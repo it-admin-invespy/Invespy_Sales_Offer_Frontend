@@ -1,13 +1,7 @@
 "use server";
 
 import { z } from "zod";
-import { createSession, deleteSession } from "../../lib/session";
 import { redirect } from "next/navigation";
-
-const testUser = {
-  email: "admin@invespy.com",
-  password: "12345678",
-};
 
 const loginSchema = z.object({
   email: z.string().email({ message: "Invalid email address" }).trim(),
@@ -28,20 +22,28 @@ export async function login(prevState, formData) {
 
   const { email, password } = result.data;
 
-  if (email !== testUser.email || password !== testUser.password) {
+  try {
+    const res = await fetch(`${process.env.BASE_URL}/api/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+
+    redirect("/sales-form");
+  } catch (error) {
     return {
       errors: {
-        email: ["Invalid email or password"],
+        email: "Invalid email or password",
+        password: "XXXXXXX email or password",
       },
     };
   }
-
-  await createSession(testUser.email);
-
-  redirect("/sales-form");
 }
 
 export async function logout() {
-  await deleteSession();
+  await fetch(
+    `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/api/auth/logout`,
+    { method: "POST" }
+  );
   redirect("/login");
 }

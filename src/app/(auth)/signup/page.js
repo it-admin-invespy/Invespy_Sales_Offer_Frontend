@@ -2,9 +2,9 @@
 
 import React from "react";
 import { useForm } from "react-hook-form";
-import { InputField } from "../../components/FormComponents";
+import { InputField } from "../../../components/FormComponents";
 
-export default function SignUp() {
+export default function Page() {
   const { register, handleSubmit } = useForm({
     defaultValues: {
       firstName: "",
@@ -35,7 +35,7 @@ export default function SignUp() {
         <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">
           Sign Up
         </h2>
-        
+
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <InputField
             register={register}
@@ -59,7 +59,7 @@ export default function SignUp() {
             type="password"
             placeholder="Password"
           />
-          
+
           <button
             type="submit"
             className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition"

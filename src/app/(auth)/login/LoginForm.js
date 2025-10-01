@@ -1,52 +1,44 @@
 "use client";
 
 import { useActionState } from "react";
-import { useFormStatus } from "react-dom";
+import { useForm } from "react-hook-form";
+import { InputField } from "../../../components/FormComponents";
 import { login } from "./actions";
 
-export default function LoginForm() {
-  const { pending } = useFormStatus();
+export function LoginForm() {
   const [state, loginAction] = useActionState(login, undefined);
+  const { register } = useForm({
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
 
   return (
-    <form
-      action={loginAction}
-      className="flex flex-col gap-4">
-      <div className="flex flex-col gap-2">
-        <input
-          id="email"
-          name="email"
-          placeholder="Email"
-          className="w-full"
-        />
-      </div>
-      {state?.errors?.email && <p className="text-red-500">{state.errors.email}</p>}
-      <div className="flex flex-col gap-2">
-        <input
-          id="password"
-          name="password"
-          type="password"
-          placeholder="Password"
-        />
-      </div>
-      {state?.errors?.password && <p className="text-red-500">{state.errors.password}</p>}
+    <form action={loginAction} className="space-y-4">
+      <InputField
+        register={register}
+        name="email"
+        type="email"
+        placeholder="Email"
+      />
+      {state?.errors?.email && (
+        <p className="text-red-500">{state.errors.email}</p>
+      )}
+
+      <InputField
+        register={register}
+        name="password"
+        type="password"
+        placeholder="Password"
+      />
+      {state?.errors?.password && (
+        <p className="text-red-500">{state.errors.password}</p>
+      )}
+
       <button
-        disabled={pending}
         type="submit"
-        className="
-          px-4 py-2 
-          bg-blue-600 
-          text-white 
-          font-medium 
-          rounded-md 
-          shadow-sm 
-          hover:bg-blue-700 
-          focus:outline-none 
-          focus:ring-2 
-          focus:ring-blue-500 
-          focus:ring-offset-2 
-          transition
-        "
+        className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition"
       >
         Login
       </button>

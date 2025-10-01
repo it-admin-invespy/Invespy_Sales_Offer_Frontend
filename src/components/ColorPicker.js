@@ -1,4 +1,4 @@
-export default function ColorPicker({ onChange, value }) {
+export default function ColorPicker({ onChange, value, placeholder }) {
   return (
     <div className="flex items-center space-x-2">
       <input
@@ -11,7 +11,7 @@ export default function ColorPicker({ onChange, value }) {
         type="text"
         value={value || ""}
         onChange={(e) => onChange(e.target.value)}
-        placeholder="Brand Color"
+        placeholder={placeholder || "Select a color"}
         className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
       />
     </div>
