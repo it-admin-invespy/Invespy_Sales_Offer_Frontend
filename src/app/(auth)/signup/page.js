@@ -1,33 +1,22 @@
 "use client";
 
-import React from "react";
+import { useActionState } from "react";
 import { useForm } from "react-hook-form";
 import { InputField } from "../../../components/FormComponents";
+import { signup } from "./actions";
 
 export default function Page() {
-  const { register, handleSubmit } = useForm({
+  const [state, signupAction] = useActionState(signup, undefined);
+
+  const { register } = useForm({
     defaultValues: {
       firstName: "",
       lastName: "",
       email: "",
       password: "",
-      role: "user",
+      confirmPassword: "",
     },
   });
-
-  const onSubmit = async (data) => {
-    try {
-      const response = await fetch("/api/signup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      const result = await response.json();
-      console.log("Sign up successful:", result);
-    } catch (error) {
-      console.error("Sign up failed:", error);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -36,29 +25,53 @@ export default function Page() {
           Sign Up
         </h2>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <form action={signupAction} className="space-y-4">
           <InputField
             register={register}
             name="firstName"
             placeholder="First Name"
           />
+          {state?.errors?.firstName && (
+            <p className="text-red-500">{state.errors.firstName}</p>
+          )}
+
           <InputField
             register={register}
             name="lastName"
             placeholder="Last Name"
           />
+          {state?.errors?.lastName && (
+            <p className="text-red-500">{state.errors.lastName}</p>
+          )}
+
           <InputField
             register={register}
             name="email"
             type="email"
             placeholder="Email"
           />
+          {state?.errors?.email && (
+            <p className="text-red-500">{state.errors.email}</p>
+          )}
+
           <InputField
             register={register}
             name="password"
             type="password"
             placeholder="Password"
           />
+          {state?.errors?.password && (
+            <p className="text-red-500">{state.errors.password}</p>
+          )}
+          <InputField
+            register={register}
+            name="confirmPassword"
+            type="password"
+            placeholder="Confirm Password"
+          />
+          {state?.errors?.confirmPassword && (
+            <p className="text-red-500">{state.errors.confirmPassword}</p>
+          )}
 
           <button
             type="submit"
@@ -66,6 +79,13 @@ export default function Page() {
           >
             Sign Up
           </button>
+
+          <p className="text-center text-gray-600">
+            Already have an account?{" "}
+            <a href="/login" className="text-blue-600 hover:underline">
+              Login
+            </a>
+          </p>
         </form>
       </div>
     </div>

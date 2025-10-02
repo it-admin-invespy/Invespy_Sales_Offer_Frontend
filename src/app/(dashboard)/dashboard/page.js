@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { getSalesOffers } from "./actions";
 
 export default function Page() {
   const [forms, setForms] = useState([]);
@@ -14,8 +15,7 @@ export default function Page() {
 
   const fetchForms = async () => {
     try {
-      const response = await fetch("/api/forms");
-      const data = await response.json();
+      const data = await getSalesOffers();
       setForms(data);
     } catch (error) {
       console.error("Failed to fetch forms:", error);

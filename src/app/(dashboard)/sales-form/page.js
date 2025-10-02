@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { useForm, useFieldArray } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import ImageUpload from "../../../components/ImageUpload";
 import ColorPicker from "../../../components/ColorPicker";
 import FontSizeDropdown from "../../../components/FontSizeDropdown";
@@ -19,7 +19,7 @@ export default function Page() {
   const [selectedCSVData, setSelectedCSVData] = useState([]);
   const [installmentData, setInstallmentData] = useState([]);
   const [floorPlanImages, setFloorPlanImages] = useState([]);
-  const { control, register, handleSubmit, setValue, watch } = useForm({
+  const { register, handleSubmit, setValue, watch, control } = useForm({
     defaultValues: {
       projects: [
         {
@@ -47,7 +47,7 @@ export default function Page() {
                   total: "",
                 },
               ],
-              floorPlans: [{ layoutsImages: "  " }],
+              floorPlans: [{ layoutsImages: "" }],
             },
           ],
         },
@@ -177,7 +177,13 @@ export default function Page() {
         <BulkImageUpload onImagesUpload={setFloorPlanImages} />
       </SectionCard>
 
-      <InvisibleTable register={register} meta={watch("meta")} />
+      <SectionCard title="Pre Registeration Payment">
+        <InvisibleTable
+          register={register}
+          meta={watch("meta")}
+          control={control}
+        />
+      </SectionCard>
 
       {/* Customer */}
       <SectionCard title="Signature">
@@ -204,7 +210,7 @@ export default function Page() {
           type="submit"
           className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
         >
-          💾 Save
+          Save
         </button>
       </div>
     </form>

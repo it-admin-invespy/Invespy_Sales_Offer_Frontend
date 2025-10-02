@@ -1,10 +1,19 @@
-export default function InvisibleTable({ register, meta }) {
+"use client";
+
+import { useFieldArray } from "react-hook-form";
+
+export default function InvisibleTable({ register, meta, control }) {
+  const { fields, append } = useFieldArray({
+    control,
+    name: "table.rows",
+  });
+
   const headerStyle = {
     backgroundColor: meta?.brandColors || "#007BFF",
   };
 
   return (
-    <div className="bg-white border border-gray-200 shadow-sm rounded-lg p-6">
+    <div>
       <table className="w-full">
         <thead>
           <tr>
@@ -23,36 +32,31 @@ export default function InvisibleTable({ register, meta }) {
           </tr>
         </thead>
         <tbody>
-          <tr>
-            <td className="p-2 border border-gray-300">
-              <input
-                {...register("table.cell1")}
-                className="w-full border-none outline-none bg-transparent"
-              />
-            </td>
-            <td className="p-2 border border-gray-300">
-              <input
-                {...register("table.cell2")}
-                className="w-full border-none outline-none bg-transparent"
-              />
-            </td>
-          </tr>
-          <tr>
-            <td className="p-2 border border-gray-300">
-              <input
-                {...register("table.cell3")}
-                className="w-full border-none outline-none bg-transparent"
-              />
-            </td>
-            <td className="p-2 border border-gray-300">
-              <input
-                {...register("table.cell4")}
-                className="w-full border-none outline-none bg-transparent"
-              />
-            </td>
-          </tr>
+          {fields.map((field, index) => (
+            <tr key={field.id}>
+              <td className="p-2 border border-gray-300">
+                <input
+                  {...register(`table.rows.${index}.description`)}
+                  className="w-full border-none outline-none bg-transparent"
+                />
+              </td>
+              <td className="p-2 border border-gray-300">
+                <input
+                  {...register(`table.rows.${index}.amount`)}
+                  className="w-full border-none outline-none bg-transparent"
+                />
+              </td>
+            </tr>
+          ))}
         </tbody>
       </table>
+      <button
+        type="button"
+        onClick={() => append({ description: "", amount: "" })}
+        className="mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+      >
+        Add Row
+      </button>
     </div>
   );
 }

@@ -2,6 +2,8 @@
 
 import { z } from "zod";
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
+import axios from "axios";
 
 const loginSchema = z.object({
   email: z.string().email({ message: "Invalid email address" }).trim(),
@@ -21,29 +23,45 @@ export async function login(prevState, formData) {
   }
 
   const { email, password } = result.data;
+  let res = {};
 
   try {
-    const res = await fetch(`${process.env.BASE_URL}/api/auth/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
+    res = await axios.post(`${process.env.BASE_URL}/api/v1/auth/login`, {
+      email,
+      password,
     });
-
-    redirect("/sales-form");
   } catch (error) {
     return {
       errors: {
         email: "Invalid email or password",
-        password: "XXXXXXX email or password",
       },
     };
   }
+
+  const cookieStore = await cookies();
+  cookieStore.set("accessToken", res.data.accessToken, {
+    httpOnly: true,
+    secure: true,
+    sameSite: "strict",
+  });
+  cookieStore.set("refreshToken", res.data.refreshToken, {
+    httpOnly: true,
+    secure: true,
+    sameSite: "strict",
+  });
+  cookieStore.set("user", JSON.stringify(res.data.user), {
+    httpOnly: true,
+    secure: true,
+    sameSite: "strict",
+  });
+
+  redirect("/dashboard");
 }
 
 export async function logout() {
-  await fetch(
-    `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/api/auth/logout`,
-    { method: "POST" }
-  );
+  const cookieStore = await cookies();
+  cookieStore.delete("accessToken");
+  cookieStore.delete("refreshToken");
+  cookieStore.delete("user");
   redirect("/login");
 }
