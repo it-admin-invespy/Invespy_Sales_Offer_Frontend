@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
-const protectedRoutes = ["/sales-form", "/", "/dashboard"];
+const protectedRoutes = ["/sales-form", "/dashboard"];
 const publicRoutes = ["/login", "signup"];
 
 export default async function middleware(req) {
@@ -16,7 +16,11 @@ export default async function middleware(req) {
   }
 
   if (isPublicRoute && session) {
-    return NextResponse.redirect(new URL("/sales-form", req.nextUrl));
+    return NextResponse.redirect(new URL("/dashboard", req.nextUrl));
+  }
+
+  if (path === "/" && session) {
+    return NextResponse.redirect(new URL("/dashboard", req.nextUrl));
   }
 
   return NextResponse.next();

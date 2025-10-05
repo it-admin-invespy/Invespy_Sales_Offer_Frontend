@@ -1,4 +1,4 @@
-export default function DynamicHeader({ register, name, meta }) {
+export default function DynamicHeader({ register, name, meta, headerValue }) {
   const headerStyle = {
     fontSize: meta?.styles?.header?.fontSize || "24px",
     fontWeight: meta?.styles?.header?.fontWeight || "700",
@@ -10,7 +10,7 @@ export default function DynamicHeader({ register, name, meta }) {
     <div className="border border-gray-200 shadow-sm rounded-lg">
       <input
         {...register(name)}
-        defaultValue="Official Sales Offer"
+        defaultValue={headerValue}
         style={headerStyle}
         className="w-full text-white text-center border-none outline-none bg-transparent rounded-lg p-6"
       />

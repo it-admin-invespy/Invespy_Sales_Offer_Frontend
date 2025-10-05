@@ -85,13 +85,18 @@ export default function Page() {
         register={register}
         name="headerTitle"
         meta={watch("meta")}
+        headerValue={"OFFICIAL SALES OFFER"}
       />
 
       {/* Meta */}
       <SectionCard title="Form Styles">
         <div className="grid grid-cols-3 gap-4">
           <ImageUpload
-            onUpload={(url) => setValue("meta.logoUrl", url)}
+            label={"Upload Logo"}
+            onUpload={(url) => {
+              console.log("URL", url);
+              setValue("meta.logoUrl", url);
+            }}
             currentUrl={watch("meta.logoUrl")}
           />
           <ColorPicker
@@ -151,11 +156,6 @@ export default function Page() {
         <CSVUpload onDataLoad={setSelectedCSVData} />
       </SectionCard>
 
-      {/* Installment Summary */}
-      <SectionCard title="Installment Summary">
-        <InstallmentCSV onDataLoad={setInstallmentData} />
-      </SectionCard>
-
       {/* Consultant */}
       <SectionCard title="Consultant & Agency">
         <div className="grid grid-cols-2 gap-4">
@@ -172,10 +172,29 @@ export default function Page() {
         </div>
       </SectionCard>
 
+      {/* Installment Summary */}
+      <SectionCard title="Installment Summary">
+        <InstallmentCSV onDataLoad={setInstallmentData} />
+      </SectionCard>
+
+      <DynamicHeader
+        register={register}
+        name="floorPlanHeader"
+        meta={watch("meta")}
+        headerValue={"INDIVIDUAL UNIT FLOOR PLAN"}
+      />
+
       {/* Bulk Upload Floor Plans */}
       <SectionCard title="Bulk Upload Floor Plans">
         <BulkImageUpload onImagesUpload={setFloorPlanImages} />
       </SectionCard>
+
+      <DynamicHeader
+        register={register}
+        name="registrationHeader"
+        meta={watch("meta")}
+        headerValue={"PRE-REGISTRATION FEE TO BE PAID WITH RESERVATION"}
+      />
 
       <SectionCard title="Pre Registeration Payment">
         <InvisibleTable
