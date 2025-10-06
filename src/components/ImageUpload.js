@@ -20,9 +20,6 @@ export default function ImageUpload({ onUpload, currentUrl, label }) {
       console.error("Failed to upload logo", error);
     } finally {
       setUploading(false);
-      if (onUpload) {
-        onUpload();
-      }
     }
   };
 

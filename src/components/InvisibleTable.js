@@ -29,13 +29,13 @@ export default function InvisibleTable({
       }, 0);
 
       // Update the amount field
-      setValue(
-        `projects.0.units.${index}.preRegistrationPayment.amount`,
-        totalAmount
+      register(
+        `projects.0.units.${index}.preRegistrationPayment.totalAmount`,
+        { value: totalAmount }
       );
-      setValue(
+      register(
         `projects.0.units.${index}.preRegistrationPayment.breakdown`,
-        breakdown
+        { value: breakdown }
       );
     });
   }, [breakdown]);

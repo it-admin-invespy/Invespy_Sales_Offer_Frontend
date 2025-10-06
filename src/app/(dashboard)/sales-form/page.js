@@ -1,7 +1,9 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
+import { useSearchParams } from "next/navigation";
+
 import ImageUpload from "../../../components/ImageUpload";
 import ColorPicker from "../../../components/ColorPicker";
 import FontSizeDropdown from "../../../components/FontSizeDropdown";
@@ -14,12 +16,26 @@ import DynamicHeader from "../../../components/DynamicHeader";
 import ContactInfo from "../../../components/ContactInfo";
 import InvisibleTable from "../../../components/InvisibleTable";
 import { SectionCard, InputField } from "../../../components/FormComponents";
+import { useRouter } from "next/navigation";
+import { createSalesOffer, getSalesOfferById } from "../dashboard/actions";
+import { generateSalesOfferHTML } from "@/app/lib/generateHtmlSalesOffer";
 
 export default function Page() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [salesOfferData, setSalesOfferData] = useState([]);
   const [unitsData, setUnitsData] = useState([]);
   const [floorPlanImages, setFloorPlanImages] = useState([]);
   const [selectedUnit, setSelectedUnit] = useState(0);
-  const { register, handleSubmit, setValue, watch, control } = useForm({
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    control,
+    getValues,
+    formState: { errors },
+  } = useForm({
     defaultValues: {
       projects: [
         {
@@ -44,7 +60,34 @@ export default function Page() {
     },
   });
 
-  const onSubmit = (data) => {
+  useEffect(() => {
+    const id = searchParams.get("id");
+    if (id) {
+      fetchSalesOffer(id);
+    }
+  }, [searchParams]);
+
+  const fetchSalesOffer = async (id) => {
+    try {
+      const data = await getSalesOfferById(id);
+      console.log("Fetched Data", data);
+      // Populate form with fetched data
+      setSalesOfferData(data.salesOffer);
+      setValue("brokerageAgency", data.salesOffer.brokerageAgency);
+      setValue("salesConsultant", data.salesOffer.salesConsultant);
+      setValue(
+        "extra.breakdown",
+        data.salesOffer.project.units[0].preRegistrationPayments
+      );
+      setValue("customer", data.salesOffer.customers[0]);
+      setValue("projects.0", data.salesOffer.project);
+      setValue("meta", data.salesOffer.project.meta);
+    } catch (error) {
+      console.error("Error fetching sales offer:", error);
+    }
+  };
+
+  const onSubmit = async (data) => {
     unitsData.forEach((unit, index) => {
       const floorPlans = floorPlanImages
         .filter((image) => {
@@ -55,10 +98,50 @@ export default function Page() {
           );
         })
         .map((image) => ({ layoutsImages: image.url }));
-      setValue(`projects.0.units.${index}.floorPlans`, floorPlans);
+      data.projects[0].units[index]["floorPlans"] = floorPlans;
+      console.log("Floor Plan Images", floorPlans);
     });
+    console.log("Data", data);
     const { extra, ...rest } = data;
     console.log(rest);
+
+    try {
+      const response = await createSalesOffer(rest);
+      console.log("Form submitted successfully:", response);
+      router.push("/dashboard");
+    } catch (error) {
+      console.error("Error submitting form:", error);
+    }
+  };
+
+  const downloadSalesOffer = async () => {
+    const data = getValues();
+    unitsData.forEach((unit, index) => {
+      const floorPlans = floorPlanImages
+        .filter((image) => {
+          return (
+            image.name.includes(unit.unitNo) &&
+            image.name.includes(unit.projectName)
+          );
+        })
+        .map((image) => decodeURIComponent(image.url));
+      data.projects[0].units[index]["floorPlans"] = floorPlans;
+    });
+    const { extra, ...rest } = data;
+    const html2pdf = (await import("html2pdf.js/dist/html2pdf.bundle.min.js"))
+      .default;
+    const html = generateSalesOfferHTML(rest, selectedUnit);
+    const element = document.createElement("div");
+    element.innerHTML = html;
+    const opt = {
+      margin: 10,
+      filename: "sales-offer.pdf",
+      image: { type: "jpeg", quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true },
+      jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+      pagebreak: { mode: ["css", "legacy"] },
+    };
+    html2pdf().set(opt).from(element).save(`SalesOffer_${"704"}.pdf`);
   };
 
   return (
@@ -117,12 +200,15 @@ export default function Page() {
             register={register}
             name="projects.0.projectName"
             placeholder="Project Name"
+            required
           />
           <InputField
             register={register}
             name="projects.0.country"
             placeholder="Country"
+            required
           />
+
           <InputField
             register={register}
             name="projects.0.location"
@@ -142,7 +228,14 @@ export default function Page() {
           onDataLoad={setUnitsData}
           register={register}
           setSelectedUnit={setSelectedUnit}
+          unitsData={unitsData}
+          units={salesOfferData && salesOfferData.project?.unit}
         />
+        {errors.projects?.[0]?.units && (
+          <p className="text-red-500 text-sm mt-2">
+            {errors.projects[0].units.message}
+          </p>
+        )}
       </SectionCard>
 
       {/* Consultant */}
@@ -152,6 +245,7 @@ export default function Page() {
             register={register}
             name="salesConsultant"
             placeholder="Sales Consultant"
+            required
           />
           <InputField
             register={register}
@@ -208,12 +302,14 @@ export default function Page() {
             register={register}
             name="customer.name"
             placeholder="Signature Name"
+            required
           />
           <InputField
             register={register}
             type="date"
             name="customer.date"
             placeholder="Date"
+            required
           />
         </div>
       </SectionCard>
@@ -221,7 +317,14 @@ export default function Page() {
       <ContactInfo register={register} />
 
       {/* Submit */}
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-4">
+        <button
+          type="button"
+          onClick={downloadSalesOffer}
+          className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+        >
+          Download PDF
+        </button>
         <button
           type="submit"
           className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"

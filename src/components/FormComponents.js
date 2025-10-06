@@ -9,11 +9,13 @@ export function SectionCard({ title, children }) {
 
 export function InputField({ register, name, placeholder, type = "text" }) {
   return (
-    <input
-      type={type}
-      {...register(name)}
-      placeholder={placeholder}
-      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-    />
+    <div>
+      <input
+        type={type}
+        {...register(name)}
+        placeholder={placeholder}
+        className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+      />
+    </div>
   );
 }

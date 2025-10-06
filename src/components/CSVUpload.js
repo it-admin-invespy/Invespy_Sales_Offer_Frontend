@@ -1,8 +1,13 @@
 import { useState } from "react";
 
-export default function CSVUpload({ onDataLoad, register, setSelectedUnit }) {
+export default function CSVUpload({
+  onDataLoad,
+  register,
+  setSelectedUnit,
+  unitsData = [],
+}) {
   const name = "projects.0.units";
-  const [csvData, setCsvData] = useState([]);
+  const [csvData, setCsvData] = useState(unitsData);
   const [selectedRow, setSelectedRow] = useState(0);
 
   const handleFileUpload = (e) => {
@@ -26,8 +31,8 @@ export default function CSVUpload({ onDataLoad, register, setSelectedUnit }) {
             floorNo: values[2]?.trim() || "",
             unitType: values[3]?.trim() || "",
             view: values[4]?.trim() || "",
-            grossArea: values[5]?.trim() || "",
-            price: values[6]?.trim() || "",
+            grossArea: parseFloat(values[5]?.trim()) || "",
+            price: parseFloat(values[6]?.trim()) || "",
           };
         });
 
@@ -147,6 +152,7 @@ export default function CSVUpload({ onDataLoad, register, setSelectedUnit }) {
                   </td>
                   <td className="border border-gray-300 px-2 py-1">
                     <input
+                      type="number"
                       {...register(`${name}.${index}.grossArea`)}
                       defaultValue={row.grossArea}
                       disabled
@@ -155,6 +161,7 @@ export default function CSVUpload({ onDataLoad, register, setSelectedUnit }) {
                   </td>
                   <td className="border border-gray-300 px-2 py-1">
                     <input
+                      type="number"
                       {...register(`${name}.${index}.price`)}
                       defaultValue={row.price}
                       disabled

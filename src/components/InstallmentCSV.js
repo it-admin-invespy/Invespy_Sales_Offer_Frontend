@@ -25,7 +25,7 @@ export default function InstallmentCSV({ setValue, disabled, price, units }) {
             percentagePayable: values[1]?.trim().replace(/[^0-9.]/g, ""),
             milestone: values[2]?.trim() || "",
             milestoneDate: values[3]?.trim() || "",
-            amount: values[4]?.trim() || "",
+            total: values[4]?.trim() || "",
           };
         });
       registerUnitInstallments(data);
@@ -44,8 +44,11 @@ export default function InstallmentCSV({ setValue, disabled, price, units }) {
             row.percentagePayable.replace(/[^0-9.]/g, "")
           ),
           milestone: row.milestone,
-          milestoneDate: row.milestoneDate,
-          amount:
+          // milestoneDate: row.milestoneDate,
+          milestoneDate: new Date(
+            new Date().setMonth(new Date().getMonth() + rowIndex)
+          ).toISOString(),
+          total:
             (parseFloat(row.percentagePayable.replace(/[^0-9.]/g, "")) / 100) *
             (element.price || 0),
         };

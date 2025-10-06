@@ -49,14 +49,14 @@ export default function Page() {
             >
               <div>
                 <h3 className="font-medium">
-                  {form.projectName || "Untitled Form"}
+                  {form.project.projectName || "Untitled Form"}
                 </h3>
                 <p className="text-sm text-gray-500">
                   Created: {new Date(form.createdAt).toLocaleDateString()}
                 </p>
               </div>
               <button
-                onClick={() => handleEdit(form.id)}
+                onClick={() => handleEdit(form.project.id)}
                 className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
               >
                 Edit
