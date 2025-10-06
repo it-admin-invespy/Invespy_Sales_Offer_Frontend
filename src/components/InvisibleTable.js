@@ -1,12 +1,44 @@
 "use client";
 
+import { useEffect } from "react";
 import { useFieldArray } from "react-hook-form";
 
-export default function InvisibleTable({ register, meta, control }) {
+export default function InvisibleTable({
+  register,
+  meta,
+  control,
+  watch,
+  setValue,
+  units,
+}) {
+  const name = `extra.breakdown`;
+
   const { fields, append } = useFieldArray({
     control,
-    name: "table.rows",
+    name,
   });
+
+  const breakdown = watch(`extra.breakdown`) || [];
+
+  useEffect(() => {
+    units.forEach((element, index) => {
+      // Calculate total amount whenever breakdown changes
+      const totalAmount = breakdown.reduce((sum, item) => {
+        const amount = parseFloat(item?.amount) || 0;
+        return sum + amount;
+      }, 0);
+
+      // Update the amount field
+      setValue(
+        `projects.0.units.${index}.preRegistrationPayment.amount`,
+        totalAmount
+      );
+      setValue(
+        `projects.0.units.${index}.preRegistrationPayment.breakdown`,
+        breakdown
+      );
+    });
+  }, [breakdown]);
 
   const headerStyle = {
     backgroundColor: meta?.brandColors || "#007BFF",
@@ -36,13 +68,14 @@ export default function InvisibleTable({ register, meta, control }) {
             <tr key={field.id}>
               <td className="p-2 border border-gray-300">
                 <input
-                  {...register(`table.rows.${index}.description`)}
+                  {...register(`${name}.${index}.description`)}
                   className="w-full border-none outline-none bg-transparent"
                 />
               </td>
               <td className="p-2 border border-gray-300">
                 <input
-                  {...register(`table.rows.${index}.amount`)}
+                  type="number"
+                  {...register(`${name}.${index}.amount`)}
                   className="w-full border-none outline-none bg-transparent"
                 />
               </td>

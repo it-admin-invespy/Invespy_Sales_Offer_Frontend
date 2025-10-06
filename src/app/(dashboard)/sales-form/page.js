@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import ImageUpload from "../../../components/ImageUpload";
 import ColorPicker from "../../../components/ColorPicker";
@@ -16,9 +16,9 @@ import InvisibleTable from "../../../components/InvisibleTable";
 import { SectionCard, InputField } from "../../../components/FormComponents";
 
 export default function Page() {
-  const [selectedCSVData, setSelectedCSVData] = useState([]);
-  const [installmentData, setInstallmentData] = useState([]);
+  const [unitsData, setUnitsData] = useState([]);
   const [floorPlanImages, setFloorPlanImages] = useState([]);
+  const [selectedUnit, setSelectedUnit] = useState(0);
   const { register, handleSubmit, setValue, watch, control } = useForm({
     defaultValues: {
       projects: [
@@ -26,30 +26,7 @@ export default function Page() {
           projectName: "",
           location: "",
           country: "",
-          units: [
-            {
-              unitNo: "",
-              floorNo: "",
-              unitType: "",
-              view: "",
-              grossArea: "",
-              price: "",
-              preRegistrationPayment: {
-                totalAmount: "",
-                breakdown: [{ description: "", amount: "" }],
-              },
-              installments: [
-                {
-                  installment: "",
-                  percentagePayable: "",
-                  milestone: "",
-                  milestoneDate: "",
-                  total: "",
-                },
-              ],
-              floorPlans: [{ layoutsImages: "" }],
-            },
-          ],
+          units: [],
         },
       ],
       salesConsultant: "",
@@ -68,12 +45,20 @@ export default function Page() {
   });
 
   const onSubmit = (data) => {
-    console.log("Form Submitted:", {
-      ...data,
-      csvData: selectedCSVData,
-      installmentData: installmentData,
-      floorPlans: floorPlanImages,
+    unitsData.forEach((unit, index) => {
+      const floorPlans = floorPlanImages
+        .filter((image) => {
+          console.log(image.name, unit.unitNo, unit.projectName);
+          return (
+            image.name.includes(unit.unitNo) &&
+            image.name.includes(unit.projectName)
+          );
+        })
+        .map((image) => ({ layoutsImages: image.url }));
+      setValue(`projects.0.units.${index}.floorPlans`, floorPlans);
     });
+    const { extra, ...rest } = data;
+    console.log(rest);
   };
 
   return (
@@ -83,7 +68,7 @@ export default function Page() {
     >
       <DynamicHeader
         register={register}
-        name="headerTitle"
+        name="extra.header.0"
         meta={watch("meta")}
         headerValue={"OFFICIAL SALES OFFER"}
       />
@@ -130,22 +115,22 @@ export default function Page() {
         <div className="grid grid-cols-2 gap-4">
           <InputField
             register={register}
-            name="projectName"
+            name="projects.0.projectName"
             placeholder="Project Name"
           />
           <InputField
             register={register}
-            name="country"
+            name="projects.0.country"
             placeholder="Country"
           />
           <InputField
             register={register}
-            name="location"
+            name="projects.0.location"
             placeholder="Location"
           />
           <InputField
             register={register}
-            name="elevations"
+            name="extra.elevations"
             placeholder="Elevations"
           />
         </div>
@@ -153,7 +138,11 @@ export default function Page() {
 
       {/* CSV Upload */}
       <SectionCard title="Project Units">
-        <CSVUpload onDataLoad={setSelectedCSVData} />
+        <CSVUpload
+          onDataLoad={setUnitsData}
+          register={register}
+          setSelectedUnit={setSelectedUnit}
+        />
       </SectionCard>
 
       {/* Consultant */}
@@ -174,12 +163,17 @@ export default function Page() {
 
       {/* Installment Summary */}
       <SectionCard title="Installment Summary">
-        <InstallmentCSV onDataLoad={setInstallmentData} />
+        <InstallmentCSV
+          setValue={setValue}
+          disabled={unitsData.length === 0}
+          price={unitsData[selectedUnit]?.price}
+          units={unitsData}
+        />
       </SectionCard>
 
       <DynamicHeader
         register={register}
-        name="floorPlanHeader"
+        name="extra.header.1"
         meta={watch("meta")}
         headerValue={"INDIVIDUAL UNIT FLOOR PLAN"}
       />
@@ -191,7 +185,7 @@ export default function Page() {
 
       <DynamicHeader
         register={register}
-        name="registrationHeader"
+        name="extra.header.2"
         meta={watch("meta")}
         headerValue={"PRE-REGISTRATION FEE TO BE PAID WITH RESERVATION"}
       />
@@ -201,6 +195,9 @@ export default function Page() {
           register={register}
           meta={watch("meta")}
           control={control}
+          watch={watch}
+          setValue={setValue}
+          units={unitsData}
         />
       </SectionCard>
 

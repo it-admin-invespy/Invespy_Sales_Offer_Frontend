@@ -1,8 +1,9 @@
 import { useState } from "react";
 
-export default function CSVUpload({ onDataLoad }) {
+export default function CSVUpload({ onDataLoad, register, setSelectedUnit }) {
+  const name = "projects.0.units";
   const [csvData, setCsvData] = useState([]);
-  const [selectedRows, setSelectedRows] = useState(new Set());
+  const [selectedRow, setSelectedRow] = useState(0);
 
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
@@ -12,15 +13,14 @@ export default function CSVUpload({ onDataLoad }) {
     reader.onload = (event) => {
       const csv = event.target.result;
       const lines = csv.split("\n");
-      const headers = lines[0].split(",");
+      // const headers = lines[0].split(",");
 
       const data = lines
         .slice(1)
         .filter((line) => line.trim())
-        .map((line, index) => {
+        .map((line) => {
           const values = line.split(",");
           return {
-            id: index,
             projectName: values[0]?.trim() || "",
             unitNo: values[1]?.trim() || "",
             floorNo: values[2]?.trim() || "",
@@ -32,27 +32,25 @@ export default function CSVUpload({ onDataLoad }) {
         });
 
       setCsvData(data);
+      onDataLoad(data);
     };
     reader.readAsText(file);
   };
 
-  const handleCalculate = (row) => {
-    const newSelected = new Set(selectedRows);
-    if (newSelected.has(row.id)) {
-      newSelected.delete(row.id);
+  const handleCalculate = (index) => {
+    if (selectedRow === index) {
+      setSelectedRow(0);
+      setSelectedUnit(0);
     } else {
-      newSelected.add(row.id);
+      setSelectedRow(index);
+      setSelectedUnit(index);
     }
-    setSelectedRows(newSelected);
-
-    const selectedData = csvData.filter((item) => newSelected.has(item.id));
-    onDataLoad(selectedData);
   };
 
   const handleRemoveCSV = () => {
     setCsvData([]);
-    setSelectedRows(new Set());
     onDataLoad([]);
+    setSelectedRow(0);
     document.getElementById("csv-upload").value = "";
   };
 
@@ -107,43 +105,73 @@ export default function CSVUpload({ onDataLoad }) {
               </tr>
             </thead>
             <tbody>
-              {csvData.map((row) => (
+              {csvData.map((row, index) => (
                 <tr
-                  key={row.id}
-                  className={selectedRows.has(row.id) ? "bg-blue-50" : ""}
+                  key={index}
+                  className={selectedRow === index ? "bg-blue-50" : ""}
                 >
                   <td className="border border-gray-300 px-2 py-1">
                     {row.projectName}
                   </td>
                   <td className="border border-gray-300 px-2 py-1">
-                    {row.unitNo}
+                    <input
+                      {...register(`${name}.${index}.unitNo`)}
+                      defaultValue={row.unitNo}
+                      disabled
+                      className="w-full border-none outline-none bg-transparent"
+                    />
                   </td>
                   <td className="border border-gray-300 px-2 py-1">
-                    {row.floorNo}
+                    <input
+                      {...register(`${name}.${index}.floorNo`)}
+                      defaultValue={row.floorNo}
+                      disabled
+                      className="w-full border-none outline-none bg-transparent"
+                    />
                   </td>
                   <td className="border border-gray-300 px-2 py-1">
-                    {row.unitType}
+                    <input
+                      {...register(`${name}.${index}.unitType`)}
+                      defaultValue={row.unitType}
+                      disabled
+                      className="w-full border-none outline-none bg-transparent"
+                    />
                   </td>
                   <td className="border border-gray-300 px-2 py-1">
-                    {row.view}
+                    <input
+                      {...register(`${name}.${index}.view`)}
+                      defaultValue={row.view}
+                      disabled
+                      className="w-full border-none outline-none bg-transparent"
+                    />
                   </td>
                   <td className="border border-gray-300 px-2 py-1">
-                    {row.grossArea}
+                    <input
+                      {...register(`${name}.${index}.grossArea`)}
+                      defaultValue={row.grossArea}
+                      disabled
+                      className="w-full border-none outline-none bg-transparent"
+                    />
                   </td>
                   <td className="border border-gray-300 px-2 py-1">
-                    {row.price}
+                    <input
+                      {...register(`${name}.${index}.price`)}
+                      defaultValue={row.price}
+                      disabled
+                      className="w-full border-none outline-none bg-transparent"
+                    />
                   </td>
                   <td className="border border-gray-300 px-2 py-1">
                     <button
                       type="button"
-                      onClick={() => handleCalculate(row)}
+                      onClick={() => handleCalculate(index)}
                       className={`px-2 py-1 text-xs rounded ${
-                        selectedRows.has(row.id)
+                        selectedRow === index
                           ? "bg-red-500 text-white"
                           : "bg-blue-500 text-white"
                       }`}
                     >
-                      {selectedRows.has(row.id) ? "Remove" : "Calculate"}
+                      {selectedRow === index ? "Remove" : "Calculate"}
                     </button>
                   </td>
                 </tr>
