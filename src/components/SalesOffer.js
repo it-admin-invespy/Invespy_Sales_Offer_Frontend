@@ -1,5 +1,4 @@
 "use client";
-import { convertImageToBase64 } from "../app/lib/utils";
 
 const emptySalesOfferData = {
   projects: [
@@ -69,10 +68,13 @@ const emptySalesOfferData = {
   },
 };
 
-const SalesOffer = ({ salesOfferData }) => {
+const SalesOffer = ({ salesOfferData, selectedUnit = 0 }) => {
   const data = salesOfferData || emptySalesOfferData;
   const project = data.projects?.[0];
+  const unit = project?.units?.[selectedUnit] || project?.units?.[0];
   const { salesConsultant, brokerageAgency, customer, meta, extra } = data;
+
+  if (!unit) return null;
 
   const brandColor = meta?.brandColors || "#007BFF";
   const fontFamily = meta?.fonts?.[0] || "Arial, sans-serif";
@@ -86,8 +88,7 @@ const SalesOffer = ({ salesOfferData }) => {
         background: "#fff",
       }}
     >
-      {project.units.map((unit, index) => (
-        <div key={unit.unitNo} style={{ pageBreakAfter: "always" }}>
+      <div key={unit.unitNo} style={{ pageBreakAfter: "always" }}>
           {/* Header */}
           <div
             style={{
@@ -98,28 +99,30 @@ const SalesOffer = ({ salesOfferData }) => {
           >
             <img
               src={
-                meta?.logoUrl
-                  ? convertImageToBase64(meta?.logoUrl)
-                  : "https://beansandblends.nl/wp-content/uploads/2025/08/Maaia-General-Trading_logo11.png"
+                meta?.logoUrl ||
+                "https://beansandblends.nl/wp-content/uploads/2025/08/Maaia-General-Trading_logo11.png"
               }
               alt="Logo"
               style={{ width: 160 }}
             />
           </div>
 
-          <h1
+          <div
             style={{
               background: brandColor,
               color: "#fff",
               padding: "12px",
               borderRadius: "4px",
               textAlign: "center",
-              fontSize: meta.styles.header.fontSize,
-              fontWeight: meta.styles.header.fontWeight,
             }}
           >
-            {`${extra?.header?.salesOffer}`}
-          </h1>
+            <h1
+              style={{
+                fontSize: meta.styles.header.fontSize,
+                fontWeight: meta.styles.header.fontWeight,
+              }}
+            >{`${extra?.header?.salesOffer}`}</h1>
+          </div>
 
           {/* Project Info */}
           <div className="section" style={{ textAlign: "center" }}>
@@ -282,34 +285,6 @@ const SalesOffer = ({ salesOfferData }) => {
                   </tr>
                 ))}
               </tbody>
-              <tfoot>
-                <tr>
-                  <th
-                    colSpan="4"
-                    style={{
-                      textAlign: "right",
-                      background: brandColor,
-                      color: "#fff",
-                      border: "1px solid #ccc",
-                      padding: "6px",
-                    }}
-                  >
-                    Total
-                  </th>
-                  <th
-                    style={{
-                      background: brandColor,
-                      color: "#fff",
-                      border: "1px solid #ccc",
-                      padding: "6px",
-                    }}
-                  >
-                    {unit.installments
-                      .reduce((sum, i) => sum + i.amount, 0)
-                      .toLocaleString()}
-                  </th>
-                </tr>
-              </tfoot>
             </table>
           </div>
 
@@ -332,11 +307,7 @@ const SalesOffer = ({ salesOfferData }) => {
               {unit.floorPlans.map((plan, i) => (
                 <img
                   key={i}
-                  src={
-                    plan.layoutsImages
-                      ? convertImageToBase64(plan.layoutsImages)
-                      : null
-                  }
+                  src={plan.layoutsImages || null}
                   alt={`Floor Plan ${i + 1}`}
                   style={{
                     width: "100%",
@@ -444,7 +415,6 @@ const SalesOffer = ({ salesOfferData }) => {
             <p>Office Number 5202, Ubora Tower, Business Bay, Dubai, UAE</p>
           </div>
         </div>
-      ))}
     </div>
   );
 };

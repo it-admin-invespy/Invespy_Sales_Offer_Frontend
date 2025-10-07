@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { uploadBulkImages } from "../app/(dashboard)/dashboard/actions";
+import { convertImageToBase64 } from "@/app/lib/utils";
 
 export default function BulkImageUpload({ onImagesUpload }) {
   const [images, setImages] = useState([]);
@@ -20,12 +21,16 @@ export default function BulkImageUpload({ onImagesUpload }) {
     try {
       const response = await uploadBulkImages(formData);
       console.log("Upload successful:", response.data.successful);
-      response.data.successful.forEach((element) => {
+
+      for (let i = 0; i < response.data.successful.length; i++) {
+        const element = response.data.successful[i];
+        const localUrl = await convertImageToBase64(element.url);
         uploadedImages.push({
           url: element.url,
           name: element.originalName,
+          localUrl: localUrl,
         });
-      });
+      }
     } catch (error) {
       console.error("Upload failed:", error);
     }

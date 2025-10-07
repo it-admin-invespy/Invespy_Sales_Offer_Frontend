@@ -29,7 +29,7 @@ export default function Page() {
   const [unitsData, setUnitsData] = useState([]);
   const [floorPlanImages, setFloorPlanImages] = useState([]);
   const [selectedUnit, setSelectedUnit] = useState(0);
-  const [pdfData, setPdfData] = useState([]);
+  const [pdfData, setPdfData] = useState();
   const {
     register,
     handleSubmit,
@@ -85,7 +85,7 @@ export default function Page() {
     try {
       const data = await getSalesOfferById(id);
       const formData = transformSalesOffer(data.salesOffer);
-      console.log("Form Data", formData);
+      setSalesOfferData(formData);
       reset({ ...formData });
     } catch (error) {
       console.error("Error fetching sales offer:", error);
@@ -129,11 +129,16 @@ export default function Page() {
             image.name.includes(unit.projectName)
           );
         })
-        .map((image) => image.url);
+        .map((image) => {
+          return { layoutsImages: image.localUrl };
+        });
       data.projects[0].units[index]["floorPlans"] = floorPlans;
     });
-    const { extra, ...rest } = data;
-    console.log({ ...rest });
+    setPdfData(data);
+    setTimeout(() => {
+      console.log("Data", pdfData);
+      toPDF();
+    }, 0);
   };
 
   const { toPDF, targetRef } = usePDF({
@@ -319,7 +324,7 @@ export default function Page() {
         <div className="flex justify-end gap-4">
           <button
             type="button"
-            onClick={toPDF}
+            onClick={downloadSalesOffer}
             className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
           >
             Download PDF
@@ -334,7 +339,7 @@ export default function Page() {
       </form>
 
       <div ref={targetRef} className="w-full max-w-5xl bg-white shadow-lg">
-        <SalesOffer data={pdfData} unitNo={selectedUnit} />
+        <SalesOffer salesOfferData={pdfData} selectedUnit={selectedUnit} />
       </div>
     </>
   );
