@@ -1,4 +1,4 @@
-export const transformSalesOffer = (data) => {
+export const transformSalesOffer = async (data) => {
   if (!data) return null;
 
   const offer = data;
@@ -23,7 +23,6 @@ export const transformSalesOffer = (data) => {
             percentagePayable: inst?.percentagePayable || "",
             milestone: inst?.milestone || "",
             milestoneDate: inst?.milestoneDate || "",
-            amount: inst?.total || "",
             total: inst?.total || "",
           })),
           preRegistrationPayment: {
@@ -37,8 +36,8 @@ export const transformSalesOffer = (data) => {
               amount: p?.amount || "",
             })),
           },
-          floorPlans: (unit?.floorPlans || []).map((f) => ({
-            layoutsImages: f?.layoutsImages || "",
+          floorPlans: (unit?.floorPlans || []).map(async (f) => ({
+            layoutsImages: (await convertImageToBase64(f?.layoutsImages)) || "",
           })),
         })),
       },
@@ -51,7 +50,7 @@ export const transformSalesOffer = (data) => {
       date: offer?.customers?.[0]?.date || "",
     },
     meta: {
-      logoUrl: meta?.logoUrl || "",
+      logoUrl: (await convertImageToBase64(meta?.logoUrl)) || "",
       brandColors: meta?.brandColors || "",
       accentColor: meta?.brandColors || "", // same as brand color (fallback)
       fonts: [meta?.fonts || ""],

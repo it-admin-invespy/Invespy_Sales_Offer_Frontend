@@ -84,7 +84,7 @@ export default function Page() {
   const fetchSalesOffer = async (id) => {
     try {
       const data = await getSalesOfferById(id);
-      const formData = transformSalesOffer(data.salesOffer);
+      const formData = await transformSalesOffer(data.salesOffer);
       setSalesOfferData(formData);
       reset({ ...formData });
     } catch (error) {
@@ -338,7 +338,10 @@ export default function Page() {
         </div>
       </form>
 
-      <div ref={targetRef} className="w-full max-w-5xl bg-white shadow-lg">
+      <div
+        ref={targetRef}
+        className="w-full max-w-5xl bg-white shadow-lg hidden"
+      >
         <SalesOffer salesOfferData={pdfData} selectedUnit={selectedUnit} />
       </div>
     </>

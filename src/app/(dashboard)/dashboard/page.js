@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { getSalesOffers } from "./actions";
 import { transformSalesOffer } from "@/app/lib/utils";
-import { usePDF, Resolution } from "react-to-pdf";
+import { usePDF } from "react-to-pdf";
 import SalesOffer from "@/components/SalesOffer";
 
 export default function Page() {
@@ -15,9 +15,8 @@ export default function Page() {
 
   const { toPDF, targetRef } = usePDF({
     method: "open",
-    resolution: Resolution.HIGH,
     filename: "sales-offer.pdf",
-    page: { margin: 10, format: "letter" },
+    page: { margin: 10, format: "a4" },
   });
 
   useEffect(() => {
@@ -40,8 +39,8 @@ export default function Page() {
     router.push(`/sales-form?id=${formId}`);
   };
 
-  const handlePreview = (data) => {
-    const formData = transformSalesOffer(data);
+  const handlePreview = async (data) => {
+    const formData = await transformSalesOffer(data);
     console.log("Preview form:", formData);
     setpreviewForm({ ...formData });
     setTimeout(() => toPDF(), 0);
