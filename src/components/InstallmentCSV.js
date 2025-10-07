@@ -45,9 +45,7 @@ export default function InstallmentCSV({ setValue, disabled, price, units }) {
           ),
           milestone: row.milestone,
           // milestoneDate: row.milestoneDate,
-          milestoneDate: new Date(
-            new Date().setMonth(new Date().getMonth() + rowIndex)
-          ).toISOString(),
+          milestoneDate: row.milestoneDate,
           total:
             (parseFloat(row.percentagePayable.replace(/[^0-9.]/g, "")) / 100) *
             (element.price || 0),

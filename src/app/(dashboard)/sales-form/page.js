@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { useSearchParams } from "next/navigation";
+import { usePDF } from "react-to-pdf";
 
 import ImageUpload from "../../../components/ImageUpload";
 import ColorPicker from "../../../components/ColorPicker";
@@ -15,10 +16,11 @@ import BulkImageUpload from "../../../components/BulkImageUpload";
 import DynamicHeader from "../../../components/DynamicHeader";
 import ContactInfo from "../../../components/ContactInfo";
 import InvisibleTable from "../../../components/InvisibleTable";
+import SalesOffer from "../../../components/SalesOffer";
 import { SectionCard, InputField } from "../../../components/FormComponents";
 import { useRouter } from "next/navigation";
 import { createSalesOffer, getSalesOfferById } from "../dashboard/actions";
-import { generateSalesOfferHTML } from "@/app/lib/generateHtmlSalesOffer";
+import { transformSalesOffer } from "@/app/lib/utils";
 
 export default function Page() {
   const router = useRouter();
@@ -27,6 +29,7 @@ export default function Page() {
   const [unitsData, setUnitsData] = useState([]);
   const [floorPlanImages, setFloorPlanImages] = useState([]);
   const [selectedUnit, setSelectedUnit] = useState(0);
+  const [pdfData, setPdfData] = useState([]);
   const {
     register,
     handleSubmit,
@@ -35,6 +38,7 @@ export default function Page() {
     control,
     getValues,
     formState: { errors },
+    reset,
   } = useForm({
     defaultValues: {
       projects: [
@@ -57,12 +61,22 @@ export default function Page() {
           table: { borderColor: "" },
         },
       },
+      extra: {
+        elevations: "",
+        header: {
+          salesOffer: "OFFICIAL SALES OFFER",
+          floorPlan: "INDIVIDUAL UNIT FLOOR PLAN",
+          preRegistration: "PRE-REGISTRATION FEE TO BE PAID WITH RESERVATION",
+        },
+        breakdown: [],
+      },
     },
   });
 
   useEffect(() => {
     const id = searchParams.get("id");
     if (id) {
+      console.log("ID", id);
       fetchSalesOffer(id);
     }
   }, [searchParams]);
@@ -70,18 +84,9 @@ export default function Page() {
   const fetchSalesOffer = async (id) => {
     try {
       const data = await getSalesOfferById(id);
-      console.log("Fetched Data", data);
-      // Populate form with fetched data
-      setSalesOfferData(data.salesOffer);
-      setValue("brokerageAgency", data.salesOffer.brokerageAgency);
-      setValue("salesConsultant", data.salesOffer.salesConsultant);
-      setValue(
-        "extra.breakdown",
-        data.salesOffer.project.units[0].preRegistrationPayments
-      );
-      setValue("customer", data.salesOffer.customers[0]);
-      setValue("projects.0", data.salesOffer.project);
-      setValue("meta", data.salesOffer.project.meta);
+      const formData = transformSalesOffer(data.salesOffer);
+      console.log("Form Data", formData);
+      reset({ ...formData });
     } catch (error) {
       console.error("Error fetching sales offer:", error);
     }
@@ -124,214 +129,213 @@ export default function Page() {
             image.name.includes(unit.projectName)
           );
         })
-        .map((image) => decodeURIComponent(image.url));
+        .map((image) => image.url);
       data.projects[0].units[index]["floorPlans"] = floorPlans;
     });
     const { extra, ...rest } = data;
-    const html2pdf = (await import("html2pdf.js/dist/html2pdf.bundle.min.js"))
-      .default;
-    const html = generateSalesOfferHTML(rest, selectedUnit);
-    const element = document.createElement("div");
-    element.innerHTML = html;
-    const opt = {
-      margin: 10,
-      filename: "sales-offer.pdf",
-      image: { type: "jpeg", quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true },
-      jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-      pagebreak: { mode: ["css", "legacy"] },
-    };
-    html2pdf().set(opt).from(element).save(`SalesOffer_${"704"}.pdf`);
+    console.log({ ...rest });
   };
 
+  const { toPDF, targetRef } = usePDF({
+    method: "open",
+    filename: "sales-offer.pdf",
+    page: { margin: 10, format: "a4" },
+  });
+
   return (
-    <form
-      onSubmit={handleSubmit(onSubmit)}
-      className="p-6 mx-auto space-y-8 bg-gray-50 min-h-screen"
-    >
-      <DynamicHeader
-        register={register}
-        name="extra.header.0"
-        meta={watch("meta")}
-        headerValue={"OFFICIAL SALES OFFER"}
-      />
-
-      {/* Meta */}
-      <SectionCard title="Form Styles">
-        <div className="grid grid-cols-3 gap-4">
-          <ImageUpload
-            label={"Upload Logo"}
-            onUpload={(url) => {
-              console.log("URL", url);
-              setValue("meta.logoUrl", url);
-            }}
-            currentUrl={watch("meta.logoUrl")}
-          />
-          <ColorPicker
-            onChange={(color) => setValue("meta.brandColors", color)}
-            value={watch("meta.brandColors")}
-            placeholder="Brand Color"
-          />
-          <FontDropdown register={register} name="meta.fonts.0" />
-        </div>
-        <div className="grid grid-cols-3 gap-4">
-          <FontSizeDropdown
-            register={register}
-            name="meta.styles.header.fontSize"
-          />
-          <FontWeightDropdown
-            register={register}
-            name="meta.styles.header.fontWeight"
-          />
-          <ColorPicker
-            onChange={(color) =>
-              setValue("meta.styles.table.borderColor", color)
-            }
-            value={watch("meta.styles.table.borderColor")}
-            placeholder="Border Color"
-          />
-        </div>
-      </SectionCard>
-
-      {/* Project Details */}
-      <SectionCard title="Project Details">
-        <div className="grid grid-cols-2 gap-4">
-          <InputField
-            register={register}
-            name="projects.0.projectName"
-            placeholder="Project Name"
-            required
-          />
-          <InputField
-            register={register}
-            name="projects.0.country"
-            placeholder="Country"
-            required
-          />
-
-          <InputField
-            register={register}
-            name="projects.0.location"
-            placeholder="Location"
-          />
-          <InputField
-            register={register}
-            name="extra.elevations"
-            placeholder="Elevations"
-          />
-        </div>
-      </SectionCard>
-
-      {/* CSV Upload */}
-      <SectionCard title="Project Units">
-        <CSVUpload
-          onDataLoad={setUnitsData}
+    <>
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        className="p-6 mx-auto space-y-8 bg-gray-50 min-h-screen"
+      >
+        <DynamicHeader
           register={register}
-          setSelectedUnit={setSelectedUnit}
-          unitsData={unitsData}
-          units={salesOfferData && salesOfferData.project?.unit}
-        />
-        {errors.projects?.[0]?.units && (
-          <p className="text-red-500 text-sm mt-2">
-            {errors.projects[0].units.message}
-          </p>
-        )}
-      </SectionCard>
-
-      {/* Consultant */}
-      <SectionCard title="Consultant & Agency">
-        <div className="grid grid-cols-2 gap-4">
-          <InputField
-            register={register}
-            name="salesConsultant"
-            placeholder="Sales Consultant"
-            required
-          />
-          <InputField
-            register={register}
-            name="brokerageAgency"
-            placeholder="Brokerage Agency"
-          />
-        </div>
-      </SectionCard>
-
-      {/* Installment Summary */}
-      <SectionCard title="Installment Summary">
-        <InstallmentCSV
-          setValue={setValue}
-          disabled={unitsData.length === 0}
-          price={unitsData[selectedUnit]?.price}
-          units={unitsData}
-        />
-      </SectionCard>
-
-      <DynamicHeader
-        register={register}
-        name="extra.header.1"
-        meta={watch("meta")}
-        headerValue={"INDIVIDUAL UNIT FLOOR PLAN"}
-      />
-
-      {/* Bulk Upload Floor Plans */}
-      <SectionCard title="Bulk Upload Floor Plans">
-        <BulkImageUpload onImagesUpload={setFloorPlanImages} />
-      </SectionCard>
-
-      <DynamicHeader
-        register={register}
-        name="extra.header.2"
-        meta={watch("meta")}
-        headerValue={"PRE-REGISTRATION FEE TO BE PAID WITH RESERVATION"}
-      />
-
-      <SectionCard title="Pre Registeration Payment">
-        <InvisibleTable
-          register={register}
+          name="extra.header.salesOffer"
           meta={watch("meta")}
-          control={control}
-          watch={watch}
-          setValue={setValue}
-          units={unitsData}
+          headerValue={"OFFICIAL SALES OFFER"}
         />
-      </SectionCard>
 
-      {/* Customer */}
-      <SectionCard title="Signature">
-        <div className="grid grid-cols-2 gap-4">
-          <InputField
+        {/* Meta */}
+        <SectionCard title="Form Styles">
+          <div className="grid grid-cols-3 gap-4">
+            <ImageUpload
+              label={"Upload Logo"}
+              onUpload={(url) => {
+                console.log("URL", url);
+                setValue("meta.logoUrl", url);
+              }}
+              currentUrl={watch("meta.logoUrl")}
+            />
+            <ColorPicker
+              onChange={(color) => setValue("meta.brandColors", color)}
+              value={watch("meta.brandColors")}
+              placeholder="Brand Color"
+            />
+            <FontDropdown register={register} name="meta.fonts.0" />
+          </div>
+          <div className="grid grid-cols-3 gap-4">
+            <FontSizeDropdown
+              register={register}
+              name="meta.styles.header.fontSize"
+            />
+            <FontWeightDropdown
+              register={register}
+              name="meta.styles.header.fontWeight"
+            />
+            <ColorPicker
+              onChange={(color) =>
+                setValue("meta.styles.table.borderColor", color)
+              }
+              value={watch("meta.styles.table.borderColor")}
+              placeholder="Border Color"
+            />
+          </div>
+        </SectionCard>
+
+        {/* Project Details */}
+        <SectionCard title="Project Details">
+          <div className="grid grid-cols-2 gap-4">
+            <InputField
+              register={register}
+              name="projects.0.projectName"
+              placeholder="Project Name"
+              required
+            />
+            <InputField
+              register={register}
+              name="projects.0.country"
+              placeholder="Country"
+              required
+            />
+
+            <InputField
+              register={register}
+              name="projects.0.location"
+              placeholder="Location"
+            />
+            <InputField
+              register={register}
+              name="extra.elevations"
+              placeholder="Elevations"
+            />
+          </div>
+        </SectionCard>
+
+        {/* CSV Upload */}
+        <SectionCard title="Project Units">
+          <CSVUpload
+            onDataLoad={setUnitsData}
             register={register}
-            name="customer.name"
-            placeholder="Signature Name"
-            required
+            setSelectedUnit={setSelectedUnit}
+            unitsData={unitsData}
+            units={salesOfferData && salesOfferData.project?.unit}
           />
-          <InputField
+          {errors.projects?.[0]?.units && (
+            <p className="text-red-500 text-sm mt-2">
+              {errors.projects[0].units.message}
+            </p>
+          )}
+        </SectionCard>
+
+        {/* Consultant */}
+        <SectionCard title="Consultant & Agency">
+          <div className="grid grid-cols-2 gap-4">
+            <InputField
+              register={register}
+              name="salesConsultant"
+              placeholder="Sales Consultant"
+              required
+            />
+            <InputField
+              register={register}
+              name="brokerageAgency"
+              placeholder="Brokerage Agency"
+            />
+          </div>
+        </SectionCard>
+
+        {/* Installment Summary */}
+        <SectionCard title="Installment Summary">
+          <InstallmentCSV
+            setValue={setValue}
+            disabled={unitsData.length === 0}
+            price={unitsData[selectedUnit]?.price}
+            units={unitsData}
+          />
+        </SectionCard>
+
+        <DynamicHeader
+          register={register}
+          name="extra.header.floorPlan"
+          meta={watch("meta")}
+          headerValue={"INDIVIDUAL UNIT FLOOR PLAN"}
+        />
+
+        {/* Bulk Upload Floor Plans */}
+        <SectionCard title="Bulk Upload Floor Plans">
+          <BulkImageUpload onImagesUpload={setFloorPlanImages} />
+        </SectionCard>
+
+        <DynamicHeader
+          register={register}
+          name="extra.header.preRegistration"
+          meta={watch("meta")}
+          headerValue={"PRE-REGISTRATION FEE TO BE PAID WITH RESERVATION"}
+        />
+
+        <SectionCard title="Pre Registeration Payment">
+          <InvisibleTable
             register={register}
-            type="date"
-            name="customer.date"
-            placeholder="Date"
-            required
+            meta={watch("meta")}
+            control={control}
+            watch={watch}
+            setValue={setValue}
+            units={unitsData}
           />
+        </SectionCard>
+
+        {/* Customer */}
+        <SectionCard title="Signature">
+          <div className="grid grid-cols-2 gap-4">
+            <InputField
+              register={register}
+              name="customer.name"
+              placeholder="Signature Name"
+              required
+            />
+            <InputField
+              register={register}
+              type="date"
+              name="customer.date"
+              placeholder="Date"
+              required
+            />
+          </div>
+        </SectionCard>
+
+        <ContactInfo register={register} />
+
+        {/* Submit */}
+        <div className="flex justify-end gap-4">
+          <button
+            type="button"
+            onClick={toPDF}
+            className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+          >
+            Download PDF
+          </button>
+          <button
+            type="submit"
+            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+          >
+            Save
+          </button>
         </div>
-      </SectionCard>
+      </form>
 
-      <ContactInfo register={register} />
-
-      {/* Submit */}
-      <div className="flex justify-end gap-4">
-        <button
-          type="button"
-          onClick={downloadSalesOffer}
-          className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
-        >
-          Download PDF
-        </button>
-        <button
-          type="submit"
-          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-        >
-          Save
-        </button>
+      <div ref={targetRef} className="w-full max-w-5xl bg-white shadow-lg">
+        <SalesOffer data={pdfData} unitNo={selectedUnit} />
       </div>
-    </form>
+    </>
   );
 }
