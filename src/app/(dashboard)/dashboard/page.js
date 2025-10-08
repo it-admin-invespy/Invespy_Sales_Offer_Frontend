@@ -92,12 +92,12 @@ export default function Page() {
                   >
                     Preview
                   </button>
-                  <button
+                  {/* <button
                     onClick={() => handleDelete(form.id)}
                     className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
                   >
                     Delete
-                  </button>
+                  </button> */}
                 </div>
               </div>
             ))}
@@ -108,7 +108,14 @@ export default function Page() {
           )}
         </div>
       </div>
-      <div className="hidden" ref={targetRef}>
+      <div
+        style={{
+          position: "absolute",
+          left: "-9999px",
+          top: "-9999px",
+        }}
+        ref={targetRef}
+      >
         <SalesOffer salesOfferData={previewForm} selectedUnit={0} />
       </div>
     </>

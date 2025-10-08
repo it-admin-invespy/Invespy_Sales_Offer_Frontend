@@ -11,7 +11,7 @@ export const transformSalesOffer = async (data) => {
         projectName: project?.projectName || "",
         location: project?.location || "",
         country: project?.country || "",
-        units: (project?.units || []).map((unit) => ({
+        units: await Promise.all((project?.units || []).map(async (unit) => ({
           unitNo: unit?.unitNo || "",
           floorNo: unit?.floorNo || "",
           unitType: unit?.unitType || "",
@@ -36,10 +36,12 @@ export const transformSalesOffer = async (data) => {
               amount: p?.amount || "",
             })),
           },
-          floorPlans: (unit?.floorPlans || []).map(async (f) => ({
-            layoutsImages: (await convertImageToBase64(f?.layoutsImages)) || "",
-          })),
-        })),
+          floorPlans: await Promise.all(
+            (unit?.floorPlans || []).map(async (f) => ({
+              layoutsImages: (await convertImageToBase64(f?.layoutsImages)) || "",
+            }))
+          ),
+        })))
       },
     ],
 

@@ -72,82 +72,138 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
   const project = data.projects?.[0];
   const unit = project?.units?.[selectedUnit] || project?.units?.[0];
   const { salesConsultant, brokerageAgency, customer, meta, extra } = data;
-
-  if (!unit) return null;
-
   const brandColor = meta?.brandColors || "#007BFF";
   const fontFamily = meta?.fonts?.[0] || "Arial, sans-serif";
+
+  const Header = ({ value }) => (
+    <div style={{ marginBottom: 30 }}>
+      <div
+        style={{ display: "flex", justifyContent: "center", marginBottom: 20 }}
+      >
+        <img src={meta?.logoUrl || null} alt="Logo" style={{ width: 160 }} />
+      </div>
+      <div
+        style={{
+          background: brandColor,
+          color: "#fff",
+          padding: "15px",
+          borderRadius: "8px",
+          textAlign: "center",
+          boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+        }}
+      >
+        <h1
+          style={{
+            fontSize: `${meta.styles.header.fontSize}`,
+            fontWeight: `${meta.styles.header.fontWeight}`,
+            margin: 0,
+          }}
+        >
+          {value}
+        </h1>
+      </div>
+    </div>
+  );
+
+  const Footer = () => (
+    <div
+      style={{
+        marginTop: 40,
+        paddingTop: 20,
+        borderTop: `2px solid ${brandColor}`,
+        fontSize: 12,
+        color: "#666",
+        textAlign: "center",
+      }}
+    >
+      <p style={{ margin: "5px 0", fontWeight: "bold" }}>
+        info@maaia.ae | www.maaia.ae
+      </p>
+      <p style={{ margin: "5px 0" }}>
+        Office Number 5202, Ubora Tower, Business Bay, Dubai, UAE
+      </p>
+    </div>
+  );
 
   return (
     <div
       style={{
         fontFamily,
         color: "#000",
-        padding: "20px",
         background: "#fff",
+        minHeight: "100vh",
       }}
     >
-      <div key={unit.unitNo} style={{ pageBreakAfter: "always" }}>
-        {/* Header */}
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            marginBottom: 20,
-          }}
-        >
-          <img
-            src={
-              meta?.logoUrl ||
-              "https://beansandblends.nl/wp-content/uploads/2025/08/Maaia-General-Trading_logo11.png"
-            }
-            alt="Logo"
-            style={{ width: 160 }}
-          />
-        </div>
-
-        <div
-          style={{
-            background: brandColor,
-            color: "#fff",
-            padding: "12px",
-            borderRadius: "4px",
-            textAlign: "center",
-          }}
-        >
-          <h1
-            style={{
-              fontSize: meta.styles.header.fontSize,
-              fontWeight: meta.styles.header.fontWeight,
-            }}
-          >{`${extra?.header?.salesOffer}`}</h1>
-        </div>
+      {/* Page 1 - Sales Offer Details */}
+      <div
+        style={{
+          padding: "30px",
+          minHeight: "100vh",
+          pageBreakAfter: "always",
+        }}
+      >
+        <Header value={extra?.header?.salesOffer} />
 
         {/* Project Info */}
-        <div className="section" style={{ textAlign: "center" }}>
-          <p>
-            <b>{project.projectName}</b> | <b>{project.location}</b> |{" "}
-            <b>{project.country}</b>
+        <div
+          style={{
+            background: "linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)",
+            padding: "20px",
+            borderRadius: "10px",
+            textAlign: "center",
+            marginBottom: 30,
+            border: `1px solid ${brandColor}20`,
+          }}
+        >
+          <h2
+            style={{
+              color: brandColor,
+              margin: "0 0 10px 0",
+              fontSize: "20px",
+            }}
+          >
+            {project.projectName}
+          </h2>
+          <p style={{ margin: "5px 0", fontSize: "16px" }}>
+            <strong>{project.location}</strong> |{" "}
+            <strong>{project.country}</strong>
           </p>
-          <p>({extra?.elevations})</p>
+          <p style={{ margin: "5px 0", fontStyle: "italic", color: "#666" }}>
+            ({extra?.elevations})
+          </p>
         </div>
 
         {/* Greeting */}
-        <div className="section" style={{ marginTop: 10 }}>
-          <p>Dear {customer?.name || "Valued Client"},</p>
-          <p>
-            Considering the points we discussed, I believe that below listed
-            project will cater your requirements.
+        <div
+          style={{
+            backgroundColor: "#f8f9fa",
+            padding: "20px",
+            borderRadius: "8px",
+            marginBottom: 30,
+            borderLeft: `4px solid ${brandColor}`,
+          }}
+        >
+          <p style={{ margin: "0 0 10px 0", fontSize: "16px" }}>
+            Dear <strong>Valued Client</strong>,
+          </p>
+          <p style={{ margin: 0, lineHeight: "1.6" }}>
+            Considering the points we discussed, I believe that the below listed
+            project will cater to your requirements.
           </p>
         </div>
 
         {/* Unit Table */}
-        <div className="section">
+        <div style={{ marginBottom: 30 }}>
+          <h3 style={{ color: brandColor, marginBottom: 15, fontSize: "18px" }}>
+            Unit Details
+          </h3>
           <table
             style={{
               width: "100%",
               borderCollapse: "collapse",
-              marginTop: "10px",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+              borderRadius: "8px",
+              overflow: "hidden",
             }}
           >
             <thead>
@@ -164,10 +220,12 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
                   <th
                     key={heading}
                     style={{
-                      background: brandColor,
+                      background: `linear-gradient(135deg, ${brandColor} 0%, ${brandColor}dd 100%)`,
                       color: "#fff",
-                      padding: "6px",
-                      border: "1px solid #ccc",
+                      padding: "12px 8px",
+                      fontSize: "14px",
+                      fontWeight: "600",
+                      textAlign: "center",
                     }}
                   >
                     {heading}
@@ -177,57 +235,98 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
             </thead>
             <tbody>
               <tr>
-                <td style={{ border: "1px solid #ccc", textAlign: "center" }}>
-                  {project.projectName}
-                </td>
-                <td style={{ border: "1px solid #ccc", textAlign: "center" }}>
-                  {unit.unitNo}
-                </td>
-                <td style={{ border: "1px solid #ccc", textAlign: "center" }}>
-                  {unit.floorNo}
-                </td>
-                <td style={{ border: "1px solid #ccc", textAlign: "center" }}>
-                  {unit.unitType}
-                </td>
-                <td style={{ border: "1px solid #ccc", textAlign: "center" }}>
-                  {unit.view}
-                </td>
-                <td style={{ border: "1px solid #ccc", textAlign: "center" }}>
-                  {unit.grossArea}
-                </td>
-                <td style={{ border: "1px solid #ccc", textAlign: "center" }}>
-                  {unit.price}
-                </td>
+                {[
+                  project.projectName,
+                  unit.unitNo,
+                  unit.floorNo,
+                  unit.unitType,
+                  unit.view,
+                  unit.grossArea,
+                  unit.price,
+                ].map((value, index) => (
+                  <td
+                    key={index}
+                    style={{
+                      border: "1px solid #e0e0e0",
+                      textAlign: "center",
+                      padding: "12px 8px",
+                      backgroundColor: index % 2 === 0 ? "#f9f9f9" : "#fff",
+                      fontSize: "14px",
+                    }}
+                  >
+                    {value}
+                  </td>
+                ))}
               </tr>
             </tbody>
           </table>
         </div>
 
         {/* Consultant Info */}
-        <div className="section" style={{ marginTop: 20 }}>
-          <p>
-            <b>Internal Sales Consultant:</b> {salesConsultant || "N/A"}
-          </p>
-          <p>
-            <b>Brokerage Agency (If Any):</b> {brokerageAgency || "N/A"}
-          </p>
-          <p style={{ fontSize: 13, marginTop: 10, marginBottom: 10 }}>
-            Applicable fees to Dubai Land Department are excluded of the above
-            price/plan, plus AED 5,000 Admin Fee.
+        <div
+          style={{
+            backgroundColor: "#f8f9fa",
+            padding: "20px",
+            borderRadius: "8px",
+            marginBottom: 30,
+          }}
+        >
+          <h3 style={{ color: brandColor, marginBottom: 15, fontSize: "18px" }}>
+            Contact Information
+          </h3>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: "15px",
+              marginBottom: 20,
+            }}
+          >
+            <div>
+              <strong>Internal Sales Consultant:</strong>
+              <p style={{ margin: "5px 0", color: "#666" }}>
+                {salesConsultant || "N/A"}
+              </p>
+            </div>
+            <div>
+              <strong>Brokerage Agency:</strong>
+              <p style={{ margin: "5px 0", color: "#666" }}>
+                {brokerageAgency || "N/A"}
+              </p>
+            </div>
+          </div>
+          <div
+            style={{
+              backgroundColor: "#fff3cd",
+              border: "1px solid #ffeaa7",
+              borderRadius: "6px",
+              padding: "15px",
+              fontSize: "13px",
+              lineHeight: "1.5",
+            }}
+          >
+            <strong>Important Notice:</strong>
             <br />
-            The above-mentioned is not considered as a reservation until signed
-            by the seller and approved by the developer. This is a
-            computer-generated proposal and does not require a signature.
-          </p>
+            Applicable fees to Dubai Land Department are excluded from the above
+            price/plan, plus AED 5,000 Admin Fee. The above-mentioned is not
+            considered as a reservation until signed by the seller and approved
+            by the developer. This is a computer-generated proposal and does not
+            require a signature.
+          </div>
         </div>
 
-        {/* Installment Plan */}
-        <div className="section">
+        {/* Payment Plan */}
+        <div style={{ marginBottom: 40 }}>
+          <h3 style={{ color: brandColor, marginBottom: 15, fontSize: "18px" }}>
+            Payment Schedule
+          </h3>
           <table
             style={{
               width: "100%",
               borderCollapse: "collapse",
-              marginTop: "10px",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+              borderRadius: "10px",
+              overflow: "hidden",
             }}
           >
             <thead>
@@ -242,10 +341,12 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
                   <th
                     key={heading}
                     style={{
-                      background: brandColor,
+                      background: `linear-gradient(135deg, ${brandColor} 0%, ${brandColor}dd 100%)`,
                       color: "#fff",
-                      border: "1px solid #ccc",
-                      padding: "6px",
+                      padding: "15px 10px",
+                      fontSize: "14px",
+                      fontWeight: "600",
+                      textAlign: "center",
                     }}
                   >
                     {heading}
@@ -255,150 +356,200 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
             </thead>
             <tbody>
               {unit.installments.map((inst, i) => (
-                <tr key={i}>
-                  <td style={{ border: "1px solid #ccc", textAlign: "center" }}>
+                <tr
+                  key={i}
+                  style={{
+                    backgroundColor: i % 2 === 0 ? "#f8f9fa" : "#fff",
+                    transition: "background-color 0.2s",
+                  }}
+                >
+                  <td
+                    style={{
+                      border: "1px solid #e0e0e0",
+                      textAlign: "center",
+                      padding: "12px 10px",
+                      fontWeight: "500",
+                    }}
+                  >
                     {inst.installment}
                   </td>
-                  <td style={{ border: "1px solid #ccc", textAlign: "center" }}>
+                  <td
+                    style={{
+                      border: "1px solid #e0e0e0",
+                      textAlign: "center",
+                      padding: "12px 10px",
+                      color: brandColor,
+                      fontWeight: "600",
+                    }}
+                  >
                     {inst.percentagePayable}%
                   </td>
-                  <td style={{ border: "1px solid #ccc", textAlign: "center" }}>
+                  <td
+                    style={{
+                      border: "1px solid #e0e0e0",
+                      textAlign: "center",
+                      padding: "12px 10px",
+                    }}
+                  >
                     {inst.milestone}
                   </td>
-                  <td style={{ border: "1px solid #ccc", textAlign: "center" }}>
+                  <td
+                    style={{
+                      border: "1px solid #e0e0e0",
+                      textAlign: "center",
+                      padding: "12px 10px",
+                    }}
+                  >
                     {inst.milestoneDate}
                   </td>
-                  <td style={{ border: "1px solid #ccc", textAlign: "center" }}>
+                  <td
+                    style={{
+                      border: "1px solid #e0e0e0",
+                      textAlign: "center",
+                      padding: "12px 10px",
+                      fontWeight: "600",
+                      color: "#28a745",
+                    }}
+                  >
                     {inst.total}
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+          <Header value={extra?.header?.floorPlan} />
+          {unit.floorPlans?.length > 0 && (
+            <div style={{ padding: "30px" }}>
+              <div>
+                <div
+                  style={{
+                    display: "grid",
+                    gap: "30px",
+                    justifyItems: "center",
+                  }}
+                >
+                  {unit.floorPlans.map((plan, i) => (
+                    <div
+                      key={i}
+                      style={{
+                        backgroundColor: "#f8f9fa",
+                        padding: "20px",
+                        borderRadius: "12px",
+                        boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                        border: `2px solid ${brandColor}20`,
+                      }}
+                    >
+                      <img
+                        src={plan.layoutsImages || null}
+                        alt={`Floor Plan ${i + 1}`}
+                        style={{
+                          width: "100%",
+                          maxHeight: "600px",
+                          objectFit: "contain",
+                          borderRadius: "8px",
+                        }}
+                      />
+                      <p
+                        style={{
+                          textAlign: "center",
+                          marginTop: "15px",
+                          fontSize: "16px",
+                          fontWeight: "600",
+                          color: brandColor,
+                        }}
+                      >
+                        Floor Plan {i + 1}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+          <Footer />
         </div>
+      </div>
 
-        {/* Floor Plan Images */}
-        {unit.floorPlans?.length > 0 && (
-          <div style={{ marginTop: 20 }}>
-            <h2
-              style={{
-                background: brandColor,
-                color: "#fff",
-                padding: "8px",
-                borderRadius: "4px",
-                textAlign: "center",
-                fontSize: meta.styles.header.fontSize,
-                fontWeight: meta.styles.header.fontWeight,
-              }}
-            >
-              {extra?.header?.floorPlan}
-            </h2>
-            {unit.floorPlans.map((plan, i) => (
-              <img
-                key={i}
-                src={plan.layoutsImages || null}
-                alt={`Floor Plan ${i + 1}`}
-                style={{
-                  width: "100%",
-                  maxHeight: "600px",
-                  objectFit: "contain",
-                  marginTop: 10,
-                }}
-              />
-            ))}
-          </div>
-        )}
-
+      {/* Page 3 - Pre-registration Payment */}
+      <div
+        style={{
+          padding: "30px",
+          minHeight: "100vh",
+        }}
+      >
         {/* Pre-registration Payment */}
-        <div style={{ marginTop: 20 }}>
-          <h2
-            style={{
-              background: brandColor,
-              color: "#fff",
-              padding: "8px",
-              borderRadius: "4px",
-              textAlign: "center",
-              fontSize: meta.styles.header.fontSize,
-              fontWeight: meta.styles.header.fontWeight,
-            }}
-          >
-            {extra?.header?.preRegistration}
-          </h2>
-          <table
-            style={{
-              width: "100%",
-              borderCollapse: "collapse",
-              marginTop: 10,
-            }}
-          >
-            <thead>
-              <tr>
-                <th
+        <Header value={extra?.header?.preRegistration} />
+
+        <table
+          style={{
+            width: "100%",
+            borderCollapse: "collapse",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+            borderRadius: "10px",
+            overflow: "hidden",
+          }}
+        >
+          <thead>
+            <tr>
+              <th
+                style={{
+                  background: `linear-gradient(135deg, ${brandColor} 0%, ${brandColor}dd 100%)`,
+                  color: "#fff",
+                  padding: "15px",
+                  fontSize: "14px",
+                  fontWeight: "600",
+                }}
+              >
+                Description
+              </th>
+              <th
+                style={{
+                  background: `linear-gradient(135deg, ${brandColor} 0%, ${brandColor}dd 100%)`,
+                  color: "#fff",
+                  padding: "15px",
+                  fontSize: "14px",
+                  fontWeight: "600",
+                }}
+              >
+                Amount (AED)
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {unit.preRegistrationPayment.breakdown.map((b, i) => (
+              <tr
+                key={i}
+                style={{
+                  backgroundColor: i % 2 === 0 ? "#f8f9fa" : "#fff",
+                }}
+              >
+                <td
                   style={{
-                    background: brandColor,
-                    color: "#fff",
-                    border: "1px solid #ccc",
-                    padding: "6px",
+                    border: "1px solid #e0e0e0",
+                    textAlign: "center",
+                    padding: "15px",
+                    fontSize: "14px",
                   }}
                 >
-                  Description
-                </th>
-                <th
+                  {b.description}
+                </td>
+                <td
                   style={{
-                    background: brandColor,
-                    color: "#fff",
-                    border: "1px solid #ccc",
-                    padding: "6px",
+                    border: "1px solid #e0e0e0",
+                    textAlign: "center",
+                    padding: "15px",
+                    fontWeight: "600",
+                    color: "#28a745",
+                    fontSize: "14px",
                   }}
                 >
-                  Amount (AED)
-                </th>
+                  {b.amount}
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {unit.preRegistrationPayment.breakdown.map((b, i) => (
-                <tr key={i}>
-                  <td style={{ border: "1px solid #ccc", textAlign: "center" }}>
-                    {b.description}
-                  </td>
-                  <td style={{ border: "1px solid #ccc", textAlign: "center" }}>
-                    {b.amount}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Footer */}
-        <div
-          className="section"
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            marginTop: 20,
-          }}
-        >
-          <div>
-            <b>Signature:</b> {customer?.name || "N/A"}
-          </div>
-          <div>
-            <b>Date:</b> {customer?.date}
-          </div>
-        </div>
-
-        <div
-          className="section"
-          style={{
-            marginTop: 30,
-            fontSize: 14,
-            color: "#555",
-            textAlign: "center",
-          }}
-        >
-          <p>info@maaia.ae | www.maaia.ae</p>
-          <p>Office Number 5202, Ubora Tower, Business Bay, Dubai, UAE</p>
-        </div>
+            ))}
+          </tbody>
+        </table>
+        <Footer />
       </div>
     </div>
   );

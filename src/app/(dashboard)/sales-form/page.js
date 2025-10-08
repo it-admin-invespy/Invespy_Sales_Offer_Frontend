@@ -76,7 +76,6 @@ export default function Page() {
   useEffect(() => {
     const id = searchParams.get("id");
     if (id) {
-      console.log("ID", id);
       fetchSalesOffer(id);
     }
   }, [searchParams]);
@@ -136,13 +135,34 @@ export default function Page() {
     });
     setPdfData(data);
     setTimeout(() => {
-      console.log("Data", pdfData);
       toPDF();
     }, 0);
   };
 
+  const downloadSalesOfferAll = async () => {
+    const data = getValues();
+    unitsData.forEach((unit, index) => {
+      const floorPlans = floorPlanImages
+        .filter((image) => {
+          return (
+            image.name.includes(unit.unitNo) &&
+            image.name.includes(unit.projectName)
+          );
+        })
+        .map((image) => {
+          return { layoutsImages: image.localUrl };
+        });
+      data.projects[0].units[index]["floorPlans"] = floorPlans;
+      setSelectedUnit(index);
+      setPdfData({ ...data });
+      setTimeout(() => {
+        toPDF();
+      }, 0);
+    });
+  };
+
   const { toPDF, targetRef } = usePDF({
-    method: "open",
+    method: "save",
     filename: "sales-offer.pdf",
     page: { margin: 10, format: "a4" },
   });
@@ -324,6 +344,13 @@ export default function Page() {
         <div className="flex justify-end gap-4">
           <button
             type="button"
+            onClick={downloadSalesOfferAll}
+            className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+          >
+            Download PDF For All Units
+          </button>
+          <button
+            type="button"
             onClick={downloadSalesOffer}
             className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
           >
@@ -340,7 +367,11 @@ export default function Page() {
 
       <div
         ref={targetRef}
-        className="w-full max-w-5xl bg-white shadow-lg hidden"
+        style={{
+          position: "absolute",
+          left: "-9999px",
+          top: "-9999px",
+        }}
       >
         <SalesOffer salesOfferData={pdfData} selectedUnit={selectedUnit} />
       </div>
