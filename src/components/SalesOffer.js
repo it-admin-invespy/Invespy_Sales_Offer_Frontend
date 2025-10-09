@@ -78,11 +78,6 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
   const Header = ({ value }) => (
     <div style={{ marginBottom: 30 }}>
       <div
-        style={{ display: "flex", justifyContent: "center", marginBottom: 20 }}
-      >
-        <img src={meta?.logoUrl || null} alt="Logo" style={{ width: 160 }} />
-      </div>
-      <div
         style={{
           background: brandColor,
           color: "#fff",
@@ -134,7 +129,12 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
         minHeight: "100vh",
       }}
     >
-      {/* Page 1 - Sales Offer Details */}
+      <div
+        style={{ display: "flex", justifyContent: "center", marginBottom: 20 }}
+      >
+        <img src={meta?.logoUrl || null} alt="Logo" style={{ width: 160 }} />
+      </div>
+      x{/* Page 1 - Sales Offer Details */}
       <div
         style={{
           padding: "30px",
@@ -469,7 +469,6 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
           <Footer />
         </div>
       </div>
-
       {/* Page 3 - Pre-registration Payment */}
       <div
         style={{
