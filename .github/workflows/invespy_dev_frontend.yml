@@ -70,7 +70,7 @@ jobs:
               -p 3000:3000 \
               --name sales-offer-frontend \
               --restart unless-stopped \
-              -e BASE_URL=${{ BACKEND_BASE_URL }}
+              -e BASE_URL=${{ secrets.BACKEND_BASE_URL }}
               $ECR_REPO:$IMAGE_TAG
 
             # Clean dangling images (optional)
