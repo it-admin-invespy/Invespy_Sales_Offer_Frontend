@@ -1,4 +1,4 @@
-name: Deploy to invespy-platform-frontend
+name: Deploy to sales-offer-frontend
 
 on:
   push:
@@ -19,7 +19,7 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
@@ -27,52 +27,50 @@ jobs:
         run: |
           aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | \
           docker login --username AWS --password-stdin \
-          ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
+          ${{ secrets.ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
 
       - name: Build and push Docker image
         env:
-          ECR_REPO: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/invespy-platform-frontend
+          ECR_REPO: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/sales-offer-frontend
           IMAGE_TAG: ${{ github.sha }}
         run: |
           # Build (no build-args; your Dockerfile doesn't use ARG)
           docker build \
             --platform linux/amd64 \
-            -t invespy-platform-frontend:$IMAGE_TAG \
-            -t invespy-platform-frontend:latest .
+            -t sales-offer-frontend:$IMAGE_TAG .
 
           # Push SHA + latest tags
-          docker tag invespy-platform-frontend:$IMAGE_TAG $ECR_REPO:$IMAGE_TAG
-          docker tag invespy-platform-frontend:latest $ECR_REPO:latest
+          docker tag sales-offer-frontend:$IMAGE_TAG $ECR_REPO:$IMAGE_TAG
           docker push $ECR_REPO:$IMAGE_TAG
-          docker push $ECR_REPO:latest
 
       - name: Deploy to EC2 via SSH
         uses: appleboy/ssh-action@v0.1.5
         with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_KEY }}
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             set -euo pipefail
-            ECR_REPO=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/invespy-platform-frontend
+            ECR_REPO=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/sales-offer-frontend
             IMAGE_TAG=${{ github.sha }}
 
             # Login & pull specific image
             sudo aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | \
-              sudo docker login --username AWS --password-stdin $ECR_REPO
+            sudo docker login --username AWS --password-stdin $ECR_REPO
             sudo docker pull $ECR_REPO:$IMAGE_TAG
 
             # Stop/remove existing container
-            sudo docker stop invespy-platform-frontend || true
-            sudo docker rm invespy-platform-frontend || true
+            sudo docker stop sales-offer-frontend || true
+            sudo docker rm sales-offer-frontend || true
 
             # Run the new container
             # NOTE: Your image already contains NEXT_PUBLIC_BASE_URL and .env.
             # If you want to override at runtime, add: -e NEXT_PUBLIC_BASE_URL='https://override.example'
             sudo docker run -d \
               -p 3000:3000 \
-              --name invespy-platform-frontend \
+              --name sales-offer-frontend \
               --restart unless-stopped \
+              -e BASE_URL=${{ BACKEND_BASE_URL }}
               $ECR_REPO:$IMAGE_TAG
 
             # Clean dangling images (optional)
