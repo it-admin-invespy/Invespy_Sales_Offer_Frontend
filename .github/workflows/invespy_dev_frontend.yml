@@ -53,18 +53,18 @@ jobs:
             IMAGE_TAG=${{ github.sha }}
 
             # Login & pull specific image
-            sudo aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | \
-            sudo docker login --username AWS --password-stdin $ECR_REPO
-            sudo docker pull $ECR_REPO:${{ github.sha }}
+            aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | \
+            docker login --username AWS --password-stdin $ECR_REPO
+            docker pull $ECR_REPO:${{ github.sha }}
 
             # Stop/remove existing container
-            sudo docker stop sales-offer-frontend || true
-            sudo docker rm sales-offer-frontend || true
+            docker stop sales-offer-frontend || true
+            docker rm sales-offer-frontend || true
 
             # Run the new container
             # NOTE: Your image already contains NEXT_PUBLIC_BASE_URL and .env.
             # If you want to override at runtime, add: -e NEXT_PUBLIC_BASE_URL='https://override.example'
-            sudo docker run -d \
+            docker run -d \
               -p 3000:3000 \
               --name sales-offer-frontend \
               --restart unless-stopped \
@@ -72,5 +72,5 @@ jobs:
               $ECR_REPO:${{ github.sha }}
 
             # Clean dangling images (optional)
-            #sudo docker image prune -f || true
+            #docker image prune -f || true
 
