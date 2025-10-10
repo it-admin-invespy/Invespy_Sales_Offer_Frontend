@@ -18,7 +18,6 @@ COPY . .
 RUN npm install
 
 # Build the Next.js application
-RUN npm run build
 
 # --- Runtime Configuration ---
 # This ensures Next.js server-side code finds the variable if it relies on a physical .env file.
@@ -28,5 +27,5 @@ RUN echo "NEXT_PUBLIC_BASE_URL=${NEXT_PUBLIC_BASE_URL}" > .env
 EXPOSE 3000
 
 # Use PM2 to start the application and keep it running reliably
-CMD ["pm2-runtime", "npm", "--", "run", "start"]
+CMD ["npm", "run", "dev"]
 
