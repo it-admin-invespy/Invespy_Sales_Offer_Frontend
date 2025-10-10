@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useForm } from "react-hook-form";
 import { useSearchParams } from "next/navigation";
 import { usePDF } from "react-to-pdf";
@@ -22,7 +22,7 @@ import { useRouter } from "next/navigation";
 import { createSalesOffer, getSalesOfferById } from "../dashboard/actions";
 import { transformSalesOffer } from "@/app/lib/utils";
 
-export default function Page() {
+function SalesFormPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [salesOfferData, setSalesOfferData] = useState([]);
@@ -75,21 +75,22 @@ export default function Page() {
 
   useEffect(() => {
     const id = searchParams.get("id");
+    const fetchSalesOffer = async (id) => {
+      try {
+        const data = await getSalesOfferById(id);
+        const formData = await transformSalesOffer(data.salesOffer);
+        setSalesOfferData(formData);
+
+        reset({ ...formData });
+      } catch (error) {
+        console.error("Error fetching sales offer:", error);
+      }
+    };
     if (id) {
       fetchSalesOffer(id);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
-
-  const fetchSalesOffer = async (id) => {
-    try {
-      const data = await getSalesOfferById(id);
-      const formData = await transformSalesOffer(data.salesOffer);
-      setSalesOfferData(formData);
-      reset({ ...formData });
-    } catch (error) {
-      console.error("Error fetching sales offer:", error);
-    }
-  };
 
   const onSubmit = async (data) => {
     unitsData.forEach((unit, index) => {
@@ -314,7 +315,6 @@ export default function Page() {
             meta={watch("meta")}
             control={control}
             watch={watch}
-            setValue={setValue}
             units={unitsData}
           />
         </SectionCard>
@@ -376,5 +376,13 @@ export default function Page() {
         <SalesOffer salesOfferData={pdfData} selectedUnit={selectedUnit} />
       </div>
     </>
+  );
+}
+
+export default function Page() {
+  return (
+    <Suspense fallback={<div className="p-6">Loading...</div>}>
+      <SalesFormPage />
+    </Suspense>
   );
 }

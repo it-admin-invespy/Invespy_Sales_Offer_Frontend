@@ -8,7 +8,6 @@ export default function InvisibleTable({
   meta,
   control,
   watch,
-  setValue,
   units,
 }) {
   const name = `extra.breakdown`;
@@ -29,16 +28,15 @@ export default function InvisibleTable({
       }, 0);
 
       // Update the amount field
-      register(
-        `projects.0.units.${index}.preRegistrationPayment.totalAmount`,
-        { value: totalAmount }
-      );
-      register(
-        `projects.0.units.${index}.preRegistrationPayment.breakdown`,
-        { value: breakdown }
-      );
+      register(`projects.0.units.${index}.preRegistrationPayment.totalAmount`, {
+        value: totalAmount,
+      });
+      register(`projects.0.units.${index}.preRegistrationPayment.breakdown`, {
+        value: breakdown,
+      });
     });
-  }, [breakdown]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [breakdown, units]);
 
   const headerStyle = {
     backgroundColor: meta?.brandColors || "#007BFF",
