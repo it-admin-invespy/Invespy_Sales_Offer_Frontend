@@ -40,8 +40,8 @@ jobs:
             -t sales-offer-frontend:$IMAGE_TAG .
 
           # Push SHA + latest tags
-          docker tag sales-offer-frontend:$IMAGE_TAG $ECR_REPO:$IMAGE_TAG
-          docker push $ECR_REPO:$IMAGE_TAG
+          docker tag sales-offer-frontend:$IMAGE_TAG ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/sales-offer-frontend:$IMAGE_TAG
+          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/sales-offer-frontend:$IMAGE_TAG
 
       - name: Deploy to EC2 via SSH
         uses: appleboy/ssh-action@v0.1.5
