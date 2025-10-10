@@ -48,7 +48,7 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
           script: |
-            set -euo pipefail
+            set -e 
             ECR_REPO=${{ secrets.ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/sales-offer-frontend
             IMAGE_TAG=${{ github.sha }}
 
@@ -58,8 +58,8 @@ jobs:
             docker pull $ECR_REPO:${{ github.sha }}
 
             # Stop/remove existing container
-            docker stop sales-offer-frontend || true
-            docker rm sales-offer-frontend || true
+            docker stop sales-offer-frontend 
+            docker rm sales-offer-frontend 
 
             # Run the new container
             # NOTE: Your image already contains NEXT_PUBLIC_BASE_URL and .env.
