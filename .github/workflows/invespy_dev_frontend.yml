@@ -65,11 +65,11 @@ jobs:
             # NOTE: Your image already contains NEXT_PUBLIC_BASE_URL and .env.
             # If you want to override at runtime, add: -e NEXT_PUBLIC_BASE_URL='https://override.example'
             docker run -d \
-              -p 3000:3000 \
+              -p 3001:3000 \
               --name sales-offer-frontend \
               --restart unless-stopped \
-              -e BASE_URL=${{ secrets.BACKEND_BASE_URL }}
-              $ECR_REPO:${{ github.sha }}
+              -e BASE_URL=${{ secrets.BACKEND_BASE_URL }} \
+              $ECR_REPO:${{ github.sha }} 
 
             # Clean dangling images (optional)
             #docker image prune -f || true
