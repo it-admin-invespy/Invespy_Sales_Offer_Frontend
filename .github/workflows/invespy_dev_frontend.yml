@@ -31,15 +31,15 @@ jobs:
 
       - name: Build and push Docker image
         env:
-          ECR_REPO: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/sales-offer-frontend
+          ECR_REPO: ${{ secrets.ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/sales-offer-frontend
           IMAGE_TAG: ${{ github.sha }}
         run: |
           # Build (no build-args; your Dockerfile doesn't use ARG)
           docker build -t sales-offer-frontend:$IMAGE_TAG .
 
           # Push SHA + latest tags
-          docker tag sales-offer-frontend:$IMAGE_TAG ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/sales-offer-frontend:${{ github.sha }}
-          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/sales-offer-frontend:${{ github.sha }}
+          docker tag sales-offer-frontend:$IMAGE_TAG ${{ secrets.ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/sales-offer-frontend:${{ github.sha }}
+          docker push ${{ secrets.ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/sales-offer-frontend:${{ github.sha }}
 
       - name: Deploy to EC2 via SSH
         uses: appleboy/ssh-action@v0.1.5
@@ -49,7 +49,7 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             set -euo pipefail
-            ECR_REPO=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/sales-offer-frontend
+            ECR_REPO=${{ secrets.ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/sales-offer-frontend
             IMAGE_TAG=${{ github.sha }}
 
             # Login & pull specific image
@@ -69,7 +69,7 @@ jobs:
               --name sales-offer-frontend \
               --restart unless-stopped \
               -e BASE_URL=${{ secrets.BACKEND_BASE_URL }}
-              $ECR_REPO:$IMAGE_TAG
+              $ECR_REPO:${{ github.sha }}
 
             # Clean dangling images (optional)
             #sudo docker image prune -f || true
