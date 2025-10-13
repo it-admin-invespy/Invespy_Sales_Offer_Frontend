@@ -18,6 +18,7 @@ import ContactInfo from "../../../components/ContactInfo";
 import InvisibleTable from "../../../components/InvisibleTable";
 import SalesOffer from "../../../components/SalesOffer";
 import { SectionCard, InputField } from "../../../components/FormComponents";
+import DynamicButton from "../../../components/DynamicButton";
 import { useRouter } from "next/navigation";
 import { createSalesOffer, getSalesOfferById } from "../dashboard/actions";
 import { transformSalesOffer } from "@/app/lib/utils";
@@ -80,8 +81,19 @@ function SalesFormPage() {
         const data = await getSalesOfferById(id);
         const formData = await transformSalesOffer(data.salesOffer);
         setSalesOfferData(formData);
-
+        setUnitsData(
+          formData.projects[0].units.map((unit) => {
+            return {
+              projectName: formData.projects[0].projectName,
+              ...unit,
+            };
+          })
+        );
         reset({ ...formData });
+        setValue(
+          "extra.breakdown",
+          formData.projects[0].units[0].preRegistrationPayment.breakdown
+        );
       } catch (error) {
         console.error("Error fetching sales offer:", error);
       }
@@ -96,7 +108,6 @@ function SalesFormPage() {
     unitsData.forEach((unit, index) => {
       const floorPlans = floorPlanImages
         .filter((image) => {
-          console.log(image.name, unit.unitNo, unit.projectName);
           return (
             image.name.includes(unit.unitNo) &&
             image.name.includes(unit.projectName)
@@ -183,38 +194,77 @@ function SalesFormPage() {
 
         {/* Meta */}
         <SectionCard title="Form Styles">
-          <div className="grid grid-cols-3 gap-4">
-            <ImageUpload
-              label={"Upload Logo"}
-              onUpload={(url) => {
-                console.log("URL", url);
-                setValue("meta.logoUrl", url);
-              }}
-              currentUrl={watch("meta.logoUrl")}
-            />
-            <ColorPicker
-              onChange={(color) => setValue("meta.brandColors", color)}
-              value={watch("meta.brandColors")}
-              placeholder="Brand Color"
-            />
-            <FontDropdown register={register} name="meta.fonts.0" />
-          </div>
-          <div className="grid grid-cols-3 gap-4">
-            <FontSizeDropdown
-              register={register}
-              name="meta.styles.header.fontSize"
-            />
-            <FontWeightDropdown
-              register={register}
-              name="meta.styles.header.fontWeight"
-            />
-            <ColorPicker
-              onChange={(color) =>
-                setValue("meta.styles.table.borderColor", color)
-              }
-              value={watch("meta.styles.table.borderColor")}
-              placeholder="Border Color"
-            />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="space-y-4">
+              <ImageUpload
+                label={"Upload Logo"}
+                onUpload={(url) => {
+                  console.log("URL", url);
+                  setValue("meta.logoUrl", url);
+                }}
+                currentUrl={watch("meta.logoUrl")}
+              />
+              {watch("meta.logoUrl") && (
+                <div className="border rounded-lg p-4 bg-gray-50 relative">
+                  <div className="flex justify-between items-center mb-2">
+                    <p className="text-sm font-medium text-gray-700">
+                      Logo Preview:
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setValue("meta.logoUrl", "")}
+                      className="text-red-500 hover:text-red-700 p-1"
+                    >
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M6 18L18 6M6 6l12 12"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                  <img
+                    src={watch("meta.logoUrl")}
+                    alt="Logo Preview"
+                    className="max-h-20 max-w-full object-contain"
+                  />
+                </div>
+              )}
+            </div>
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <ColorPicker
+                  onChange={(color) => setValue("meta.brandColors", color)}
+                  value={watch("meta.brandColors")}
+                  placeholder="Brand Color"
+                />
+                <FontDropdown register={register} name="meta.fonts.0" />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <FontSizeDropdown
+                  register={register}
+                  name="meta.styles.header.fontSize"
+                />
+                <FontWeightDropdown
+                  register={register}
+                  name="meta.styles.header.fontWeight"
+                />
+              </div>
+              <ColorPicker
+                onChange={(color) =>
+                  setValue("meta.styles.table.borderColor", color)
+                }
+                value={watch("meta.styles.table.borderColor")}
+                placeholder="Border Color"
+              />
+            </div>
           </div>
         </SectionCard>
 
@@ -299,7 +349,12 @@ function SalesFormPage() {
 
         {/* Bulk Upload Floor Plans */}
         <SectionCard title="Bulk Upload Floor Plans">
-          <BulkImageUpload onImagesUpload={setFloorPlanImages} />
+          <BulkImageUpload
+            onImagesUpload={setFloorPlanImages}
+            imageArray={unitsData[selectedUnit]?.floorPlans.map(
+              (fp) => fp.layoutsImages
+            )}
+          />
         </SectionCard>
 
         <DynamicHeader
@@ -314,7 +369,7 @@ function SalesFormPage() {
             register={register}
             meta={watch("meta")}
             control={control}
-            watch={watch}
+            breakdown={watch(`extra.breakdown`)}
             units={unitsData}
           />
         </SectionCard>
@@ -356,12 +411,13 @@ function SalesFormPage() {
           >
             Download PDF
           </button>
-          <button
+          <DynamicButton
             type="submit"
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+            className="px-6 py-2 rounded-lg"
+            variant="primary"
           >
             Save
-          </button>
+          </DynamicButton>
         </div>
       </form>
 

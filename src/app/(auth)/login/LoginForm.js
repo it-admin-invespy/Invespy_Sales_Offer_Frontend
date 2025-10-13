@@ -3,10 +3,11 @@
 import { useActionState } from "react";
 import { useForm } from "react-hook-form";
 import { InputField } from "../../../components/FormComponents";
+import DynamicButton from "../../../components/DynamicButton";
 import { login } from "./actions";
 
 export function LoginForm() {
-  const [state, loginAction] = useActionState(login, undefined);
+  const [state, loginAction, isPending] = useActionState(login, undefined);
   const { register } = useForm({
     defaultValues: {
       email: "",
@@ -36,12 +37,14 @@ export function LoginForm() {
         <p className="text-red-500">{state.errors.password}</p>
       )}
 
-      <button
+      <DynamicButton
         type="submit"
-        className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition"
+        className="w-full"
+        variant="primary"
+        loading={isPending}
       >
         Login
-      </button>
+      </DynamicButton>
 
       <p className="text-center text-gray-600">
         {`Don't have an account?`}

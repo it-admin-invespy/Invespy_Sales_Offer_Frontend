@@ -1,28 +1,33 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useFieldArray } from "react-hook-form";
 
 export default function InvisibleTable({
   register,
   meta,
   control,
-  watch,
+  breakdown,
   units,
 }) {
   const name = `extra.breakdown`;
+
+  const [breakdownRows, setBreakdownRows] = useState([]);
 
   const { fields, append } = useFieldArray({
     control,
     name,
   });
 
-  const breakdown = watch(`extra.breakdown`) || [];
+  useEffect(() => {
+    console.log("breakdown", breakdown);
+    setBreakdownRows(breakdown);
+  }, [breakdown]);
 
   useEffect(() => {
     units.forEach((element, index) => {
       // Calculate total amount whenever breakdown changes
-      const totalAmount = breakdown.reduce((sum, item) => {
+      const totalAmount = breakdownRows?.reduce((sum, item) => {
         const amount = parseFloat(item?.amount) || 0;
         return sum + amount;
       }, 0);

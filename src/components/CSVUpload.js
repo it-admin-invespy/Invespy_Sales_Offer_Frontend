@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function CSVUpload({
   onDataLoad,
@@ -7,8 +7,12 @@ export default function CSVUpload({
   unitsData = [],
 }) {
   const name = "projects.0.units";
-  const [csvData, setCsvData] = useState(unitsData);
+  const [csvData, setCsvData] = useState([]);
   const [selectedRow, setSelectedRow] = useState(0);
+
+  useEffect(() => {
+    setCsvData(unitsData);
+  }, [unitsData]);
 
   const handleFileUpload = (e) => {
     const file = e.target.files[0];

@@ -3,7 +3,7 @@
 import { z } from "zod";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
-import axios from "axios";
+import AxiosInstance from "@/app/lib/axiosInstance";
 
 const signupSchema = z
   .object({
@@ -34,7 +34,7 @@ export async function signup(prevState, formData) {
   let res = {};
 
   try {
-    res = await axios.post(`${process.env.BASE_URL}/api/v1/auth/register`, {
+    res = await AxiosInstance.post(`/api/v1/auth/register`, {
       firstName,
       lastName,
       email,

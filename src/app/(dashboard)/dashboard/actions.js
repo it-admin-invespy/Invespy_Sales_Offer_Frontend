@@ -1,31 +1,15 @@
 "use server";
 
-import { cookies } from "next/headers";
-import axios from "axios";
-
-const getAuthHeaders = async () => {
-  const accessToken = (await cookies()).get("accessToken")?.value;
-  return { Authorization: `Bearer ${accessToken}` };
-};
+import AxiosInstance from "@/app/lib/axiosInstance";
 
 export async function getSalesOffers() {
-  const response = await axios.get(
-    `${process.env.BASE_URL}/api/v1/sales-offers`,
-    {
-      headers: await getAuthHeaders(),
-    }
-  );
+  const response = await AxiosInstance.get("/api/v1/sales-offers");
   return response.data.salesOffers;
 }
 
 export async function getSalesOfferById(id) {
   try {
-    const response = await axios.get(
-      `${process.env.BASE_URL}/api/v1/sales-offers/${id}`,
-      {
-        headers: await getAuthHeaders(),
-      }
-    );
+    const response = await AxiosInstance.get(`/api/v1/sales-offers/${id}`);
     return response.data;
   } catch (error) {
     console.error("Error fetching sales offer by ID:", error);
@@ -34,12 +18,11 @@ export async function getSalesOfferById(id) {
 }
 
 export async function uploadImage(formData) {
-  const response = await axios.post(
-    `${process.env.BASE_URL}/api/v1/sales-offers/upload/single`,
+  const response = await AxiosInstance.post(
+    "/api/v1/sales-offers/upload/single",
     formData,
     {
       headers: {
-        ...(await getAuthHeaders()),
         "Content-Type": "multipart/form-data",
       },
     }
@@ -48,12 +31,11 @@ export async function uploadImage(formData) {
 }
 
 export async function uploadBulkImages(formData) {
-  const response = await axios.post(
-    `${process.env.BASE_URL}/api/v1/sales-offers/upload/bulk`,
+  const response = await AxiosInstance.post(
+    "/api/v1/sales-offers/upload/bulk",
     formData,
     {
       headers: {
-        ...(await getAuthHeaders()),
         "Content-Type": "multipart/form-data",
       },
     }
@@ -63,12 +45,11 @@ export async function uploadBulkImages(formData) {
 
 export async function createSalesOffer(formData) {
   try {
-    const response = await axios.post(
-      `${process.env.BASE_URL}/api/v1/sales-offers`,
+    const response = await AxiosInstance.post(
+      "/api/v1/sales-offers",
       formData,
       {
         headers: {
-          ...(await getAuthHeaders()),
           "Content-Type": "application/json",
         },
       }
@@ -76,6 +57,16 @@ export async function createSalesOffer(formData) {
     return response.data;
   } catch (error) {
     console.error("Error creating sales offer:", error);
+    throw error;
+  }
+}
+
+export async function deleteSalesOffer(id) {
+  try {
+    const response = await AxiosInstance.delete(`/api/v1/sales-offers/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting sales offer:", error);
     throw error;
   }
 }

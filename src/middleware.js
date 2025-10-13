@@ -19,8 +19,12 @@ export default async function middleware(req) {
     return NextResponse.redirect(new URL("/dashboard", req.nextUrl));
   }
 
-  if (path === "/" && session) {
-    return NextResponse.redirect(new URL("/dashboard", req.nextUrl));
+  if (path === "/") {
+    if (session) {
+      return NextResponse.redirect(new URL("/dashboard", req.nextUrl));
+    } else {
+      return NextResponse.redirect(new URL("/login", req.nextUrl));
+    }
   }
 
   return NextResponse.next();

@@ -1,9 +1,9 @@
 "use server";
+import AxiosInstance from "../../lib/axiosInstance";
 
 import { z } from "zod";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
-import axios from "axios";
 
 const loginSchema = z.object({
   email: z.string().email({ message: "Invalid email address" }).trim(),
@@ -26,7 +26,7 @@ export async function login(prevState, formData) {
   let res = {};
 
   try {
-    res = await axios.post(`${process.env.BASE_URL}/api/v1/auth/login`, {
+    res = await AxiosInstance.post(`/api/v1/auth/login`, {
       email,
       password,
     });

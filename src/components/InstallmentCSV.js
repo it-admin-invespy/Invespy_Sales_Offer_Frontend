@@ -1,9 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function InstallmentCSV({ setValue, disabled, price, units }) {
   const [csvData, setCsvData] = useState([]);
+
+  useEffect(() => {
+    setCsvData(units[0] && units[0]?.installments);
+  }, [units]);
 
   const handleUpload = (e) => {
     const fileInput = document.getElementById("installment-csv-upload");

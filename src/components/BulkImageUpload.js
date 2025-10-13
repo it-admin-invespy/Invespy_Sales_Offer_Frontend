@@ -1,10 +1,14 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { uploadBulkImages } from "../app/(dashboard)/dashboard/actions";
 import { convertImageToBase64 } from "@/app/lib/utils";
 
-export default function BulkImageUpload({ onImagesUpload }) {
+export default function BulkImageUpload({ onImagesUpload, imageArray }) {
   const [images, setImages] = useState([]);
   const [uploading, setUploading] = useState(false);
+
+  useEffect(() => {
+    setImages(imageArray);
+  }, [imageArray]);
 
   const handleFileChange = async (e) => {
     const files = Array.from(e.target.files);
@@ -57,7 +61,7 @@ export default function BulkImageUpload({ onImagesUpload }) {
           {images.map((image, index) => (
             <div key={index} className="text-center">
               <img
-                src={image.url}
+                src={image.url || image}
                 alt={image.name}
                 className="w-full h-32 object-cover rounded border"
               />

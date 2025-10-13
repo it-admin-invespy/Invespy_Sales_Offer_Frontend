@@ -11,37 +11,40 @@ export const transformSalesOffer = async (data) => {
         projectName: project?.projectName || "",
         location: project?.location || "",
         country: project?.country || "",
-        units: await Promise.all((project?.units || []).map(async (unit) => ({
-          unitNo: unit?.unitNo || "",
-          floorNo: unit?.floorNo || "",
-          unitType: unit?.unitType || "",
-          view: unit?.view || "",
-          grossArea: unit?.grossArea || "",
-          price: unit?.price || "",
-          installments: (unit?.installments || []).map((inst) => ({
-            installment: inst?.installment || "",
-            percentagePayable: inst?.percentagePayable || "",
-            milestone: inst?.milestone || "",
-            milestoneDate: inst?.milestoneDate || "",
-            total: inst?.total || "",
-          })),
-          preRegistrationPayment: {
-            totalAmount:
-              unit?.preRegistrationPayments?.reduce(
-                (sum, p) => sum + (p?.amount || 0),
-                0
-              ) || "",
-            breakdown: (unit?.preRegistrationPayments || []).map((p) => ({
-              description: p?.description || "",
-              amount: p?.amount || "",
+        units: await Promise.all(
+          (project?.units || []).map(async (unit) => ({
+            unitNo: unit?.unitNo || "",
+            floorNo: unit?.floorNo || "",
+            unitType: unit?.unitType || "",
+            view: unit?.view || "",
+            grossArea: unit?.grossArea || "",
+            price: unit?.price || "",
+            installments: (unit?.installments || []).map((inst) => ({
+              installment: inst?.installment || "",
+              percentagePayable: inst?.percentagePayable || "",
+              milestone: inst?.milestone || "",
+              milestoneDate: inst?.milestoneDate || "",
+              total: inst?.total || "",
             })),
-          },
-          floorPlans: await Promise.all(
-            (unit?.floorPlans || []).map(async (f) => ({
-              layoutsImages: (await convertImageToBase64(f?.layoutsImages)) || "",
-            }))
-          ),
-        })))
+            preRegistrationPayment: {
+              totalAmount:
+                unit?.preRegistrationPayments?.reduce(
+                  (sum, p) => sum + (p?.amount || 0),
+                  0
+                ) || "",
+              breakdown: (unit?.preRegistrationPayments || []).map((p) => ({
+                description: p?.description || "",
+                amount: p?.amount || "",
+              })),
+            },
+            floorPlans: await Promise.all(
+              (unit?.floorPlans || []).map(async (f) => ({
+                layoutsImages:
+                  (await convertImageToBase64(f?.layoutsImages)) || "",
+              }))
+            ),
+          }))
+        ),
       },
     ],
 
@@ -73,6 +76,73 @@ export const transformSalesOffer = async (data) => {
         floorPlan: "INDIVIDUAL UNIT FLOOR PLAN",
         preRegistration: "PRE-REGISTRATION FEE TO BE PAID WITH RESERVATION",
       },
+    },
+  };
+};
+
+export const createPayloadForDuplicateObj = (objectA) => {
+  if (!objectA || !objectA.project) return null;
+
+  return {
+    projects: [
+      {
+        projectName: objectA.project.projectName,
+        location: objectA.project.location,
+        country: objectA.project.country,
+        units: objectA.project.units.map((unit) => ({
+          unitNo: unit.unitNo,
+          floorNo: unit.floorNo,
+          unitType: unit.unitType,
+          view: unit.view,
+          grossArea: parseFloat(unit.grossArea),
+          price: parseFloat(unit.price),
+
+          // combine pre-registration payments into a single object
+          preRegistrationPayment: {
+            totalAmount: unit.preRegistrationPayments.reduce(
+              (sum, p) => sum + p.amount,
+              0
+            ),
+            breakdown: unit.preRegistrationPayments.map((p) => ({
+              description: p.description,
+              amount: p.amount,
+            })),
+          },
+
+          // map installments array
+          installments: unit.installments.map((inst) => ({
+            installment: inst.installment,
+            percentagePayable: parseFloat(inst.percentagePayable),
+            milestone: inst.milestone,
+            milestoneDate: inst.milestoneDate || null,
+            total: parseFloat(inst.total),
+          })),
+
+          // keep only image URLs
+          floorPlans: unit.floorPlans.map((fp) => ({
+            layoutsImages: fp.layoutsImages,
+          })),
+        })),
+      },
+    ],
+    salesConsultant: objectA.salesConsultant,
+    brokerageAgency: objectA.brokerageAgency,
+
+    // take first customer (assuming one)
+    customer:
+      objectA.customers && objectA.customers.length
+        ? {
+            name: objectA.customers[0].name,
+            date: objectA.customers[0].date,
+          }
+        : null,
+
+    // meta information
+    meta: {
+      logoUrl: objectA.project.meta.logoUrl,
+      brandColors: objectA.project.meta.brandColors,
+      fonts: objectA.project.meta.fonts ? [objectA.project.meta.fonts] : [],
+      styles: objectA.project.meta.styles,
     },
   };
 };

@@ -2,10 +2,14 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { getSalesOffers } from "./actions";
-import { transformSalesOffer } from "@/app/lib/utils";
+import { getSalesOffers, deleteSalesOffer, createSalesOffer } from "./actions";
+import {
+  createPayloadForDuplicateObj,
+  transformSalesOffer,
+} from "@/app/lib/utils";
 import { usePDF } from "react-to-pdf";
 import SalesOffer from "@/components/SalesOffer";
+import DynamicButton from "@/components/DynamicButton";
 
 export default function Page() {
   const [forms, setForms] = useState([]);
@@ -26,7 +30,6 @@ export default function Page() {
   const fetchForms = async () => {
     try {
       const data = await getSalesOffers();
-      console.log("Forms", data);
       setForms(data);
     } catch (error) {
       console.error("Failed to fetch forms:", error);
@@ -46,9 +49,26 @@ export default function Page() {
     setTimeout(() => toPDF(), 0);
   };
 
-  const handleDelete = (formId) => {
-    // Add delete functionality
-    console.log("Delete form:", formId);
+  const handleDuplicate = async (formId) => {
+    try {
+      const form = forms.find((f) => f.id === formId);
+      const { id, createdAt, updatedAt, ...formData } = form;
+      formData.project.projectName = `${formData.project.projectName} - Copy`;
+      const payload = createPayloadForDuplicateObj(formData);
+      await createSalesOffer(payload);
+      fetchForms();
+    } catch (error) {
+      console.error("Failed to duplicate form:", error);
+    }
+  };
+
+  const handleDelete = async (formId) => {
+    try {
+      await deleteSalesOffer(formId);
+      setForms(forms.filter((form) => form.id !== formId));
+    } catch (error) {
+      console.error("Failed to delete form:", error);
+    }
   };
 
   if (loading) return <div className="p-6">Loading...</div>;
@@ -80,24 +100,88 @@ export default function Page() {
                   </p>
                 </div>
                 <div className="flex gap-2">
-                  <button
+                  <DynamicButton
                     onClick={() => handleEdit(form.id)}
-                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                    variant="primary"
+                    className="p-2"
                   >
-                    Edit
-                  </button>
-                  <button
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                      />
+                    </svg>
+                  </DynamicButton>
+                  <DynamicButton
                     onClick={() => handlePreview(form)}
-                    className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                    variant="success"
+                    className="p-2"
                   >
-                    Preview
-                  </button>
-                  {/* <button
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                      />
+                    </svg>
+                  </DynamicButton>
+                  <DynamicButton
+                    onClick={() => handleDuplicate(form.id)}
+                    variant="secondary"
+                    className="p-2"
+                  >
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                      />
+                    </svg>
+                  </DynamicButton>
+                  <DynamicButton
                     onClick={() => handleDelete(form.id)}
-                    className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+                    variant="danger"
+                    className="p-2"
                   >
-                    Delete
-                  </button> */}
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                      />
+                    </svg>
+                  </DynamicButton>
                 </div>
               </div>
             ))}
