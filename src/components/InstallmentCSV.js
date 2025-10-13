@@ -6,7 +6,7 @@ export default function InstallmentCSV({ setValue, disabled, price, units }) {
   const [csvData, setCsvData] = useState([]);
 
   useEffect(() => {
-    setCsvData(units[0] && units[0]?.installments);
+    setCsvData(units[0] ? units[0]?.installments : []);
   }, [units]);
 
   const handleUpload = (e) => {
