@@ -11,6 +11,7 @@ export const transformSalesOffer = async (data) => {
         projectName: project?.projectName || "",
         location: project?.location || "",
         country: project?.country || "",
+        elevation: project?.elevation || "",
         units: await Promise.all(
           (project?.units || []).map(async (unit) => ({
             unitNo: unit?.unitNo || "",
@@ -70,7 +71,6 @@ export const transformSalesOffer = async (data) => {
       },
     },
     extra: {
-      elevations: "",
       header: {
         salesOffer: "OFFICIAL SALES OFFER",
         floorPlan: "INDIVIDUAL UNIT FLOOR PLAN",

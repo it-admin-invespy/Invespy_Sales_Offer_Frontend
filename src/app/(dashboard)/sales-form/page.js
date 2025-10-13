@@ -47,6 +47,7 @@ function SalesFormPage() {
           projectName: "",
           location: "",
           country: "",
+          elevation: "",
           units: [],
         },
       ],
@@ -63,7 +64,6 @@ function SalesFormPage() {
         },
       },
       extra: {
-        elevations: "",
         header: {
           salesOffer: "OFFICIAL SALES OFFER",
           floorPlan: "INDIVIDUAL UNIT FLOOR PLAN",
@@ -119,7 +119,7 @@ function SalesFormPage() {
     });
     console.log("Data", data);
     const { extra, ...rest } = data;
-    console.log(rest);
+    console.log("payload being saved", rest);
 
     try {
       const response = await createSalesOffer(rest);
@@ -291,8 +291,8 @@ function SalesFormPage() {
             />
             <InputField
               register={register}
-              name="extra.elevations"
-              placeholder="Elevations"
+              name="projects.0.elevation"
+              placeholder="Elevation"
             />
           </div>
         </SectionCard>

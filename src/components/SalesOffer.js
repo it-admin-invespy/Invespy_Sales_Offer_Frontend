@@ -6,6 +6,7 @@ const emptySalesOfferData = {
       projectName: "",
       location: "",
       country: "",
+      elevation: "",
       units: [
         {
           unitNo: "",
@@ -58,7 +59,6 @@ const emptySalesOfferData = {
     },
   },
   extra: {
-    elevations: "",
     header: {
       salesOffer: "OFFICIAL SALES OFFER",
       floorPlan: "INDIVIDUAL UNIT FLOOR PLAN",
@@ -169,7 +169,7 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
             <strong>{project.country}</strong>
           </p>
           <p style={{ margin: "5px 0", fontStyle: "italic", color: "#666" }}>
-            ({extra?.elevations})
+            ({project.elevation})
           </p>
         </div>
 
