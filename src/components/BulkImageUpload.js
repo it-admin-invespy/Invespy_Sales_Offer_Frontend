@@ -7,7 +7,7 @@ export default function BulkImageUpload({ onImagesUpload, imageArray }) {
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
-    setImages(imageArray);
+    setImages(imageArray ? imageArray : []);
   }, [imageArray]);
 
   const handleFileChange = async (e) => {
