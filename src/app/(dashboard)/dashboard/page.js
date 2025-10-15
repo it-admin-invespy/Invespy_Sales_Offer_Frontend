@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { getSalesOffers, deleteSalesOffer, createSalesOffer } from "./actions";
 import {
@@ -10,6 +10,12 @@ import {
 import { usePDF } from "react-to-pdf";
 import SalesOffer from "@/components/SalesOffer";
 import DynamicButton from "@/components/DynamicButton";
+
+const HIDDEN_PREVIEW_STYLES = {
+  position: "absolute",
+  left: "-9999px",
+  top: "-9999px",
+};
 
 export default function Page() {
   const [forms, setForms] = useState([]);
@@ -42,19 +48,26 @@ export default function Page() {
     router.push(`/sales-form?id=${formId}`);
   };
 
-  const handlePreview = async (data) => {
+  const handlePreview = useCallback(async (data) => {
     const formData = await transformSalesOffer(data);
     console.log("Preview form:", formData);
     setpreviewForm({ ...formData });
     setTimeout(() => toPDF(), 0);
-  };
+  }, [toPDF]);
 
   const handleDuplicate = async (formId) => {
     try {
       const form = forms.find((f) => f.id === formId);
+      if (!form) return;
       const { id, createdAt, updatedAt, ...formData } = form;
-      formData.project.projectName = `${formData.project.projectName} - Copy`;
+      if (formData?.project?.projectName) {
+        formData.project.projectName = `${formData.project.projectName} - Copy`;
+      }
       const payload = createPayloadForDuplicateObj(formData);
+      if (!payload) {
+        console.error("Failed to create payload for duplication");
+        return;
+      }
       await createSalesOffer(payload);
       fetchForms();
     } catch (error) {
@@ -93,10 +106,10 @@ export default function Page() {
               >
                 <div>
                   <h3 className="font-medium">
-                    {form.project.projectName || "Untitled Form"}
+                    {form?.project?.projectName || "Untitled Form"}
                   </h3>
                   <p className="text-sm text-gray-500">
-                    Created: {new Date(form.createdAt).toLocaleDateString()}
+                    Created: {form?.createdAt ? new Date(form.createdAt).toLocaleDateString() : 'Unknown'}
                   </p>
                 </div>
                 <div className="flex gap-2">
@@ -192,14 +205,7 @@ export default function Page() {
           )}
         </div>
       </div>
-      <div
-        style={{
-          position: "absolute",
-          left: "-9999px",
-          top: "-9999px",
-        }}
-        ref={targetRef}
-      >
+      <div style={HIDDEN_PREVIEW_STYLES} ref={targetRef}>
         <SalesOffer salesOfferData={previewForm} selectedUnit={0} />
       </div>
     </>

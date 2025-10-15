@@ -3,8 +3,13 @@
 import AxiosInstance from "@/app/lib/axiosInstance";
 
 export async function getSalesOffers() {
-  const response = await AxiosInstance.get("/api/v1/sales-offers");
-  return response.data.salesOffers;
+  try {
+    const response = await AxiosInstance.get("/api/v1/sales-offers");
+    return response.data.salesOffers;
+  } catch (error) {
+    console.error("Error fetching sales offers:", error);
+    throw error;
+  }
 }
 
 export async function getSalesOfferById(id) {
@@ -18,29 +23,39 @@ export async function getSalesOfferById(id) {
 }
 
 export async function uploadImage(formData) {
-  const response = await AxiosInstance.post(
-    "/api/v1/sales-offers/upload/single",
-    formData,
-    {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    }
-  );
-  return response.data;
+  try {
+    const response = await AxiosInstance.post(
+      "/api/v1/sales-offers/upload/single",
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error uploading image:", error);
+    throw error;
+  }
 }
 
 export async function uploadBulkImages(formData) {
-  const response = await AxiosInstance.post(
-    "/api/v1/sales-offers/upload/bulk",
-    formData,
-    {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    }
-  );
-  return response.data;
+  try {
+    const response = await AxiosInstance.post(
+      "/api/v1/sales-offers/upload/bulk",
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error uploading bulk images:", error);
+    throw error;
+  }
 }
 
 export async function createSalesOffer(formData) {
@@ -57,6 +72,24 @@ export async function createSalesOffer(formData) {
     return response.data;
   } catch (error) {
     console.error("Error creating sales offer:", error);
+    throw error;
+  }
+}
+
+export async function updateSalesOffer(formData, id) {
+  try {
+    const response = await AxiosInstance.put(
+      `/api/v1/sales-offers/${id}`,
+      formData,
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error creating sales offer:", error.response);
     throw error;
   }
 }

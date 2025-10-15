@@ -25,9 +25,9 @@ export default function InvisibleTable({
   }, [breakdown]);
 
   useEffect(() => {
-    units.forEach((element, index) => {
+    (units || []).forEach((element, index) => {
       // Calculate total amount whenever breakdown changes
-      const totalAmount = breakdownRows?.reduce((sum, item) => {
+      const totalAmount = (breakdownRows || []).reduce((sum, item) => {
         const amount = parseFloat(item?.amount) || 0;
         return sum + amount;
       }, 0);
@@ -37,7 +37,7 @@ export default function InvisibleTable({
         value: totalAmount,
       });
       register(`projects.0.units.${index}.preRegistrationPayment.breakdown`, {
-        value: breakdown,
+        value: breakdown || [],
       });
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -67,8 +67,8 @@ export default function InvisibleTable({
           </tr>
         </thead>
         <tbody>
-          {fields.map((field, index) => (
-            <tr key={field.id}>
+          {breakdownRows.map((field, index) => (
+            <tr key={`breakdown-${index}`}>
               <td className="p-2 border border-gray-300">
                 <input
                   {...register(`${name}.${index}.description`)}

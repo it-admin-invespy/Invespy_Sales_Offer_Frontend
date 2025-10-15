@@ -20,7 +20,11 @@ import SalesOffer from "../../../components/SalesOffer";
 import { SectionCard, InputField } from "../../../components/FormComponents";
 import DynamicButton from "../../../components/DynamicButton";
 import { useRouter } from "next/navigation";
-import { createSalesOffer, getSalesOfferById } from "../dashboard/actions";
+import {
+  createSalesOffer,
+  getSalesOfferById,
+  updateSalesOffer,
+} from "../dashboard/actions";
 import { transformSalesOffer } from "@/app/lib/utils";
 
 function SalesFormPage() {
@@ -31,6 +35,21 @@ function SalesFormPage() {
   const [floorPlanImages, setFloorPlanImages] = useState([]);
   const [selectedUnit, setSelectedUnit] = useState(0);
   const [pdfData, setPdfData] = useState();
+
+  const getFloorPlansForUnit = (unit, useLocalUrl = false) => {
+    return (
+      floorPlanImages
+        ?.filter((image) => {
+          return (
+            image?.name?.includes(unit?.unitNo) &&
+            image?.name?.includes(unit?.projectName)
+          );
+        })
+        .map((image) => ({
+          layoutsImages: useLocalUrl ? image?.localUrl : image?.url,
+        })) || []
+    );
+  };
   const {
     register,
     handleSubmit,
@@ -82,17 +101,18 @@ function SalesFormPage() {
         const formData = await transformSalesOffer(data.salesOffer);
         setSalesOfferData(formData);
         setUnitsData(
-          formData.projects[0].units.map((unit) => {
+          formData.projects?.[0]?.units?.map((unit) => {
             return {
-              projectName: formData.projects[0].projectName,
+              projectName: formData.projects?.[0]?.projectName,
               ...unit,
             };
-          })
+          }) || []
         );
         reset({ ...formData });
         setValue(
           "extra.breakdown",
-          formData.projects[0].units[0].preRegistrationPayment.breakdown
+          formData.projects?.[0]?.units?.[0]?.preRegistrationPayment
+            ?.breakdown || []
         );
       } catch (error) {
         console.error("Error fetching sales offer:", error);
@@ -105,24 +125,22 @@ function SalesFormPage() {
   }, [searchParams]);
 
   const onSubmit = async (data) => {
+    const id = searchParams.get("id");
+    console.log("id", id);
     unitsData.forEach((unit, index) => {
-      const floorPlans = floorPlanImages
-        .filter((image) => {
-          return (
-            image.name.includes(unit.unitNo) &&
-            image.name.includes(unit.projectName)
-          );
-        })
-        .map((image) => ({ layoutsImages: image.url }));
-      data.projects[0].units[index]["floorPlans"] = floorPlans;
-      console.log("Floor Plan Images", floorPlans);
+      const floorPlans = getFloorPlansForUnit(unit);
+      if (data.projects?.[0]?.units?.[index]) {
+        data.projects[0].units[index]["floorPlans"] = floorPlans;
+      }
     });
     console.log("Data", data);
     const { extra, ...rest } = data;
     console.log("payload being saved", rest);
 
     try {
-      const response = await createSalesOffer(rest);
+      const response = id
+        ? await updateSalesOffer(rest, id)
+        : await createSalesOffer(rest);
       console.log("Form submitted successfully:", response);
       router.push("/dashboard");
     } catch (error) {
@@ -133,17 +151,10 @@ function SalesFormPage() {
   const downloadSalesOffer = async () => {
     const data = getValues();
     unitsData.forEach((unit, index) => {
-      const floorPlans = floorPlanImages
-        .filter((image) => {
-          return (
-            image.name.includes(unit.unitNo) &&
-            image.name.includes(unit.projectName)
-          );
-        })
-        .map((image) => {
-          return { layoutsImages: image.localUrl };
-        });
-      data.projects[0].units[index]["floorPlans"] = floorPlans;
+      const floorPlans = getFloorPlansForUnit(unit, true);
+      if (data.projects?.[0]?.units?.[index]) {
+        data.projects[0].units[index]["floorPlans"] = floorPlans;
+      }
     });
     setPdfData(data);
     setTimeout(() => {
@@ -154,17 +165,10 @@ function SalesFormPage() {
   const downloadSalesOfferAll = async () => {
     const data = getValues();
     unitsData.forEach((unit, index) => {
-      const floorPlans = floorPlanImages
-        .filter((image) => {
-          return (
-            image.name.includes(unit.unitNo) &&
-            image.name.includes(unit.projectName)
-          );
-        })
-        .map((image) => {
-          return { layoutsImages: image.localUrl };
-        });
-      data.projects[0].units[index]["floorPlans"] = floorPlans;
+      const floorPlans = getFloorPlansForUnit(unit, true);
+      if (data.projects?.[0]?.units?.[index]) {
+        data.projects[0].units[index]["floorPlans"] = floorPlans;
+      }
       setSelectedUnit(index);
       setPdfData({ ...data });
       setTimeout(() => {
@@ -304,7 +308,7 @@ function SalesFormPage() {
             register={register}
             setSelectedUnit={setSelectedUnit}
             unitsData={unitsData}
-            units={salesOfferData && salesOfferData.project?.unit}
+            units={salesOfferData?.projects?.[0]?.units || []}
           />
           {errors.projects?.[0]?.units && (
             <p className="text-red-500 text-sm mt-2">
@@ -351,9 +355,11 @@ function SalesFormPage() {
         <SectionCard title="Bulk Upload Floor Plans">
           <BulkImageUpload
             onImagesUpload={setFloorPlanImages}
-            imageArray={unitsData[selectedUnit]?.floorPlans.map(
-              (fp) => fp.layoutsImages
-            )}
+            imageArray={
+              unitsData[selectedUnit]?.floorPlans?.map(
+                (fp) => fp.layoutsImages
+              ) || []
+            }
           />
         </SectionCard>
 

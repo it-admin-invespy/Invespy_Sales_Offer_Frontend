@@ -38,22 +38,38 @@ export async function login(prevState, formData) {
     };
   }
 
-  const cookieStore = await cookies();
-  cookieStore.set("accessToken", res.data.accessToken, {
-    httpOnly: true,
-    secure: true,
-    sameSite: "strict",
-  });
-  cookieStore.set("refreshToken", res.data.refreshToken, {
-    httpOnly: true,
-    secure: true,
-    sameSite: "strict",
-  });
-  cookieStore.set("user", JSON.stringify(res.data.user), {
-    httpOnly: true,
-    secure: true,
-    sameSite: "strict",
-  });
+  if (!res.data?.accessToken || !res.data?.refreshToken) {
+    return {
+      errors: {
+        email: "Login failed. Please try again.",
+      },
+    };
+  }
+
+  try {
+    const cookieStore = await cookies();
+    cookieStore.set("accessToken", res.data.accessToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "strict",
+    });
+    cookieStore.set("refreshToken", res.data.refreshToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "strict",
+    });
+    cookieStore.set("user", JSON.stringify(res.data.user), {
+      httpOnly: true,
+      secure: true,
+      sameSite: "strict",
+    });
+  } catch (error) {
+    return {
+      errors: {
+        email: "Login failed. Please try again.",
+      },
+    };
+  }
 
   redirect("/dashboard");
 }

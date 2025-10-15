@@ -29,13 +29,13 @@ export const transformSalesOffer = async (data) => {
             })),
             preRegistrationPayment: {
               totalAmount:
-                unit?.preRegistrationPayments?.reduce(
+                (unit?.preRegistrationPayments || []).reduce(
                   (sum, p) => sum + (p?.amount || 0),
                   0
-                ) || "",
+                ) || 0,
               breakdown: (unit?.preRegistrationPayments || []).map((p) => ({
                 description: p?.description || "",
-                amount: p?.amount || "",
+                amount: p?.amount || 0,
               })),
             },
             floorPlans: await Promise.all(
@@ -58,7 +58,6 @@ export const transformSalesOffer = async (data) => {
     meta: {
       logoUrl: (await convertImageToBase64(meta?.logoUrl)) || "",
       brandColors: meta?.brandColors || "",
-      accentColor: meta?.brandColors || "", // same as brand color (fallback)
       fonts: [meta?.fonts || ""],
       styles: {
         header: {
@@ -83,76 +82,88 @@ export const transformSalesOffer = async (data) => {
 export const createPayloadForDuplicateObj = (objectA) => {
   if (!objectA || !objectA.project) return null;
 
-  return {
-    projects: [
-      {
-        projectName: objectA.project.projectName,
-        location: objectA.project.location,
-        country: objectA.project.country,
-        units: objectA.project.units.map((unit) => ({
-          unitNo: unit.unitNo,
-          floorNo: unit.floorNo,
-          unitType: unit.unitType,
-          view: unit.view,
-          grossArea: parseFloat(unit.grossArea),
-          price: parseFloat(unit.price),
+  try {
+    return {
+      projects: [
+        {
+          projectName: objectA?.project?.projectName || "",
+          location: objectA?.project?.location || "",
+          country: objectA?.project?.country || "",
+          units: (objectA?.project?.units || []).map((unit) => ({
+            unitNo: unit?.unitNo || "",
+            floorNo: unit?.floorNo || "",
+            unitType: unit?.unitType || "",
+            view: unit?.view || "",
+            grossArea: parseFloat(unit?.grossArea || 0),
+            price: parseFloat(unit?.price || 0),
 
-          // combine pre-registration payments into a single object
-          preRegistrationPayment: {
-            totalAmount: unit.preRegistrationPayments.reduce(
-              (sum, p) => sum + p.amount,
-              0
-            ),
-            breakdown: unit.preRegistrationPayments.map((p) => ({
-              description: p.description,
-              amount: p.amount,
+            // combine pre-registration payments into a single object
+            preRegistrationPayment: {
+              totalAmount: (unit?.preRegistrationPayments || []).reduce(
+                (sum, p) => sum + (p?.amount || 0),
+                0
+              ),
+              breakdown: (unit?.preRegistrationPayments || []).map((p) => ({
+                description: p?.description || "",
+                amount: p?.amount || 0,
+              })),
+            },
+
+            // map installments array
+            installments: (unit?.installments || []).map((inst) => ({
+              installment: inst?.installment || "",
+              percentagePayable: parseFloat(inst?.percentagePayable || 0),
+              milestone: inst?.milestone || "",
+              milestoneDate: inst?.milestoneDate || null,
+              total: parseFloat(inst?.total || 0),
             })),
-          },
 
-          // map installments array
-          installments: unit.installments.map((inst) => ({
-            installment: inst.installment,
-            percentagePayable: parseFloat(inst.percentagePayable),
-            milestone: inst.milestone,
-            milestoneDate: inst.milestoneDate || null,
-            total: parseFloat(inst.total),
+            // keep only image URLs
+            floorPlans: (unit?.floorPlans || []).map((fp) => ({
+              layoutsImages: fp?.layoutsImages || "",
+            })),
           })),
+        },
+      ],
+      salesConsultant: objectA?.salesConsultant || "",
+      brokerageAgency: objectA?.brokerageAgency || "",
 
-          // keep only image URLs
-          floorPlans: unit.floorPlans.map((fp) => ({
-            layoutsImages: fp.layoutsImages,
-          })),
-        })),
-      },
-    ],
-    salesConsultant: objectA.salesConsultant,
-    brokerageAgency: objectA.brokerageAgency,
-
-    // take first customer (assuming one)
-    customer:
-      objectA.customers && objectA.customers.length
+      // take first customer (assuming one)
+      customer: objectA?.customers?.length
         ? {
-            name: objectA.customers[0].name,
-            date: objectA.customers[0].date,
+            name: objectA.customers[0]?.name || "",
+            date: objectA.customers[0]?.date || "",
           }
-        : null,
+        : { name: "", date: "" },
 
-    // meta information
-    meta: {
-      logoUrl: objectA.project.meta.logoUrl,
-      brandColors: objectA.project.meta.brandColors,
-      fonts: objectA.project.meta.fonts ? [objectA.project.meta.fonts] : [],
-      styles: objectA.project.meta.styles,
-    },
-  };
+      // meta information
+      meta: {
+        logoUrl: objectA?.project?.meta?.logoUrl || "",
+        brandColors: objectA?.project?.meta?.brandColors || "",
+        fonts: objectA?.project?.meta?.fonts
+          ? [objectA.project.meta.fonts]
+          : [],
+        styles: objectA?.project?.meta?.styles || {},
+      },
+    };
+  } catch (error) {
+    console.error("Error creating payload for duplicate:", error);
+    return null;
+  }
 };
 
 export const convertImageToBase64 = async (url) => {
+  if (!url || typeof url !== "string") return url;
+
   try {
+    const parsedUrl = new URL(url);
+    if (!["http:", "https:"].includes(parsedUrl.protocol)) {
+      return url;
+    }
+
     const response = await fetch(
       `/api/proxy-image?url=${encodeURIComponent(url)}`
     );
-    console.log("Response", response.url);
     return response.url;
   } catch (error) {
     console.error("Error converting image:", error);

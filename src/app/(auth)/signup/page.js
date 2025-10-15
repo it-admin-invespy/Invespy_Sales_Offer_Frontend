@@ -26,6 +26,42 @@ export default function Page() {
           Sign Up
         </h2>
 
+        {state?.error && (
+          <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+            {state.error}
+          </div>
+        )}
+
+        {state?.error && (
+          <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+            {state.error}
+          </div>
+        )}
+
+        {state?.error && (
+          <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+            {state.error}
+          </div>
+        )}
+
+        {state?.error && (
+          <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+            {state.error}
+          </div>
+        )}
+
+        {state?.error && (
+          <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+            {state.error}
+          </div>
+        )}
+
+        {state?.error && (
+          <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+            {state.error}
+          </div>
+        )}
+
         <form action={signupAction} className="space-y-4">
           <InputField
             register={register}

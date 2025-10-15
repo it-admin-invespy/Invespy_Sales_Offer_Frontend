@@ -6,8 +6,12 @@ export default function InstallmentCSV({ setValue, disabled, price, units }) {
   const [csvData, setCsvData] = useState([]);
 
   useEffect(() => {
-    setCsvData(units[0] ? units[0]?.installments : []);
+    setCsvData(units?.[0]?.installments || []);
   }, [units]);
+
+  const handleChooseFile = () => {
+    document.getElementById("installment-csv-upload").click();
+  };
 
   const handleUpload = (e) => {
     const fileInput = document.getElementById("installment-csv-upload");
@@ -21,12 +25,12 @@ export default function InstallmentCSV({ setValue, disabled, price, units }) {
 
       const data = lines
         .slice(1)
-        .filter((line) => line.trim())
+        .filter((line) => line?.trim())
         .map((line) => {
-          const values = line.split(",");
+          const values = line?.split(",") || [];
           return {
             installment: values[0]?.trim() || "",
-            percentagePayable: values[1]?.trim().replace(/[^0-9.]/g, ""),
+            percentagePayable: values[1]?.trim()?.replace(/[^0-9.]/g, "") || "",
             milestone: values[2]?.trim() || "",
             milestoneDate: values[3]?.trim() || "",
             total: values[4]?.trim() || "",
@@ -43,16 +47,15 @@ export default function InstallmentCSV({ setValue, disabled, price, units }) {
       data.forEach((row, rowIndex) => {
         const basePath = `projects.0.units.${unitIndex}.installments.${rowIndex}`;
         const values = {
-          installment: row.installment,
+          installment: row?.installment || "",
           percentagePayable: parseFloat(
-            row.percentagePayable.replace(/[^0-9.]/g, "")
+            row?.percentagePayable?.replace(/[^0-9.]/g, "") || "0"
           ),
-          milestone: row.milestone,
-          // milestoneDate: row.milestoneDate,
-          milestoneDate: row.milestoneDate,
+          milestone: row?.milestone || "",
+          milestoneDate: row?.milestoneDate || "",
           total:
-            (parseFloat(row.percentagePayable.replace(/[^0-9.]/g, "")) / 100) *
-            (element.price || 0),
+            (parseFloat(row?.percentagePayable?.replace(/[^0-9.]/g, "") || "0") / 100) *
+            (element?.price || 0),
         };
         Object.entries(values).forEach(([key, value]) => {
           setValue(`${basePath}.${key}`, value);
@@ -81,9 +84,7 @@ export default function InstallmentCSV({ setValue, disabled, price, units }) {
           <button
             type="button"
             disabled={disabled}
-            onClick={() =>
-              document.getElementById("installment-csv-upload").click()
-            }
+            onClick={handleChooseFile}
             className={`${
               disabled
                 ? "bg-gray-400 cursor-not-allowed"
@@ -137,7 +138,7 @@ export default function InstallmentCSV({ setValue, disabled, price, units }) {
                     {row.milestoneDate}
                   </td>
                   <td className="border border-gray-300 px-2 py-1">
-                    {`${(row.percentagePayable / 100) * price}`}
+                    {`${((row?.percentagePayable || 0) / 100) * (price || 0)}`}
                   </td>
                 </tr>
               ))}

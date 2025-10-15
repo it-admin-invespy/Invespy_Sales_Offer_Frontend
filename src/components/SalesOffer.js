@@ -46,7 +46,6 @@ const emptySalesOfferData = {
   meta: {
     logoUrl: "",
     brandColors: "",
-    accentColor: "",
     fonts: [""],
     styles: {
       header: {
@@ -69,11 +68,26 @@ const emptySalesOfferData = {
 
 const SalesOffer = ({ salesOfferData, selectedUnit }) => {
   const data = salesOfferData || emptySalesOfferData;
-  const project = data.projects?.[0];
+  const project = data?.projects?.[0];
   const unit = project?.units?.[selectedUnit] || project?.units?.[0];
-  const { salesConsultant, brokerageAgency, customer, meta, extra } = data;
+  const { salesConsultant, brokerageAgency, customer, meta, extra } =
+    data || {};
   const brandColor = meta?.brandColors || "#007BFF";
   const fontFamily = meta?.fonts?.[0] || "Arial, sans-serif";
+
+  const sanitizeText = (text) => {
+    if (typeof text !== "string") return "";
+    return text.replace(/[<>"'&]/g, (match) => {
+      const entities = {
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#x27;",
+        "&": "&amp;",
+      };
+      return entities[match];
+    });
+  };
 
   const Header = ({ value }) => (
     <div style={{ marginBottom: 30 }}>
@@ -89,12 +103,12 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
       >
         <h1
           style={{
-            fontSize: `${meta.styles.header.fontSize}`,
-            fontWeight: `${meta.styles.header.fontWeight}`,
+            fontSize: `${meta?.styles?.header?.fontSize || "24px"}`,
+            fontWeight: `${meta?.styles?.header?.fontWeight || "700"}`,
             margin: 0,
           }}
         >
-          {value}
+          {sanitizeText(value)}
         </h1>
       </div>
     </div>
@@ -162,14 +176,14 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
               fontSize: "20px",
             }}
           >
-            {project.projectName}
+            {sanitizeText(project?.projectName)}
           </h2>
           <p style={{ margin: "5px 0", fontSize: "16px" }}>
-            <strong>{project.location}</strong> |{" "}
-            <strong>{project.country}</strong>
+            <strong>{sanitizeText(project?.location)}</strong> |{" "}
+            <strong>{sanitizeText(project?.country)}</strong>
           </p>
           <p style={{ margin: "5px 0", fontStyle: "italic", color: "#666" }}>
-            ({project.elevation})
+            ({sanitizeText(project?.elevation)})
           </p>
         </div>
 
@@ -236,13 +250,13 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
             <tbody>
               <tr>
                 {[
-                  project.projectName,
-                  unit.unitNo,
-                  unit.floorNo,
-                  unit.unitType,
-                  unit.view,
-                  unit.grossArea,
-                  unit.price,
+                  project?.projectName || "",
+                  unit?.unitNo || "",
+                  unit?.floorNo || "",
+                  unit?.unitType || "",
+                  unit?.view || "",
+                  unit?.grossArea || "",
+                  unit?.price || "",
                 ].map((value, index) => (
                   <td
                     key={index}
@@ -254,7 +268,7 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
                       fontSize: "14px",
                     }}
                   >
-                    {value}
+                    {sanitizeText(String(value))}
                   </td>
                 ))}
               </tr>
@@ -285,13 +299,13 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
             <div>
               <strong>Internal Sales Consultant:</strong>
               <p style={{ margin: "5px 0", color: "#666" }}>
-                {salesConsultant || "N/A"}
+                {sanitizeText(salesConsultant) || "N/A"}
               </p>
             </div>
             <div>
               <strong>Brokerage Agency:</strong>
               <p style={{ margin: "5px 0", color: "#666" }}>
-                {brokerageAgency || "N/A"}
+                {sanitizeText(brokerageAgency) || "N/A"}
               </p>
             </div>
           </div>
@@ -355,7 +369,7 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
               </tr>
             </thead>
             <tbody>
-              {unit.installments.map((inst, i) => (
+              {(unit?.installments || []).map((inst, i) => (
                 <tr
                   key={i}
                   style={{
@@ -371,7 +385,7 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
                       fontWeight: "500",
                     }}
                   >
-                    {inst.installment}
+                    {sanitizeText(inst?.installment)}
                   </td>
                   <td
                     style={{
@@ -382,7 +396,7 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
                       fontWeight: "600",
                     }}
                   >
-                    {inst.percentagePayable}%
+                    {sanitizeText(String(inst?.percentagePayable || 0))}%
                   </td>
                   <td
                     style={{
@@ -391,7 +405,7 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
                       padding: "12px 10px",
                     }}
                   >
-                    {inst.milestone}
+                    {sanitizeText(inst?.milestone)}
                   </td>
                   <td
                     style={{
@@ -400,7 +414,7 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
                       padding: "12px 10px",
                     }}
                   >
-                    {inst.milestoneDate}
+                    {sanitizeText(inst?.milestoneDate)}
                   </td>
                   <td
                     style={{
@@ -411,14 +425,14 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
                       color: "#28a745",
                     }}
                   >
-                    {inst.total}
+                    {sanitizeText(String(inst?.total || 0))}
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
           <Header value={extra?.header?.floorPlan} />
-          {unit.floorPlans?.length > 0 && (
+          {(unit?.floorPlans?.length || 0) > 0 && (
             <div style={{ padding: "30px" }}>
               <div>
                 <div
@@ -428,7 +442,7 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
                     justifyItems: "center",
                   }}
                 >
-                  {unit.floorPlans.map((plan, i) => (
+                  {(unit?.floorPlans || []).map((plan, i) => (
                     <div
                       key={i}
                       style={{
@@ -440,7 +454,7 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
                       }}
                     >
                       <img
-                        src={plan.layoutsImages || null}
+                        src={plan?.layoutsImages || null}
                         alt={`Floor Plan ${i + 1}`}
                         style={{
                           width: "100%",
@@ -515,7 +529,7 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
             </tr>
           </thead>
           <tbody>
-            {unit.preRegistrationPayment.breakdown.map((b, i) => (
+            {(unit?.preRegistrationPayment?.breakdown || []).map((b, i) => (
               <tr
                 key={i}
                 style={{
@@ -530,7 +544,7 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
                     fontSize: "14px",
                   }}
                 >
-                  {b.description}
+                  {sanitizeText(b?.description)}
                 </td>
                 <td
                   style={{
@@ -542,7 +556,7 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
                     fontSize: "14px",
                   }}
                 >
-                  {b.amount}
+                  {sanitizeText(String(b?.amount || 0))}
                 </td>
               </tr>
             ))}
