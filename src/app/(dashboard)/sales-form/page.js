@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from "react";
 import { useForm } from "react-hook-form";
 import { useSearchParams } from "next/navigation";
 import { usePDF } from "react-to-pdf";
+import { convertImageToBase64 } from "@/app/lib/utils";
 
 import ImageUpload from "../../../components/ImageUpload";
 import ColorPicker from "../../../components/ColorPicker";
@@ -35,21 +36,8 @@ function SalesFormPage() {
   const [floorPlanImages, setFloorPlanImages] = useState([]);
   const [selectedUnit, setSelectedUnit] = useState(0);
   const [pdfData, setPdfData] = useState();
+  const [loading, setLoading] = useState(false);
 
-  const getFloorPlansForUnit = (unit, useLocalUrl = false) => {
-    return (
-      floorPlanImages
-        ?.filter((image) => {
-          return (
-            image?.name?.includes(unit?.unitNo) &&
-            image?.name?.includes(unit?.projectName)
-          );
-        })
-        .map((image) => ({
-          layoutsImages: useLocalUrl ? image?.localUrl : image?.url,
-        })) || []
-    );
-  };
   const {
     register,
     handleSubmit,
@@ -96,10 +84,29 @@ function SalesFormPage() {
   useEffect(() => {
     const id = searchParams.get("id");
     const fetchSalesOffer = async (id) => {
+      setLoading(true);
       try {
         const data = await getSalesOfferById(id);
+        console.log("Fetched sales offer data:", data);
+        const floorPlanUnitImages = [];
+        const unitsArray = data.salesOffer?.project?.units;
+        for (let i = 0; i < unitsArray?.length; i++) {
+          console.log("Processing unit for images:", unitsArray[i]);
+          const fp = unitsArray[i].floorPlans;
+          for (let j = 0; j < fp.length; j++) {
+            floorPlanUnitImages.push({
+              url: fp[j].layoutsImages,
+              name: `${unitsArray[i].unitNo} - floorPlan - ${j + 1}`,
+              localUrl: await convertImageToBase64(fp[j].layoutsImages),
+            });
+          }
+        }
+        setFloorPlanImages(floorPlanUnitImages);
         const formData = await transformSalesOffer(data.salesOffer);
         setSalesOfferData(formData);
+        formData.extra.breakdown =
+          formData.projects?.[0]?.units?.[0]?.preRegistrationPayment
+            ?.breakdown || [];
         setUnitsData(
           formData.projects?.[0]?.units?.map((unit) => {
             return {
@@ -109,13 +116,10 @@ function SalesFormPage() {
           }) || []
         );
         reset({ ...formData });
-        setValue(
-          "extra.breakdown",
-          formData.projects?.[0]?.units?.[0]?.preRegistrationPayment
-            ?.breakdown || []
-        );
       } catch (error) {
         console.error("Error fetching sales offer:", error);
+      } finally {
+        setLoading(false);
       }
     };
     if (id) {
@@ -126,12 +130,24 @@ function SalesFormPage() {
 
   const onSubmit = async (data) => {
     const id = searchParams.get("id");
-    console.log("id", id);
     unitsData.forEach((unit, index) => {
       const floorPlans = getFloorPlansForUnit(unit);
+      console.log("Floor plans for unit", index, floorPlans);
       if (data.projects?.[0]?.units?.[index]) {
         data.projects[0].units[index]["floorPlans"] = floorPlans;
       }
+    });
+    unitsData.forEach((element, index) => {
+      const breakdown = watch(`extra.breakdown`);
+      const totalAmount = breakdown.reduce((sum, item) => {
+        const amount = parseFloat(item?.amount) || 0;
+        return sum + amount;
+      }, 0);
+
+      data.projects[0].units[index]["preRegistrationPayment"]["totalAmount"] =
+        totalAmount;
+      data.projects[0].units[index]["preRegistrationPayment"]["breakdown"] =
+        breakdown;
     });
     console.log("Data", data);
     const { extra, ...rest } = data;
@@ -177,11 +193,35 @@ function SalesFormPage() {
     });
   };
 
+  const getFloorPlansForUnit = (unit, useLocalUrl = false) => {
+    console.log("Getting floor plans for unit:", floorPlanImages);
+    return (
+      floorPlanImages
+        ?.filter((image) => {
+          return image?.name?.includes(unit?.unitNo);
+        })
+        .map((image) => ({
+          layoutsImages: useLocalUrl ? image?.localUrl : image?.url,
+        })) || []
+    );
+  };
+
   const { toPDF, targetRef } = usePDF({
-    method: "save",
+    method: "open",
     filename: "sales-offer.pdf",
     page: { margin: 10, format: "a4" },
   });
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading sales offer data...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -355,11 +395,7 @@ function SalesFormPage() {
         <SectionCard title="Bulk Upload Floor Plans">
           <BulkImageUpload
             onImagesUpload={setFloorPlanImages}
-            imageArray={
-              unitsData[selectedUnit]?.floorPlans?.map(
-                (fp) => fp.layoutsImages
-              ) || []
-            }
+            imageArray={floorPlanImages}
           />
         </SectionCard>
 

@@ -48,12 +48,15 @@ export default function Page() {
     router.push(`/sales-form?id=${formId}`);
   };
 
-  const handlePreview = useCallback(async (data) => {
-    const formData = await transformSalesOffer(data);
-    console.log("Preview form:", formData);
-    setpreviewForm({ ...formData });
-    setTimeout(() => toPDF(), 0);
-  }, [toPDF]);
+  const handlePreview = useCallback(
+    async (data) => {
+      const formData = await transformSalesOffer(data);
+      console.log("Preview form:", formData);
+      setpreviewForm({ ...formData });
+      setTimeout(() => toPDF(), 0);
+    },
+    [toPDF]
+  );
 
   const handleDuplicate = async (formId) => {
     try {
@@ -109,7 +112,10 @@ export default function Page() {
                     {form?.project?.projectName || "Untitled Form"}
                   </h3>
                   <p className="text-sm text-gray-500">
-                    Created: {form?.createdAt ? new Date(form.createdAt).toLocaleDateString() : 'Unknown'}
+                    Created:{" "}
+                    {form?.createdAt
+                      ? new Date(form.createdAt).toLocaleDateString()
+                      : "Unknown"}
                   </p>
                 </div>
                 <div className="flex gap-2">

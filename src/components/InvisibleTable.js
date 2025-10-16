@@ -1,47 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useFieldArray } from "react-hook-form";
 
-export default function InvisibleTable({
-  register,
-  meta,
-  control,
-  breakdown,
-  units,
-}) {
+export default function InvisibleTable({ register, meta, control }) {
   const name = `extra.breakdown`;
-
-  const [breakdownRows, setBreakdownRows] = useState([]);
-
   const { fields, append } = useFieldArray({
     control,
     name,
   });
-
-  useEffect(() => {
-    console.log("breakdown", breakdown);
-    setBreakdownRows(breakdown);
-  }, [breakdown]);
-
-  useEffect(() => {
-    (units || []).forEach((element, index) => {
-      // Calculate total amount whenever breakdown changes
-      const totalAmount = (breakdownRows || []).reduce((sum, item) => {
-        const amount = parseFloat(item?.amount) || 0;
-        return sum + amount;
-      }, 0);
-
-      // Update the amount field
-      register(`projects.0.units.${index}.preRegistrationPayment.totalAmount`, {
-        value: totalAmount,
-      });
-      register(`projects.0.units.${index}.preRegistrationPayment.breakdown`, {
-        value: breakdown || [],
-      });
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [breakdown, units]);
 
   const headerStyle = {
     backgroundColor: meta?.brandColors || "#007BFF",
@@ -67,7 +33,7 @@ export default function InvisibleTable({
           </tr>
         </thead>
         <tbody>
-          {breakdownRows.map((field, index) => (
+          {fields?.map((field, index) => (
             <tr key={`breakdown-${index}`}>
               <td className="p-2 border border-gray-300">
                 <input

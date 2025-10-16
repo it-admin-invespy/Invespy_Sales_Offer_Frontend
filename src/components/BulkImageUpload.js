@@ -1,16 +1,21 @@
-import { useEffect, useState } from "react";
+import { useState, useCallback } from "react";
 import { uploadBulkImages } from "../app/(dashboard)/dashboard/actions";
 import { convertImageToBase64 } from "@/app/lib/utils";
 
 export default function BulkImageUpload({ onImagesUpload, imageArray }) {
-  const [images, setImages] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState(null);
+  const [hoveredImage, setHoveredImage] = useState(null);
 
-  useEffect(() => {
-    if (imageArray.length === 0) return;
-    setImages(imageArray);
-  }, [imageArray]);
+  const handleRemoveImage = useCallback(
+    (indexToRemove) => {
+      const updatedImages = imageArray.filter(
+        (_, index) => index !== indexToRemove
+      );
+      onImagesUpload(updatedImages);
+    },
+    [onImagesUpload]
+  );
 
   const handleFileChange = async (e) => {
     const files = Array.from(e.target.files);
@@ -26,17 +31,15 @@ export default function BulkImageUpload({ onImagesUpload, imageArray }) {
 
     try {
       const response = await uploadBulkImages(formData);
-      console.log("Upload successful:", response.data.successful);
 
-      for (let i = 0; i < (response.data?.successful?.length || 0); i++) {
-        const element = response.data.successful[i];
-        const localUrl = await convertImageToBase64(element?.url);
-        uploadedImages.push({
+      const imagePromises =
+        response.data?.successful?.map(async (element) => ({
           url: element?.url,
           name: element?.originalName,
-          localUrl: localUrl,
-        });
-      }
+          localUrl: await convertImageToBase64(element?.url),
+        })) || [];
+
+      uploadedImages.push(...(await Promise.all(imagePromises)));
     } catch (error) {
       console.error("Upload failed:", error);
       setError("Upload failed. Please try again.");
@@ -45,13 +48,9 @@ export default function BulkImageUpload({ onImagesUpload, imageArray }) {
     }
 
     if (uploadedImages.length > 0) {
-      console.log("Uploaded images:", uploadedImages);
-      setImages((prev) => {
-        return [...prev, ...uploadedImages];
-      });
-      onImagesUpload((prev) => {
-        return [...prev, ...uploadedImages];
-      });
+      const newImages = [...imageArray, ...uploadedImages];
+      console.log("New images:", newImages);
+      onImagesUpload(newImages);
       setError(null);
     }
   };
@@ -68,19 +67,74 @@ export default function BulkImageUpload({ onImagesUpload, imageArray }) {
       />
       {uploading && <p className="text-sm text-blue-600">Uploading...</p>}
       {error && <p className="text-sm text-red-600">{error}</p>}
-
-      {images.length > 0 && (
-        <div className="grid grid-cols-3 gap-4">
-          {images.map((image, index) => (
-            <div key={image?.url || index} className="text-center">
+      {imageArray.length > 0 && (
+        <div className="relative">
+          <div className="bg-gray-50 rounded-lg p-4">
+            <h4 className="text-sm font-medium text-gray-700 mb-3 flex items-center">
+              <svg
+                className="w-4 h-4 mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                />
+              </svg>
+              Uploaded Images ({imageArray.length})
+            </h4>
+            <ul className="space-y-2 max-h-48 overflow-y-auto">
+              {imageArray.map((image, index) => (
+                <li
+                  key={image?.url || index}
+                  className="group p-3 bg-white border border-gray-200 rounded-md hover:border-blue-300 hover:shadow-sm transition-all duration-200 flex justify-between items-center cursor-pointer"
+                  onMouseEnter={() => setHoveredImage(image)}
+                  onMouseLeave={() => setHoveredImage(null)}
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                    <span className="text-sm text-gray-700 font-medium truncate">
+                      {image?.name || `Image ${index + 1}`}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => handleRemoveImage(index)}
+                    className="text-red-500 hover:text-red-700 hover:bg-red-50 rounded-full p-1 transition-all duration-200"
+                    title="Remove image"
+                  >
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+          {hoveredImage && (
+            <div className="absolute top-0 right-0 z-20 p-3 bg-white border border-gray-300 rounded-lg shadow-xl">
               <img
-                src={image?.url || image}
-                alt={image?.name || "Image"}
-                className="w-full h-32 object-cover rounded border"
+                src={hoveredImage?.url || hoveredImage}
+                alt={hoveredImage?.name || "Preview"}
+                className="w-56 h-36 object-cover rounded-md"
               />
-              <p className="text-xs text-gray-600 mt-1">{image?.name}</p>
+              <p className="text-xs text-gray-600 mt-2 text-center truncate">
+                {hoveredImage?.name || "Preview"}
+              </p>
             </div>
-          ))}
+          )}
         </div>
       )}
     </div>
