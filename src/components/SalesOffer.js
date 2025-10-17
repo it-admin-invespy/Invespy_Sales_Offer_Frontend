@@ -108,34 +108,53 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
         style={{
           background: brandColor,
           color: "#fff",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          borderRadius: "8px",
-          fontSize: `${meta?.styles?.header?.fontSize || "24px"}`,
-          fontWeight: `${meta?.styles?.header?.fontWeight || "700"}`,
-          boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+          textAlign: "center",
+          fontSize: "16px",
+          fontWeight: "600",
+          padding: "12px 0",
         }}
       >
-        <div>{sanitizeText(value)}</div>
+        {sanitizeText(value)}
       </div>
     </div>
   );
 
   const Footer = () => (
-    <div
-      style={{
-        borderTop: `2px solid ${brandColor}`,
-        paddingTop: "8px",
-        textAlign: "center",
-      }}
-    >
-      <p style={{ margin: "3px 0", fontWeight: "bold", fontSize: "10px" }}>
-        info@maaia.ae | www.maaia.ae
-      </p>
-      <p style={{ margin: "3px 0", fontSize: "9px" }}>
-        Office Number 5202, Ubora Tower, Business Bay, Dubai, UAE
-      </p>
+    <div style={{ width: "100%" }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          marginBottom: 14,
+        }}
+      >
+        <div style={{ fontSize: "12px" }}>
+          <strong>Customer signature:</strong>{" "}
+          <span style={{ color: "#333" }}>
+            {sanitizeText(customer?.name) || "N/A"}
+          </span>
+        </div>
+        <div style={{ fontSize: "12px", textAlign: "right" }}>
+          <strong>Date:</strong>{" "}
+          <span style={{ color: "#333" }}>
+            {sanitizeText(customer?.date) || "N/A"}
+          </span>
+        </div>
+      </div>
+      <div
+        style={{
+          borderTop: `2px solid ${brandColor}`,
+          paddingTop: "8px",
+          textAlign: "center",
+        }}
+      >
+        <p style={{ margin: "3px 0", fontWeight: "bold", fontSize: "12px" }}>
+          info@maaia.ae | www.maaia.ae
+        </p>
+        <p style={{ margin: "3px 0", fontSize: "12px" }}>
+          Office Number 5202, Ubora Tower, Business Bay, Dubai, UAE
+        </p>
+      </div>
     </div>
   );
 
@@ -154,37 +173,45 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
         }}
       >
         <Header value={extra?.header?.salesOffer} />
-        {/* Greeting */}
         <div
           style={{
-            backgroundColor: "#f8f9fa",
-            padding: "12px",
-            borderRadius: "6px",
-            marginBottom: 15,
-            borderLeft: `4px solid ${brandColor}`,
+            marginTop: "-10px",
+            width: "100%",
           }}
         >
-          <p style={{ margin: "0 0 6px 0", fontSize: "13px" }}>
-            Dear <strong>Valued Client</strong>,
-          </p>
-          <p style={{ margin: 0, lineHeight: "1.4", fontSize: "12px" }}>
-            Considering the points we discussed, I believe that the below listed
-            project will cater to your requirements.
-          </p>
+          {/* Project Details */}
+          <div
+            style={{
+              textAlign: "center",
+              marginTop: "-10px",
+            }}
+          >
+            <div style={{ fontSize: "12px", marginBottom: "8px" }}>
+              <strong>{project?.projectName || ""}</strong>,{" "}
+              {project?.location || ""} - {project?.country || ""}
+            </div>
+            <div style={{ fontSize: "12px", color: "#333" }}>
+              {project?.elevation || ""}
+            </div>
+          </div>
+
+          {/* Greeting */}
+          <div style={{ width: "100%" }}>
+            <div style={{ margin: "0px", fontSize: "12px" }}>Dear,</div>
+            <div style={{ margin: 0, lineHeight: "1.5", fontSize: "12px" }}>
+              Considering the points we discussed, I believe that the below
+              listed project will cater to your requirements.
+            </div>
+          </div>
         </div>
 
         {/* Unit Table */}
-        <div style={{ marginBottom: 15 }}>
-          <h3 style={{ color: brandColor, marginBottom: 8, fontSize: "14px" }}>
-            Unit Details
-          </h3>
+        <div style={{ marginBottom: 20 }}>
           <table
             style={{
               width: "100%",
               borderCollapse: "collapse",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-              borderRadius: "8px",
-              overflow: "hidden",
+              border: "1px solid #000",
             }}
           >
             <thead>
@@ -201,12 +228,13 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
                   <th
                     key={heading}
                     style={{
-                      background: `linear-gradient(135deg, ${brandColor} 0%, ${brandColor}dd 100%)`,
+                      background: brandColor,
                       color: "#fff",
-                      padding: "8px 6px",
-                      fontSize: "11px",
+                      padding: "10px 8px",
+                      fontSize: "12px",
                       fontWeight: "600",
                       textAlign: "center",
+                      border: "1px solid #000",
                     }}
                   >
                     {heading}
@@ -228,11 +256,11 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
                   <td
                     key={index}
                     style={{
-                      border: "1px solid #e0e0e0",
+                      border: "1px solid #000",
                       textAlign: "center",
-                      padding: "8px 6px",
-                      backgroundColor: index % 2 === 0 ? "#f9f9f9" : "#fff",
-                      fontSize: "11px",
+                      padding: "10px 8px",
+                      backgroundColor: "#fff",
+                      fontSize: "12px",
                     }}
                   >
                     {sanitizeText(String(value))}
@@ -246,69 +274,58 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
         {/* Consultant Info */}
         <div
           style={{
-            backgroundColor: "#f8f9fa",
-            padding: "12px",
-            borderRadius: "6px",
+            width: "100%",
+            display: "flex",
           }}
         >
-          <h3 style={{ color: brandColor, marginBottom: 8, fontSize: "14px" }}>
-            Contact Information
-          </h3>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: "10px",
-              marginBottom: 12,
-            }}
-          >
-            <div>
-              <strong style={{ fontSize: "12px" }}>
-                Internal Sales Consultant:
-              </strong>
-              <p style={{ margin: "3px 0", color: "#666", fontSize: "11px" }}>
-                {sanitizeText(salesConsultant) || "N/A"}
-              </p>
-            </div>
-            <div>
-              <strong style={{ fontSize: "12px" }}>Brokerage Agency:</strong>
-              <p style={{ margin: "3px 0", color: "#666", fontSize: "11px" }}>
-                {sanitizeText(brokerageAgency) || "N/A"}
-              </p>
-            </div>
+          <div style={{ fontSize: "12px", width: "50%" }}>
+            <strong>Internal Sales Consultant:</strong>{" "}
+            <span style={{ color: "#333" }}>
+              {sanitizeText(salesConsultant) || "N/A"}
+            </span>
           </div>
-          <div
-            style={{
-              backgroundColor: "#fff3cd",
-              border: "1px solid #ffeaa7",
-              borderRadius: "6px",
-              padding: "10px",
-              fontSize: "10px",
-              lineHeight: "1.3",
-            }}
-          >
-            <strong>Important Notice:</strong>
-            <br />
-            Applicable fees to Dubai Land Department are excluded from the above
-            price/plan, plus AED 5,000 Admin Fee. The above-mentioned is not
-            considered as a reservation until signed by the seller and approved
-            by the developer. This is a computer-generated proposal and does not
-            require a signature.
+          <div style={{ fontSize: "12px", width: "50%" }}>
+            <strong>{`Brokerage Agency (if any)`} :</strong>{" "}
+            <span style={{ color: "#333" }}>
+              {sanitizeText(brokerageAgency) || "N/A"}
+            </span>
           </div>
+        </div>
+        <div
+          style={{
+            backgroundColor: "#fff3cd",
+            border: "1px solid #000",
+            padding: "12px",
+            fontSize: "12px",
+            lineHeight: "1.4",
+          }}
+        >
+          <strong>Important Notice:</strong>
+          <br />
+          Applicable fees to Dubai Land Department are excluded from the above
+          price/plan, plus AED 5,000 Admin Fee. The above-mentioned is not
+          considered as a reservation until signed by the seller and approved by
+          the developer. This is a computer-generated proposal and does not
+          require a signature.
         </div>
 
         {/* Payment Plan */}
         <div style={{ width: "100%" }}>
-          <h3 style={{ color: brandColor, marginBottom: 8, fontSize: "14px" }}>
+          <h3
+            style={{
+              color: brandColor,
+              marginBottom: 12,
+              fontSize: "14px",
+              fontWeight: "600",
+            }}
+          >
             Payment Schedule
           </h3>
           <table
             style={{
               width: "100%",
               borderCollapse: "collapse",
-              boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-              borderRadius: "10px",
-              overflow: "hidden",
+              border: "1px solid #000",
             }}
           >
             <thead>
@@ -323,12 +340,13 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
                   <th
                     key={heading}
                     style={{
-                      background: `linear-gradient(135deg, ${brandColor} 0%, ${brandColor}dd 100%)`,
+                      background: brandColor,
                       color: "#fff",
-                      padding: "8px 6px",
-                      fontSize: "11px",
+                      padding: "10px 8px",
+                      fontSize: "12px",
                       fontWeight: "600",
                       textAlign: "center",
+                      border: "1px solid #000",
                     }}
                   >
                     {heading}
@@ -341,61 +359,60 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
                 <tr
                   key={i}
                   style={{
-                    backgroundColor: i % 2 === 0 ? "#f8f9fa" : "#fff",
-                    transition: "background-color 0.2s",
+                    backgroundColor: "#fff",
                   }}
                 >
                   <td
                     style={{
-                      border: "1px solid #e0e0e0",
+                      border: "1px solid #000",
                       textAlign: "center",
-                      padding: "6px 4px",
+                      padding: "8px 6px",
                       fontWeight: "500",
-                      fontSize: "10px",
+                      fontSize: "12px",
                     }}
                   >
                     {sanitizeText(inst?.installment)}
                   </td>
                   <td
                     style={{
-                      border: "1px solid #e0e0e0",
+                      border: "1px solid #000",
                       textAlign: "center",
-                      padding: "6px 4px",
+                      padding: "8px 6px",
                       color: brandColor,
                       fontWeight: "600",
-                      fontSize: "10px",
+                      fontSize: "12px",
                     }}
                   >
                     {sanitizeText(String(inst?.percentagePayable || 0))}%
                   </td>
                   <td
                     style={{
-                      border: "1px solid #e0e0e0",
+                      border: "1px solid #000",
                       textAlign: "center",
-                      padding: "6px 4px",
-                      fontSize: "10px",
+                      padding: "8px 6px",
+                      fontSize: "12px",
                     }}
                   >
                     {sanitizeText(inst?.milestone)}
                   </td>
                   <td
                     style={{
-                      border: "1px solid #e0e0e0",
+                      border: "1px solid #000",
                       textAlign: "center",
-                      padding: "6px 4px",
-                      fontSize: "10px",
+                      padding: "8px 6px",
+                      fontSize: "12px",
                     }}
                   >
                     {sanitizeText(inst?.milestoneDate)}
                   </td>
                   <td
                     style={{
-                      border: "1px solid #e0e0e0",
+                      border: "1px solid #000",
                       textAlign: "center",
-                      padding: "6px 4px",
+                      padding: "8px 6px",
                       fontWeight: "600",
                       color: "#28a745",
-                      fontSize: "10px",
+                      fontSize: "12px",
                     }}
                   >
                     {sanitizeText(String(inst?.total || 0))}
@@ -419,7 +436,7 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
           alignItems: "center",
         }}
       >
-        <Header value={extra?.header?.salesOffer} />
+        <Header value={extra?.header?.floorPlan} />
         {(unit?.floorPlans?.length || 0) > 0 && (
           <div style={{ padding: "30px" }}>
             <div>
@@ -436,9 +453,7 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
                     style={{
                       backgroundColor: "#f8f9fa",
                       padding: "20px",
-                      borderRadius: "12px",
-                      boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-                      border: `2px solid ${brandColor}20`,
+                      border: `2px solid ${brandColor}`,
                     }}
                   >
                     <img
@@ -448,7 +463,6 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
                         width: "100%",
                         maxHeight: "600px",
                         objectFit: "contain",
-                        borderRadius: "8px",
                       }}
                     />
                     <p
@@ -482,37 +496,37 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
           alignItems: "center",
         }}
       >
-        <Header value={extra?.header?.salesOffer} />
+        <Header value={extra?.header?.preRegistration} />
         <div style={{ flex: 1, width: "100%" }}>
           <table
             style={{
               width: "100%",
               borderCollapse: "collapse",
-              boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-              borderRadius: "10px",
-              overflow: "hidden",
+              border: "1px solid #000",
             }}
           >
             <thead>
               <tr>
                 <th
                   style={{
-                    background: `linear-gradient(135deg, ${brandColor} 0%, ${brandColor}dd 100%)`,
+                    background: brandColor,
                     color: "#fff",
                     padding: "15px",
                     fontSize: "14px",
                     fontWeight: "600",
+                    border: "1px solid #000",
                   }}
                 >
                   Description
                 </th>
                 <th
                   style={{
-                    background: `linear-gradient(135deg, ${brandColor} 0%, ${brandColor}dd 100%)`,
+                    background: brandColor,
                     color: "#fff",
                     padding: "15px",
                     fontSize: "14px",
                     fontWeight: "600",
+                    border: "1px solid #000",
                   }}
                 >
                   Amount (AED)
@@ -524,27 +538,27 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
                 <tr
                   key={i}
                   style={{
-                    backgroundColor: i % 2 === 0 ? "#f8f9fa" : "#fff",
+                    backgroundColor: "#fff",
                   }}
                 >
                   <td
                     style={{
-                      border: "1px solid #e0e0e0",
+                      border: "1px solid #000",
                       textAlign: "center",
                       padding: "15px",
-                      fontSize: "14px",
+                      fontSize: "12px",
                     }}
                   >
                     {sanitizeText(b?.description)}
                   </td>
                   <td
                     style={{
-                      border: "1px solid #e0e0e0",
+                      border: "1px solid #000",
                       textAlign: "center",
                       padding: "15px",
                       fontWeight: "600",
                       color: "#28a745",
-                      fontSize: "14px",
+                      fontSize: "12px",
                     }}
                   >
                     {sanitizeText(String(b?.amount || 0))}

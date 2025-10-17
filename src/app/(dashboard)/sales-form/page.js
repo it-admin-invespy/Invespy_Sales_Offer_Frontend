@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, use } from "react";
 import { useForm } from "react-hook-form";
 import { useSearchParams } from "next/navigation";
 import { usePDF } from "react-to-pdf";
@@ -37,6 +37,7 @@ function SalesFormPage() {
   const [selectedUnit, setSelectedUnit] = useState(0);
   const [pdfData, setPdfData] = useState();
   const [loading, setLoading] = useState(false);
+  const [loaderButton, setLoaderButton] = useState(false);
 
   const {
     register,
@@ -87,11 +88,9 @@ function SalesFormPage() {
       setLoading(true);
       try {
         const data = await getSalesOfferById(id);
-        console.log("Fetched sales offer data:", data);
         const floorPlanUnitImages = [];
         const unitsArray = data.salesOffer?.project?.units;
         for (let i = 0; i < unitsArray?.length; i++) {
-          console.log("Processing unit for images:", unitsArray[i]);
           const fp = unitsArray[i].floorPlans;
           for (let j = 0; j < fp.length; j++) {
             floorPlanUnitImages.push({
@@ -104,9 +103,6 @@ function SalesFormPage() {
         setFloorPlanImages(floorPlanUnitImages);
         const formData = await transformSalesOffer(data.salesOffer);
         setSalesOfferData(formData);
-        formData.extra.breakdown =
-          formData.projects?.[0]?.units?.[0]?.preRegistrationPayment
-            ?.breakdown || [];
         setUnitsData(
           formData.projects?.[0]?.units?.map((unit) => {
             return {
@@ -128,30 +124,40 @@ function SalesFormPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
-  const onSubmit = async (data) => {
+  useEffect(() => {
+    const unitPrice = unitsData[selectedUnit]?.price || 0;
+    const amount = unitPrice * 0.04;
+    setValue("extra.breakdown.0.amount", amount);
+  }, [selectedUnit, unitsData]);
+
+  const onSubmit = async (formValue) => {
+    const data = formValue;
+    setLoaderButton(true);
     const id = searchParams.get("id");
     unitsData.forEach((unit, index) => {
       const floorPlans = getFloorPlansForUnit(unit);
-      console.log("Floor plans for unit", index, floorPlans);
       if (data.projects?.[0]?.units?.[index]) {
         data.projects[0].units[index]["floorPlans"] = floorPlans;
       }
     });
+    const breakdown = { ...watch(`extra.breakdown`) };
     unitsData.forEach((element, index) => {
-      const breakdown = watch(`extra.breakdown`);
-      const totalAmount = breakdown.reduce((sum, item) => {
-        const amount = parseFloat(item?.amount) || 0;
-        return sum + amount;
-      }, 0);
+      const totalAmount = element.price * 0.04 + Number(breakdown[1].amount);
+      const unitBreakdown = [{}, {}];
+      unitBreakdown[0]["description"] = "4% of Sales Price (DLD FEE)";
+      unitBreakdown[0]["amount"] = element.price * 0.04;
+      unitBreakdown[1]["description"] = "Admin Fee + VAT ";
+      unitBreakdown[1]["amount"] = Number(breakdown[1].amount);
 
-      data.projects[0].units[index]["preRegistrationPayment"]["totalAmount"] =
-        totalAmount;
-      data.projects[0].units[index]["preRegistrationPayment"]["breakdown"] =
-        breakdown;
+      data.projects[0].units[index]["preRegistrationPayment"] = {
+        totalAmount: totalAmount,
+        breakdown: unitBreakdown,
+      };
     });
-    console.log("Data", data);
     const { extra, ...rest } = data;
-    console.log("payload being saved", rest);
+    rest.projects[0].units.map((unit) => {
+      console.log("Submitting unit:", unit.preRegistrationPayment);
+    });
 
     try {
       const response = id
@@ -161,40 +167,87 @@ function SalesFormPage() {
       router.push("/dashboard");
     } catch (error) {
       console.error("Error submitting form:", error);
+    } finally {
+      setLoaderButton(false);
     }
   };
 
   const downloadSalesOffer = async () => {
+    setLoaderButton(true);
     const data = getValues();
+    const breakdown = { ...watch(`extra.breakdown`) };
     unitsData.forEach((unit, index) => {
       const floorPlans = getFloorPlansForUnit(unit, true);
       if (data.projects?.[0]?.units?.[index]) {
         data.projects[0].units[index]["floorPlans"] = floorPlans;
       }
+      const totalAmount = unit.price * 0.04 + Number(breakdown[1].amount);
+      const unitBreakdown = [{}, {}];
+      unitBreakdown[0]["description"] = "4% of Sales Price (DLD FEE)";
+      unitBreakdown[0]["amount"] = unit.price * 0.04;
+      unitBreakdown[1]["description"] = "Admin Fee + VAT ";
+      unitBreakdown[1]["amount"] = Number(breakdown[1].amount);
+
+      data.projects[0].units[index]["preRegistrationPayment"] = {
+        totalAmount: totalAmount,
+        breakdown: unitBreakdown,
+      };
     });
-    setPdfData(data);
-    setTimeout(() => {
-      toPDF();
-    }, 0);
+    setPdfData({ ...data });
+    // Wait for the DOM to update (React render cycle)
+    await new Promise((resolve) => setTimeout(resolve, 300));
+
+    // Then trigger PDF for the updated view
+    toPDF({
+      filename: `sales-offer-${
+        data.projects?.[0]?.units?.[selectedUnit].unitNo || selectedUnit + 1
+      }.pdf`,
+      targetRef,
+    });
+    setLoaderButton(false);
   };
 
   const downloadSalesOfferAll = async () => {
+    setLoaderButton(true);
     const data = getValues();
-    unitsData.forEach((unit, index) => {
+    const breakdown = { ...watch(`extra.breakdown`) };
+
+    for (let index = 0; index < unitsData.length; index++) {
+      const unit = unitsData[index];
       const floorPlans = getFloorPlansForUnit(unit, true);
+
       if (data.projects?.[0]?.units?.[index]) {
-        data.projects[0].units[index]["floorPlans"] = floorPlans;
+        data.projects[0].units[index].floorPlans = floorPlans;
       }
+
+      const totalAmount = unit.price * 0.04 + Number(breakdown[1].amount);
+      const unitBreakdown = [{}, {}];
+      unitBreakdown[0]["description"] = "4% of Sales Price (DLD FEE)";
+      unitBreakdown[0]["amount"] = unit.price * 0.04;
+      unitBreakdown[1]["description"] = "Admin Fee + VAT ";
+      unitBreakdown[1]["amount"] = Number(breakdown[1].amount);
+
+      data.projects[0].units[index]["preRegistrationPayment"] = {
+        totalAmount: totalAmount,
+        breakdown: unitBreakdown,
+      };
+
       setSelectedUnit(index);
       setPdfData({ ...data });
-      setTimeout(() => {
-        toPDF();
-      }, 0);
-    });
+
+      // Wait for the DOM to update (React render cycle)
+      await new Promise((resolve) => setTimeout(resolve, 300));
+
+      // Then trigger PDF for the updated view
+      toPDF({
+        filename: `sales-offer-${unit.unitNo || index + 1}.pdf`,
+        targetRef,
+      });
+      setLoaderButton(false);
+    }
   };
 
   const getFloorPlansForUnit = (unit, useLocalUrl = false) => {
-    console.log("Getting floor plans for unit:", floorPlanImages);
     return (
       floorPlanImages
         ?.filter((image) => {
@@ -207,7 +260,7 @@ function SalesFormPage() {
   };
 
   const { toPDF, targetRef } = usePDF({
-    method: "open",
+    method: "save",
     filename: "sales-offer.pdf",
     page: { margin: 10, format: "a4" },
   });
@@ -411,8 +464,6 @@ function SalesFormPage() {
             register={register}
             meta={watch("meta")}
             control={control}
-            breakdown={watch(`extra.breakdown`)}
-            units={unitsData}
           />
         </SectionCard>
 
@@ -439,20 +490,22 @@ function SalesFormPage() {
 
         {/* Submit */}
         <div className="flex justify-end gap-4">
-          <button
+          <DynamicButton
             type="button"
             onClick={downloadSalesOfferAll}
-            className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+            className="px-6 py-2 rounded-lg"
+            variant="success"
           >
             Download PDF For All Units
-          </button>
-          <button
+          </DynamicButton>
+          <DynamicButton
             type="button"
             onClick={downloadSalesOffer}
-            className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+            className="px-6 py-2 rounded-lg"
+            variant="success"
           >
             Download PDF
-          </button>
+          </DynamicButton>
           <DynamicButton
             type="submit"
             className="px-6 py-2 rounded-lg"

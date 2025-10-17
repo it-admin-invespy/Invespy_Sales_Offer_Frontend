@@ -15,9 +15,15 @@ export default function CSVUpload({
   }, [unitsData]);
 
   const sanitizeText = (text) => {
-    if (typeof text !== 'string') return '';
+    if (typeof text !== "string") return "";
     return text.replace(/[<>"'&]/g, (match) => {
-      const entities = { '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#x27;', '&': '&amp;' };
+      const entities = {
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#x27;",
+        "&": "&amp;",
+      };
       return entities[match];
     });
   };

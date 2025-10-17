@@ -91,12 +91,14 @@ export default function BulkImageUpload({ onImagesUpload, imageArray }) {
                 <li
                   key={image?.url || index}
                   className="group p-3 bg-white border border-gray-200 rounded-md hover:border-blue-300 hover:shadow-sm transition-all duration-200 flex justify-between items-center cursor-pointer"
-                  onMouseEnter={() => setHoveredImage(image)}
-                  onMouseLeave={() => setHoveredImage(null)}
                 >
                   <div className="flex items-center space-x-3">
                     <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                    <span className="text-sm text-gray-700 font-medium truncate">
+                    <span
+                      className="text-sm text-gray-700 font-medium truncate"
+                      onMouseEnter={() => setHoveredImage(image)}
+                      onMouseLeave={() => setHoveredImage(null)}
+                    >
                       {image?.name || `Image ${index + 1}`}
                     </span>
                   </div>
