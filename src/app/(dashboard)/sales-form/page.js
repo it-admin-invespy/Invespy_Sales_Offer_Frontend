@@ -1,11 +1,10 @@
 "use client";
 
-import { useState, useEffect, Suspense, use } from "react";
+import { useState, useEffect, Suspense, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { useSearchParams } from "next/navigation";
-import { usePDF } from "react-to-pdf";
+import generatePDF from "react-to-pdf";
 import { convertImageToBase64 } from "@/app/lib/utils";
-
 import ImageUpload from "../../../components/ImageUpload";
 import ColorPicker from "../../../components/ColorPicker";
 import FontSizeDropdown from "../../../components/FontSizeDropdown";
@@ -30,6 +29,7 @@ import { transformSalesOffer } from "@/app/lib/utils";
 
 function SalesFormPage() {
   const router = useRouter();
+  const targetRef = useRef();
   const searchParams = useSearchParams();
   const [salesOfferData, setSalesOfferData] = useState([]);
   const [unitsData, setUnitsData] = useState([]);
@@ -176,6 +176,7 @@ function SalesFormPage() {
     setLoaderButton(true);
     const data = getValues();
     const breakdown = { ...watch(`extra.breakdown`) };
+    const currentUnit = data.projects[0].units[selectedUnit];
     unitsData.forEach((unit, index) => {
       const floorPlans = getFloorPlansForUnit(unit, true);
       if (data.projects?.[0]?.units?.[index]) {
@@ -188,7 +189,7 @@ function SalesFormPage() {
       unitBreakdown[1]["description"] = "Admin Fee + VAT ";
       unitBreakdown[1]["amount"] = Number(breakdown[1].amount);
 
-      data.projects[0].units[index]["preRegistrationPayment"] = {
+      currentUnit["preRegistrationPayment"] = {
         totalAmount: totalAmount,
         breakdown: unitBreakdown,
       };
@@ -198,11 +199,10 @@ function SalesFormPage() {
     await new Promise((resolve) => setTimeout(resolve, 300));
 
     // Then trigger PDF for the updated view
-    toPDF({
-      filename: `sales-offer-${
-        data.projects?.[0]?.units?.[selectedUnit].unitNo || selectedUnit + 1
-      }.pdf`,
-      targetRef,
+    generatePDF(targetRef, {
+      method: "save",
+      filename: `${data.projects[0].projectName}-${currentUnit.unitNo}-sales-offer.pdf`,
+      page: { margin: 10, format: "a4" },
     });
     setLoaderButton(false);
   };
@@ -220,6 +220,7 @@ function SalesFormPage() {
         data.projects[0].units[index].floorPlans = floorPlans;
       }
 
+      const currentUnit = data.projects[0].units[index];
       const totalAmount = unit.price * 0.04 + Number(breakdown[1].amount);
       const unitBreakdown = [{}, {}];
       unitBreakdown[0]["description"] = "4% of Sales Price (DLD FEE)";
@@ -239,9 +240,10 @@ function SalesFormPage() {
       await new Promise((resolve) => setTimeout(resolve, 300));
 
       // Then trigger PDF for the updated view
-      toPDF({
-        filename: `sales-offer-${unit.unitNo || index + 1}.pdf`,
-        targetRef,
+      generatePDF(targetRef, {
+        method: "save",
+        filename: `${data.projects[0].projectName}-${currentUnit.unitNo}-sales-offer.pdf`,
+        page: { margin: 10, format: "a4" },
       });
       setLoaderButton(false);
     }
@@ -258,12 +260,6 @@ function SalesFormPage() {
         })) || []
     );
   };
-
-  const { toPDF, targetRef } = usePDF({
-    method: "save",
-    filename: "sales-offer.pdf",
-    page: { margin: 10, format: "a4" },
-  });
 
   if (loading) {
     return (
@@ -495,6 +491,7 @@ function SalesFormPage() {
             onClick={downloadSalesOfferAll}
             className="px-6 py-2 rounded-lg"
             variant="success"
+            loading={loaderButton}
           >
             Download PDF For All Units
           </DynamicButton>
@@ -503,6 +500,7 @@ function SalesFormPage() {
             onClick={downloadSalesOffer}
             className="px-6 py-2 rounded-lg"
             variant="success"
+            loading={loaderButton}
           >
             Download PDF
           </DynamicButton>
@@ -510,6 +508,7 @@ function SalesFormPage() {
             type="submit"
             className="px-6 py-2 rounded-lg"
             variant="primary"
+            loading={loaderButton}
           >
             Save
           </DynamicButton>
