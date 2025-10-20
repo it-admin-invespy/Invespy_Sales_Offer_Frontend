@@ -293,7 +293,6 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
         </div>
         <div
           style={{
-            backgroundColor: "#fff3cd",
             border: "1px solid #000",
             padding: "12px",
             fontSize: "12px",
@@ -430,66 +429,6 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
           height: "306mm",
           display: "flex",
           width: "210mm",
-          gap: "0.2rem",
-          flexDirection: "column",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        <Header value={extra?.header?.floorPlan} />
-        {(unit?.floorPlans?.length || 0) > 0 && (
-          <div style={{ padding: "30px" }}>
-            <div>
-              <div
-                style={{
-                  display: "grid",
-                  gap: "30px",
-                  justifyItems: "center",
-                }}
-              >
-                {(unit?.floorPlans || []).map((plan, i) => (
-                  <div
-                    key={i}
-                    style={{
-                      backgroundColor: "#f8f9fa",
-                      padding: "20px",
-                      border: `2px solid ${brandColor}`,
-                    }}
-                  >
-                    <img
-                      src={plan?.layoutsImages || null}
-                      alt={`Floor Plan ${i + 1}`}
-                      style={{
-                        width: "100%",
-                        maxHeight: "600px",
-                        objectFit: "contain",
-                      }}
-                    />
-                    <p
-                      style={{
-                        textAlign: "center",
-                        marginTop: "15px",
-                        fontSize: "16px",
-                        fontWeight: "600",
-                        color: brandColor,
-                      }}
-                    >
-                      Floor Plan {i + 1}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-        <Footer />
-      </div>
-      {/* Page 3 */}
-      <div
-        style={{
-          height: "306mm",
-          display: "flex",
-          width: "210mm",
           gap: "2rem",
           flexDirection: "column",
           justifyContent: "space-between",
@@ -568,6 +507,66 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
             </tbody>
           </table>
         </div>
+        <Footer />
+      </div>
+      {/* Page 3 */}
+      <div
+        style={{
+          height: "306mm",
+          display: "flex",
+          width: "210mm",
+          gap: "0.2rem",
+          flexDirection: "column",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <Header value={extra?.header?.floorPlan} />
+        {(unit?.floorPlans?.length || 0) > 0 && (
+          <div style={{ padding: "30px" }}>
+            <div>
+              <div
+                style={{
+                  display: "grid",
+                  gap: "30px",
+                  justifyItems: "center",
+                }}
+              >
+                {(unit?.floorPlans || []).map((plan, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      backgroundColor: "#f8f9fa",
+                      padding: "20px",
+                      border: `2px solid ${brandColor}`,
+                    }}
+                  >
+                    <img
+                      src={plan?.layoutsImages || null}
+                      alt={`Floor Plan ${i + 1}`}
+                      style={{
+                        width: "100%",
+                        maxHeight: "600px",
+                        objectFit: "contain",
+                      }}
+                    />
+                    <p
+                      style={{
+                        textAlign: "center",
+                        marginTop: "15px",
+                        fontSize: "16px",
+                        fontWeight: "600",
+                        color: brandColor,
+                      }}
+                    >
+                      Floor Plan {i + 1}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
         <Footer />
       </div>
     </>
