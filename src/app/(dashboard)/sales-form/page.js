@@ -200,7 +200,7 @@ function SalesFormPage() {
 
     // Then trigger PDF for the updated view
     generatePDF(targetRef, {
-      method: "save",
+      method: "open",
       filename: `${data.projects[0].projectName}-${currentUnit.unitNo}-sales-offer.pdf`,
       page: { margin: 10, format: "a4" },
     });

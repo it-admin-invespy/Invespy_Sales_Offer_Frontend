@@ -114,7 +114,7 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
           padding: "12px 0",
         }}
       >
-        {sanitizeText(value)}
+        *** {sanitizeText(value)} ***
       </div>
     </div>
   );
@@ -128,22 +128,47 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
           marginBottom: 14,
         }}
       >
-        <div style={{ fontSize: "12px" }}>
+        <div
+          style={{ fontSize: "12px", display: "flex", alignItems: "center" }}
+        >
           <strong>Customer signature:</strong>{" "}
-          <span style={{ color: "#333" }}>
+          <div
+            style={{
+              color: "#333",
+              borderBottom: "1px solid #000",
+              paddingBottom: "10px",
+              paddingLeft: "5px",
+              minWidth: "150px",
+              marginLeft: "5px",
+            }}
+          >
             {sanitizeText(customer?.name) || "N/A"}
-          </span>
+          </div>
         </div>
-        <div style={{ fontSize: "12px", textAlign: "right" }}>
+        <div
+          style={{
+            fontSize: "12px",
+            display: "flex",
+            alignItems: "center",
+          }}
+        >
           <strong>Date:</strong>{" "}
-          <span style={{ color: "#333" }}>
+          <span
+            style={{
+              color: "#333",
+              borderBottom: "1px solid #000",
+              paddingBottom: "10px",
+              paddingLeft: "5px",
+              minWidth: "150px",
+              marginLeft: "5px",
+            }}
+          >
             {sanitizeText(customer?.date) || "N/A"}
           </span>
         </div>
       </div>
       <div
         style={{
-          borderTop: `2px solid ${brandColor}`,
           paddingTop: "8px",
           textAlign: "center",
         }}
@@ -191,7 +216,7 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
               {project?.location || ""} - {project?.country || ""}
             </div>
             <div style={{ fontSize: "12px", color: "#333" }}>
-              {project?.elevation || ""}
+              {`(${project?.elevation || ""})`}
             </div>
           </div>
 
@@ -228,8 +253,6 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
                   <th
                     key={heading}
                     style={{
-                      background: brandColor,
-                      color: "#fff",
                       padding: "10px 8px",
                       fontSize: "12px",
                       fontWeight: "600",
@@ -250,8 +273,8 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
                   unit?.floorNo || "",
                   unit?.unitType || "",
                   unit?.view || "",
-                  unit?.grossArea || "",
-                  unit?.price || "",
+                  Number(unit?.grossArea) || "",
+                  Number(unit?.price) || "",
                 ].map((value, index) => (
                   <td
                     key={index}
@@ -272,35 +295,24 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
         </div>
 
         {/* Consultant Info */}
-        <div
-          style={{
-            width: "100%",
-            display: "flex",
-          }}
-        >
-          <div style={{ fontSize: "12px", width: "50%" }}>
-            <strong>Internal Sales Consultant:</strong>{" "}
-            <span style={{ color: "#333" }}>
-              {sanitizeText(salesConsultant) || "N/A"}
-            </span>
-          </div>
-          <div style={{ fontSize: "12px", width: "50%" }}>
-            <strong>{`Brokerage Agency (if any)`} :</strong>{" "}
-            <span style={{ color: "#333" }}>
-              {sanitizeText(brokerageAgency) || "N/A"}
-            </span>
-          </div>
+        <div style={{ fontSize: "12px", width: "100%" }}>
+          <strong>Internal Sales Consultant:</strong>{" "}
+          <span style={{ color: "#333" }}>
+            {sanitizeText(salesConsultant) || "N/A"}
+          </span>
+        </div>
+        <div style={{ fontSize: "12px", width: "100%" }}>
+          <strong>{`Brokerage Agency (if any)`} :</strong>{" "}
+          <span style={{ color: "#333" }}>
+            {sanitizeText(brokerageAgency) || "N/A"}
+          </span>
         </div>
         <div
           style={{
-            border: "1px solid #000",
-            padding: "12px",
             fontSize: "12px",
             lineHeight: "1.4",
           }}
         >
-          <strong>Important Notice:</strong>
-          <br />
           Applicable fees to Dubai Land Department are excluded from the above
           price/plan, plus AED 5,000 Admin Fee. The above-mentioned is not
           considered as a reservation until signed by the seller and approved by
@@ -310,16 +322,19 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
 
         {/* Payment Plan */}
         <div style={{ width: "100%" }}>
-          <h3
+          <div
             style={{
-              color: brandColor,
-              marginBottom: 12,
-              fontSize: "14px",
+              background: brandColor,
+              color: "#fff",
+              textAlign: "center",
+              fontSize: "16px",
               fontWeight: "600",
+              padding: "12px 0",
+              marginBottom: "10px",
             }}
           >
-            Payment Schedule
-          </h3>
+            *** INSTALLMENT PLAN ***
+          </div>
           <table
             style={{
               width: "100%",
@@ -339,8 +354,6 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
                   <th
                     key={heading}
                     style={{
-                      background: brandColor,
-                      color: "#fff",
                       padding: "10px 8px",
                       fontSize: "12px",
                       fontWeight: "600",
@@ -377,12 +390,11 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
                       border: "1px solid #000",
                       textAlign: "center",
                       padding: "8px 6px",
-                      color: brandColor,
                       fontWeight: "600",
                       fontSize: "12px",
                     }}
                   >
-                    {sanitizeText(String(inst?.percentagePayable || 0))}%
+                    {Number(inst?.percentagePayable || 0)}%
                   </td>
                   <td
                     style={{
@@ -410,11 +422,10 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
                       textAlign: "center",
                       padding: "8px 6px",
                       fontWeight: "600",
-                      color: "#28a745",
                       fontSize: "12px",
                     }}
                   >
-                    {sanitizeText(String(inst?.total || 0))}
+                    {Number(inst?.total || 0)}
                   </td>
                 </tr>
               ))}
@@ -448,8 +459,6 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
               <tr>
                 <th
                   style={{
-                    background: brandColor,
-                    color: "#fff",
                     padding: "15px",
                     fontSize: "14px",
                     fontWeight: "600",
@@ -460,8 +469,6 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
                 </th>
                 <th
                   style={{
-                    background: brandColor,
-                    color: "#fff",
                     padding: "15px",
                     fontSize: "14px",
                     fontWeight: "600",
@@ -496,7 +503,6 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
                       textAlign: "center",
                       padding: "15px",
                       fontWeight: "600",
-                      color: "#28a745",
                       fontSize: "12px",
                     }}
                   >
@@ -538,7 +544,6 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
                     style={{
                       backgroundColor: "#f8f9fa",
                       padding: "20px",
-                      border: `2px solid ${brandColor}`,
                     }}
                   >
                     <img
@@ -550,17 +555,6 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
                         objectFit: "contain",
                       }}
                     />
-                    <p
-                      style={{
-                        textAlign: "center",
-                        marginTop: "15px",
-                        fontSize: "16px",
-                        fontWeight: "600",
-                        color: brandColor,
-                      }}
-                    >
-                      Floor Plan {i + 1}
-                    </p>
                   </div>
                 ))}
               </div>
