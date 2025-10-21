@@ -142,7 +142,7 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
               marginLeft: "5px",
             }}
           >
-            {sanitizeText(customer?.name) || "N/A"}
+            {sanitizeText(customer?.name) || ""}
           </div>
         </div>
         <div
@@ -163,7 +163,7 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
               marginLeft: "5px",
             }}
           >
-            {sanitizeText(customer?.date) || "N/A"}
+            {sanitizeText(customer?.date) || ""}
           </span>
         </div>
       </div>
@@ -298,13 +298,13 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
         <div style={{ fontSize: "12px", width: "100%" }}>
           <strong>Internal Sales Consultant:</strong>{" "}
           <span style={{ color: "#333" }}>
-            {sanitizeText(salesConsultant) || "N/A"}
+            {sanitizeText(salesConsultant) || ""}
           </span>
         </div>
         <div style={{ fontSize: "12px", width: "100%" }}>
           <strong>{`Brokerage Agency (if any)`} :</strong>{" "}
           <span style={{ color: "#333" }}>
-            {sanitizeText(brokerageAgency) || "N/A"}
+            {sanitizeText(brokerageAgency) || ""}
           </span>
         </div>
         <div
