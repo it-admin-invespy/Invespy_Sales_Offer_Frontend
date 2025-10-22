@@ -63,6 +63,8 @@ const emptySalesOfferData = {
       floorPlan: "INDIVIDUAL UNIT FLOOR PLAN",
       preRegistration: "PRE-REGISTRATION FEE TO BE PAID WITH RESERVATION",
     },
+    contactEmail: "",
+    contactAddress: "",
   },
 };
 
@@ -111,7 +113,8 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
           textAlign: "center",
           fontSize: "16px",
           fontWeight: "600",
-          padding: "12px 0",
+          paddingBottom: "20px",
+          paddingTop: "10px",
         }}
       >
         *** {sanitizeText(value)} ***
@@ -136,14 +139,11 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
             style={{
               color: "#333",
               borderBottom: "1px solid #000",
-              paddingBottom: "10px",
-              paddingLeft: "5px",
               minWidth: "150px",
+              marginTop: "24px",
               marginLeft: "5px",
             }}
-          >
-            {sanitizeText(customer?.name) || ""}
-          </div>
+          ></div>
         </div>
         <div
           style={{
@@ -157,14 +157,11 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
             style={{
               color: "#333",
               borderBottom: "1px solid #000",
-              paddingBottom: "10px",
-              paddingLeft: "5px",
+              marginTop: "24px",
               minWidth: "150px",
               marginLeft: "5px",
             }}
-          >
-            {sanitizeText(customer?.date) || ""}
-          </span>
+          ></span>
         </div>
       </div>
       <div
@@ -174,10 +171,10 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
         }}
       >
         <p style={{ margin: "3px 0", fontWeight: "bold", fontSize: "12px" }}>
-          info@maaia.ae | www.maaia.ae
+          {extra.contactEmail}
         </p>
         <p style={{ margin: "3px 0", fontSize: "12px" }}>
-          Office Number 5202, Ubora Tower, Business Bay, Dubai, UAE
+          {extra.contactAddress}
         </p>
       </div>
     </div>
@@ -329,7 +326,8 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
               textAlign: "center",
               fontSize: "16px",
               fontWeight: "600",
-              padding: "12px 0",
+              paddingBottom: "20px",
+              paddingTop: "10px",
               marginBottom: "10px",
             }}
           >
