@@ -3,7 +3,7 @@ export default function ContactInfo({ register }) {
     <div className="bg-white border border-gray-200 shadow-sm rounded-lg p-6 space-y-4 text-gray-700">
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
-          Footer Line 1
+          {`Footer Line ( email | website )`}
         </label>
         <input
           {...register("extra.contactEmail")}
@@ -13,7 +13,7 @@ export default function ContactInfo({ register }) {
       </div>
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
-          Footer Line 2
+          {`Footer Line ( address )`}
         </label>
         <input
           {...register("extra.contactAddress")}

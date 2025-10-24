@@ -7,9 +7,15 @@ export function SectionCard({ title, children }) {
   );
 }
 
-export function InputField({ register, name, placeholder, type = "text" }) {
+export function InputField({ register, name, placeholder, type = "text", label, required }) {
   return (
     <div>
+      {label && (
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          {label}
+          {required && <span className="text-red-500 ml-1">*</span>}
+        </label>
+      )}
       <input
         type={type}
         {...register(name)}

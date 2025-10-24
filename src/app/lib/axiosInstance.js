@@ -30,6 +30,7 @@ AxiosInstance.interceptors.response.use(
     return response;
   },
   (error) => {
+    console.error("Response error:", error.response?.data);
     // Handle response errors here
     return Promise.reject(error);
   }
