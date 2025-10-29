@@ -272,48 +272,55 @@ function SalesFormPage() {
 
   const handleCSVFileChange = (event) => {
     const file = event.target.files[0];
-    if (file && file.type === 'text/csv') {
+    if (file && file.type === "text/csv") {
       const reader = new FileReader();
       reader.onload = (e) => {
         const csv = e.target.result;
-        const lines = csv.split('\n');
-        const headers = lines[0].split(',').map(h => h.trim());
-        
+        const lines = csv.split("\n");
+        const headers = lines[0].split(",").map((h) => h.trim());
+
         if (lines.length > 1) {
-          const values = lines[1].split(',').map(v => v.trim());
-          
+          const values = lines[1].split(",").map((v) => v.trim());
+
           // Map CSV headers to form fields
           headers.forEach((header, index) => {
-            const value = values[index] || '';
+            const value = values[index] || "";
             switch (header.toLowerCase()) {
-              case 'projectname':
-              case 'project name':
-                setValue('projects.0.projectName', value);
+              case "brand color":
+                setValue("meta.brandColors", value);
                 break;
-              case 'country':
-                setValue('projects.0.country', value);
+              case "font family":
+                setValue("meta.fonts.0", value);
                 break;
-              case 'location':
-                setValue('projects.0.location', value);
+              case "project name":
+                setValue("projects.0.projectName", value);
                 break;
-              case 'elevation':
-                setValue('projects.0.elevation', value);
+              case "country":
+                setValue("projects.0.country", value);
                 break;
-              case 'salesconsultant':
-              case 'sales consultant':
-                setValue('salesConsultant', value);
+              case "location":
+                setValue("projects.0.location", value);
                 break;
-              case 'brokerageagency':
-              case 'brokerage agency':
-                setValue('brokerageAgency', value);
+              case "elevation":
+                setValue("projects.0.elevation", value);
                 break;
-              case 'customername':
-              case 'customer name':
-              case 'signature name':
-                setValue('customer.name', value);
+              case "sales consultant":
+                setValue("salesConsultant", value);
                 break;
-              case 'date':
-                setValue('customer.date', value);
+              case "brokerage agency":
+                setValue("brokerageAgency", value);
+                break;
+              case "signature":
+                setValue("customer.name", value);
+                break;
+              case "date":
+                setValue("customer.date", value);
+                break;
+              case "email-website":
+                setValue("extra.contactEmail", value);
+                break;
+              case "address":
+                setValue("extra.contactAddress", value);
                 break;
             }
           });
@@ -321,7 +328,7 @@ function SalesFormPage() {
       };
       reader.readAsText(file);
     }
-    event.target.value = '';
+    event.target.value = "";
   };
 
   if (loading) {
@@ -616,8 +623,18 @@ function SalesFormPage() {
             {/* Import Section */}
             <div className="flex items-center gap-3">
               <div className="flex items-center justify-center w-10 h-10 bg-blue-100 rounded-lg">
-                <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                <svg
+                  className="w-5 h-5 text-blue-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"
+                  />
                 </svg>
               </div>
               <div>
@@ -629,10 +646,12 @@ function SalesFormPage() {
                 >
                   Import Fields from CSV
                 </DynamicButton>
-                <p className="text-xs text-gray-500 mt-1">Upload CSV to auto-fill form fields</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  Upload CSV to auto-fill form fields
+                </p>
               </div>
             </div>
-            
+
             <input
               ref={csvImportRef}
               type="file"
@@ -640,7 +659,7 @@ function SalesFormPage() {
               onChange={handleCSVFileChange}
               className="hidden"
             />
-            
+
             {/* Action Buttons */}
             <div className="flex flex-wrap gap-3">
               <DynamicButton
@@ -650,12 +669,22 @@ function SalesFormPage() {
                 variant="success"
                 loading={loaderButton}
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                  />
                 </svg>
                 Download All PDFs
               </DynamicButton>
-              
+
               <DynamicButton
                 type="button"
                 onClick={downloadSalesOffer}
@@ -663,20 +692,40 @@ function SalesFormPage() {
                 variant="success"
                 loading={loaderButton}
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                  />
                 </svg>
                 Download PDF
               </DynamicButton>
-              
+
               <DynamicButton
                 type="submit"
                 className="px-8 py-3 rounded-lg font-semibold transition-all duration-200 hover:shadow-md flex items-center gap-2"
                 variant="primary"
                 loading={loaderButton}
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 13l4 4L19 7"
+                  />
                 </svg>
                 Save Form
               </DynamicButton>
