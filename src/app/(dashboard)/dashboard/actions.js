@@ -8,7 +8,7 @@ export async function getSalesOffers() {
     return response.data.salesOffers;
   } catch (error) {
     console.error("Error fetching sales offers:", error);
-    throw error;
+    throw new Error(error.response?.data?.message || error.message || 'Failed to fetch sales offers');
   }
 }
 
@@ -18,7 +18,7 @@ export async function getSalesOfferById(id) {
     return response.data;
   } catch (error) {
     console.error("Error fetching sales offer by ID:", error);
-    throw error;
+    throw new Error(error.response?.data?.message || error.message || 'Failed to fetch sales offer');
   }
 }
 
@@ -36,7 +36,7 @@ export async function uploadImage(formData) {
     return response.data;
   } catch (error) {
     console.error("Error uploading image:", error);
-    throw error;
+    throw new Error(error.response?.data?.message || error.message || 'Failed to upload image');
   }
 }
 
@@ -54,7 +54,7 @@ export async function uploadBulkImages(formData) {
     return response.data;
   } catch (error) {
     console.error("Error uploading bulk images:", error);
-    throw error;
+    throw new Error(error.response?.data?.message || error.message || 'Failed to upload bulk images');
   }
 }
 
@@ -72,7 +72,7 @@ export async function createSalesOffer(formData) {
     return response.data;
   } catch (error) {
     console.error("Error creating sales offer:", error);
-    throw error;
+    throw new Error(error.response?.data?.message || error.message || 'Failed to create sales offer');
   }
 }
 
@@ -90,7 +90,7 @@ export async function updateSalesOffer(formData, id) {
     return response.data;
   } catch (error) {
     console.error("Error creating sales offer:", error.response);
-    throw error;
+    throw new Error(error.response?.data?.message || error.message || 'Failed to update sales offer');
   }
 }
 
@@ -100,6 +100,6 @@ export async function deleteSalesOffer(id) {
     return response.data;
   } catch (error) {
     console.error("Error deleting sales offer:", error);
-    throw error;
+    throw new Error(error.response?.data?.message || error.message || 'Failed to delete sales offer');
   }
 }

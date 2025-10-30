@@ -13,13 +13,15 @@ export default function Header() {
   };
 
   return (
-    <header className="bg-white shadow-sm border-b">
-      <div className="max-w-7xl mx-auto px-6 py-8">
+    <header className="bg-white shadow-sm border-b border-gray-200">
+      <div className="max-w-7xl mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">
-              Sales Dashboard
-            </h1>
+            <Link href="/dashboard">
+              <h1 className="text-3xl font-bold text-gray-900 hover:text-blue-600 transition-colors cursor-pointer">
+                Sales Dashboard
+              </h1>
+            </Link>
             <p className="text-gray-600 mt-1">
               Manage and track your sales offers
             </p>

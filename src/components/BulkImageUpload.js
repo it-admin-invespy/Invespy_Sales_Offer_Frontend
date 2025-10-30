@@ -9,12 +9,9 @@ export default function BulkImageUpload({ onImagesUpload, imageArray }) {
 
   const handleRemoveImage = useCallback(
     (indexToRemove) => {
-      const updatedImages = imageArray.filter(
-        (_, index) => index !== indexToRemove
-      );
-      onImagesUpload(updatedImages);
+      onImagesUpload(imageArray.filter((_, index) => index !== indexToRemove));
     },
-    [onImagesUpload]
+    [imageArray, onImagesUpload]
   );
 
   const handleFileChange = async (e) => {
@@ -106,6 +103,7 @@ export default function BulkImageUpload({ onImagesUpload, imageArray }) {
                     onClick={() => handleRemoveImage(index)}
                     className="text-red-500 hover:text-red-700 hover:bg-red-50 rounded-full p-1 transition-all duration-200"
                     title="Remove image"
+                    type="button"
                   >
                     <svg
                       className="w-4 h-4"

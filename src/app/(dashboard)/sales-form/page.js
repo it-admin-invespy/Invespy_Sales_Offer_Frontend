@@ -26,6 +26,7 @@ import {
   updateSalesOffer,
 } from "../dashboard/actions";
 import { transformSalesOffer } from "@/app/lib/utils";
+import { set } from "zod";
 
 function SalesFormPage() {
   const router = useRouter();
@@ -127,7 +128,44 @@ function SalesFormPage() {
     };
     if (id) {
       fetchSalesOffer(id);
+    } else {
+      console.log("No ID found in URL");
+      setSelectedUnit(0);
+      setUnitsData([]);
+      setFloorPlanImages([]);
+      reset({
+        projects: [
+          {
+            projectName: "",
+            location: "",
+            country: "",
+            elevation: "",
+            units: [],
+          },
+        ],
+        salesConsultant: "",
+        brokerageAgency: "",
+        customer: { name: "", date: "" },
+        meta: {
+          logoUrl: "",
+          brandColors: "",
+          fonts: [""],
+          styles: {
+            header: { fontSize: "18px", fontWeight: "600" },
+            table: { borderColor: "" },
+          },
+        },
+        extra: {
+          header: {
+            salesOffer: "OFFICIAL SALES OFFER",
+            floorPlan: "INDIVIDUAL UNIT FLOOR PLAN",
+            preRegistration: "PRE-REGISTRATION FEE TO BE PAID WITH RESERVATION",
+          },
+          breakdown: [],
+        },
+      });
     }
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
@@ -164,8 +202,6 @@ function SalesFormPage() {
     });
     const { extra, ...rest } = data;
 
-    console.log("rest", rest);
-
     try {
       const response = id
         ? await updateSalesOffer(rest, id)
@@ -174,6 +210,7 @@ function SalesFormPage() {
       router.push("/dashboard");
     } catch (error) {
       console.error("Error submitting form:", error);
+      alert(`Error: ${error.message || 'Failed to submit form'}`);
     } finally {
       setLoaderButton(false);
     }
@@ -320,6 +357,7 @@ function SalesFormPage() {
                 setValue("extra.contactEmail", value);
                 break;
               case "address":
+                console.log("address", value);
                 setValue("extra.contactAddress", value);
                 break;
             }
