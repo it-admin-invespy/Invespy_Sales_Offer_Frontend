@@ -24,7 +24,7 @@ export default function InvisibleTable({ register, meta, control }) {
         { description: "Admin Fee + VAT", amount: 5250 },
       ]);
     }
-  }, [fields.length, append]);
+  }, [fields, append]);
 
   return (
     <div>

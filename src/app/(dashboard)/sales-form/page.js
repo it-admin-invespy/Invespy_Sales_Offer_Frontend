@@ -89,7 +89,6 @@ function SalesFormPage() {
       setLoading(true);
       try {
         const data = await getSalesOfferById(id);
-        console.log("Fetched sales offer data:", data);
         const floorPlanUnitImages = [];
         const unitsArray = data.salesOffer?.project?.units;
         for (let i = 0; i < unitsArray?.length; i++) {
@@ -104,7 +103,6 @@ function SalesFormPage() {
         }
         setFloorPlanImages(floorPlanUnitImages);
         const formData = await transformSalesOffer(data.salesOffer);
-        console.log("transformed formData", formData);
         setSalesOfferData(formData);
         const breakdown =
           formData.projects?.[0]?.units?.[0]?.preRegistrationPayment?.breakdown.reverse();
@@ -117,7 +115,6 @@ function SalesFormPage() {
             };
           }) || []
         );
-        console.log("formData", formData);
         reset({ ...formData });
       } catch (error) {
         console.error("Error fetching sales offer:", error);
@@ -128,7 +125,6 @@ function SalesFormPage() {
     if (id) {
       fetchSalesOffer(id);
     } else {
-      console.log("No ID found in URL");
       setSelectedUnit(0);
       setUnitsData([]);
       setFloorPlanImages([]);
@@ -169,9 +165,12 @@ function SalesFormPage() {
   }, [searchParams]);
 
   useEffect(() => {
-    const unitPrice = unitsData[selectedUnit]?.price || 0;
-    const amount = unitPrice * 0.04;
-    setValue("extra.breakdown.0.amount", amount);
+    const breakdown = watch(`extra.breakdown`);
+    if (breakdown.length > 0 && unitsData.length > 0) {
+      const unitPrice = unitsData[selectedUnit]?.price || 0;
+      const amount = unitPrice * 0.04;
+      setValue("extra.breakdown.0.amount", amount);
+    }
   }, [selectedUnit, unitsData]);
 
   const onSubmit = async (formValue) => {
@@ -205,7 +204,6 @@ function SalesFormPage() {
       const response = id
         ? await updateSalesOffer(rest, id)
         : await createSalesOffer(rest);
-      console.log("Form submitted successfully:", response);
       router.push("/dashboard");
     } catch (error) {
       console.error("Error submitting form:", error);
@@ -265,7 +263,6 @@ function SalesFormPage() {
       }
 
       const currentUnit = data.projects[0].units[index];
-      console.log("Generating PDF for unit:", currentUnit.unitNo);
       const totalAmount = Object.values(breakdown).reduce((sum, item) => {
         return sum + (Number(item?.amount) || 0);
       }, 0);
@@ -274,8 +271,6 @@ function SalesFormPage() {
         totalAmount: totalAmount,
         breakdown: breakdown,
       };
-
-      console.log("Data for PDF:", data);
 
       setSelectedUnit(index);
       setPdfData({ ...data });
@@ -359,7 +354,6 @@ function SalesFormPage() {
                 setValue("extra.contactEmail", value);
                 break;
               case "address":
-                console.log("address", value);
                 setValue("extra.contactAddress", value);
                 break;
             }
@@ -419,7 +413,6 @@ function SalesFormPage() {
               <ImageUpload
                 label={"Upload Logo"}
                 onUpload={(url) => {
-                  console.log("URL", url);
                   setValue("meta.logoUrl", url);
                 }}
                 currentUrl={watch("meta.logoUrl")}
