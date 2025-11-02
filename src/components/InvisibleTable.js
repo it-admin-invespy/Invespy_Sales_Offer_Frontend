@@ -28,7 +28,7 @@ export default function InvisibleTable({ register, meta, control }) {
 
   return (
     <div>
-      <div>{JSON.stringify(fields)}</div>
+      {/* <div>{JSON.stringify(fields)}</div> */}
       <table className="w-full">
         <thead>
           <tr>

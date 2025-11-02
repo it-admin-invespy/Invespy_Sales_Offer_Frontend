@@ -26,7 +26,6 @@ import {
   updateSalesOffer,
 } from "../dashboard/actions";
 import { transformSalesOffer } from "@/app/lib/utils";
-import { set } from "zod";
 
 function SalesFormPage() {
   const router = useRouter();
@@ -210,7 +209,7 @@ function SalesFormPage() {
       router.push("/dashboard");
     } catch (error) {
       console.error("Error submitting form:", error);
-      alert(`Error: ${error.message || 'Failed to submit form'}`);
+      alert(`Error: ${error.message || "Failed to submit form"}`);
     } finally {
       setLoaderButton(false);
     }
@@ -255,7 +254,7 @@ function SalesFormPage() {
   const downloadSalesOfferAll = async () => {
     setLoaderButton(true);
     const data = getValues();
-    const breakdown = { ...watch(`extra.breakdown`) };
+    const breakdown = [...watch(`extra.breakdown`)];
 
     for (let index = 0; index < unitsData.length; index++) {
       const unit = unitsData[index];
@@ -266,6 +265,7 @@ function SalesFormPage() {
       }
 
       const currentUnit = data.projects[0].units[index];
+      console.log("Generating PDF for unit:", currentUnit.unitNo);
       const totalAmount = Object.values(breakdown).reduce((sum, item) => {
         return sum + (Number(item?.amount) || 0);
       }, 0);
@@ -274,6 +274,8 @@ function SalesFormPage() {
         totalAmount: totalAmount,
         breakdown: breakdown,
       };
+
+      console.log("Data for PDF:", data);
 
       setSelectedUnit(index);
       setPdfData({ ...data });
