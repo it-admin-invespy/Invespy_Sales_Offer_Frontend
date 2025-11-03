@@ -7,8 +7,6 @@ import generatePDF from "react-to-pdf";
 import { convertImageToBase64 } from "@/app/lib/utils";
 import ImageUpload from "../../../components/ImageUpload";
 import ColorPicker from "../../../components/ColorPicker";
-// import FontSizeDropdown from "../../../components/FontSizeDropdown";
-// import FontWeightDropdown from "../../../components/FontWeightDropdown";
 import FontDropdown from "../../../components/FontDropdown";
 import CSVUpload from "../../../components/CSVUpload";
 import InstallmentCSV from "../../../components/InstallmentCSV";
@@ -62,7 +60,12 @@ function SalesFormPage() {
       ],
       salesConsultant: "",
       brokerageAgency: "",
-      customer: { name: "", date: new Date().toISOString().split('T')[0] },
+      customer: {
+        name: "",
+        date: "",
+        email: "",
+        address: "",
+      },
       meta: {
         logoUrl: "",
         brandColors: "",
@@ -89,6 +92,7 @@ function SalesFormPage() {
       setLoading(true);
       try {
         const data = await getSalesOfferById(id);
+        console.log("Fetched sales offer data:", data);
         const floorPlanUnitImages = [];
         const unitsArray = data.salesOffer?.project?.units;
         for (let i = 0; i < unitsArray?.length; i++) {
@@ -140,7 +144,12 @@ function SalesFormPage() {
         ],
         salesConsultant: "",
         brokerageAgency: "",
-        customer: { name: "", date: new Date().toISOString().split('T')[0] },
+        customer: {
+          name: "",
+          date: "",
+          email: "",
+          address: "",
+        },
         meta: {
           logoUrl: "",
           brandColors: "",
@@ -351,10 +360,10 @@ function SalesFormPage() {
                 setValue("customer.date", value);
                 break;
               case "email-website":
-                setValue("extra.contactEmail", value);
+                setValue("customer.email", value);
                 break;
               case "address":
-                setValue("extra.contactAddress", value);
+                setValue("customer.address", value);
                 break;
             }
           });
@@ -534,7 +543,6 @@ function SalesFormPage() {
               name="projects.0.country"
               placeholder="Country"
               label="Country"
-              required
             />
 
             <InputField
@@ -576,7 +584,6 @@ function SalesFormPage() {
               name="salesConsultant"
               placeholder="Sales Consultant"
               label="Sales Consultant"
-              required
             />
             <InputField
               register={register}
@@ -635,7 +642,6 @@ function SalesFormPage() {
               name="customer.name"
               placeholder="Signature Name"
               label="Signature Name"
-              required
             />
             <InputField
               register={register}
@@ -643,7 +649,6 @@ function SalesFormPage() {
               name="customer.date"
               placeholder="Date"
               label="Date"
-              required
             />
           </div>
         </SectionCard>

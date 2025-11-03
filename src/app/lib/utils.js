@@ -54,6 +54,8 @@ export const transformSalesOffer = async (data) => {
     customer: {
       name: offer?.customers?.[0]?.name || "",
       date: offer?.customers?.[0]?.date || "",
+      email: offer?.customers?.[0]?.email || "",
+      address: offer?.customers?.[0]?.address || "",
     },
     meta: {
       logoUrl: (await convertImageToBase64(meta?.logoUrl)) || "",
@@ -133,8 +135,10 @@ export const createPayloadForDuplicateObj = (objectA) => {
         ? {
             name: objectA.customers[0]?.name || "",
             date: objectA.customers[0]?.date || "",
+            email: objectA.customers[0]?.email || "",
+            address: objectA.customers[0]?.address || "",
           }
-        : { name: "", date: "" },
+        : { name: "", date: "", email: "", address: "" },
 
       // meta information
       meta: {

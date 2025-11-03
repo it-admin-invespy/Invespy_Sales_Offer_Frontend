@@ -36,6 +36,7 @@ export default function Page() {
   const fetchForms = async () => {
     try {
       const data = await getSalesOffers();
+      console.log("Fetched forms:", data);
       setForms(data);
     } catch (error) {
       console.error("Failed to fetch forms:", error);
@@ -50,6 +51,7 @@ export default function Page() {
 
   const handlePreview = useCallback(
     async (data) => {
+      console.log("Generating preview for data:", data);
       const formData = await transformSalesOffer(data);
       console.log("Preview form:", formData);
       setpreviewForm({ ...formData });

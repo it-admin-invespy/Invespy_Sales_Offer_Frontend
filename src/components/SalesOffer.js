@@ -42,6 +42,8 @@ const emptySalesOfferData = {
   customer: {
     name: "",
     date: "",
+    email: "",
+    address: "",
   },
   meta: {
     logoUrl: "",
@@ -63,8 +65,6 @@ const emptySalesOfferData = {
       floorPlan: "INDIVIDUAL UNIT FLOOR PLAN",
       preRegistration: "PRE-REGISTRATION FEE TO BE PAID WITH RESERVATION",
     },
-    contactEmail: "",
-    contactAddress: "",
   },
 };
 
@@ -104,7 +104,11 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
           marginBottom: 10,
         }}
       >
-        <img src={meta?.logoUrl || null} alt="Logo" style={{ width: 140 }} />
+        <img
+          src={meta?.logoUrl || null}
+          alt="Logo"
+          style={{ width: 140, margin: 5 }}
+        />
       </div>
       <div
         style={{
@@ -171,11 +175,9 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
         }}
       >
         <p style={{ margin: "3px 0", fontWeight: "bold", fontSize: "12px" }}>
-          {extra.contactEmail}
+          {customer.email}
         </p>
-        <p style={{ margin: "3px 0", fontSize: "12px" }}>
-          {extra.contactAddress}
-        </p>
+        <p style={{ margin: "3px 0", fontSize: "12px" }}>{customer.address}</p>
       </div>
     </div>
   );

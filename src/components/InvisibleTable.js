@@ -16,9 +16,7 @@ export default function InvisibleTable({ register, meta, control }) {
 
   // Initialize with fixed fields if empty
   useEffect(() => {
-    console.log("Fields length:", fields.length);
     if (fields.length === 0) {
-      console.log("Appending initial fields");
       append([
         { description: "4% of Sales Price (DLD FEE)", amount: 0 },
         { description: "Admin Fee + VAT", amount: 5250 },
