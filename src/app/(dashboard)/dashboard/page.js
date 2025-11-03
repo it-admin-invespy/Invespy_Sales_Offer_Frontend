@@ -53,7 +53,8 @@ export default function Page() {
       const formData = await transformSalesOffer(data);
       console.log("Preview form:", formData);
       setpreviewForm({ ...formData });
-      setTimeout(() => toPDF(), 0);
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      toPDF();
     },
     [toPDF]
   );
