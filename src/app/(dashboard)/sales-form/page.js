@@ -62,7 +62,7 @@ function SalesFormPage() {
       ],
       salesConsultant: "",
       brokerageAgency: "",
-      customer: { name: "", date: "" },
+      customer: { name: "", date: new Date().toISOString().split('T')[0] },
       meta: {
         logoUrl: "",
         brandColors: "",
@@ -140,7 +140,7 @@ function SalesFormPage() {
         ],
         salesConsultant: "",
         brokerageAgency: "",
-        customer: { name: "", date: "" },
+        customer: { name: "", date: new Date().toISOString().split('T')[0] },
         meta: {
           logoUrl: "",
           brandColors: "",
