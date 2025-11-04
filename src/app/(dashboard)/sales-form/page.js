@@ -209,6 +209,33 @@ function SalesFormPage() {
     });
     const { extra, ...rest } = data;
 
+    // Remove empty string or null values
+    const removeEmptyValues = (obj) => {
+      Object.keys(obj).forEach((key) => {
+        const val = obj[key];
+        if (val === "" || val === null) {
+          delete obj[key];
+        } else if (val && typeof val === "object" && !Array.isArray(val)) {
+          removeEmptyValues(val);
+          if (!Object.keys(val).length) delete obj[key];
+        } else if (val && Array.isArray(val)) {
+          val.forEach((item, index) => {
+            if (typeof item === "object") {
+              removeEmptyValues(item);
+            } else if (item === "" || item === null) {
+              val.splice(index, 1);
+            }
+          });
+          removeEmptyValues(val);
+          if (!Object.keys(val).length) delete obj[key];
+        }
+      });
+    };
+
+    removeEmptyValues(rest);
+
+    console.log("Submitting form data:", rest);
+
     try {
       const response = id
         ? await updateSalesOffer(rest, id)
