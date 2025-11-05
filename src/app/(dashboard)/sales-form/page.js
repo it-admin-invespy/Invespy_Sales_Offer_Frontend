@@ -386,7 +386,10 @@ function SalesFormPage() {
                 setValue("customer.name", value);
                 break;
               case "date":
-                setValue("customer.date", value);
+                setValue(
+                  "customer.date",
+                  new Date(value).toISOString().split("T")[0]
+                );
                 break;
               case "email-website":
                 setValue("customer.email", value);
