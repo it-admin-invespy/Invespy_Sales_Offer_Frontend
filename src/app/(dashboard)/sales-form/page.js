@@ -350,6 +350,7 @@ function SalesFormPage() {
         const headers = lines[0].split(",").map((h) => h.trim());
 
         if (lines.length > 1) {
+          console.log("CSV lines:", lines);
           const values = lines[1].split(",").map((v) => v.trim());
 
           // Map CSV headers to form fields
@@ -390,7 +391,12 @@ function SalesFormPage() {
                 setValue("customer.email", value);
                 break;
               case "address":
-                setValue("customer.address", value);
+                setValue(
+                  "customer.address",
+                  `${value}, ${values[index + 1]}, ${values[index + 2]}, ${
+                    values[index + 3]
+                  }`
+                );
                 break;
             }
           });
