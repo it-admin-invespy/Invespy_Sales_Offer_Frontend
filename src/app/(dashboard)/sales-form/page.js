@@ -356,6 +356,7 @@ function SalesFormPage() {
           // Map CSV headers to form fields
           headers.forEach((header, index) => {
             const value = values[index] || "";
+
             switch (header.toLowerCase()) {
               case "brand color":
                 setValue("meta.brandColors", value);
@@ -391,12 +392,11 @@ function SalesFormPage() {
                 setValue("customer.email", value);
                 break;
               case "address":
-                setValue(
-                  "customer.address",
-                  `${value}, ${values[index + 1]}, ${values[index + 2]}, ${
-                    values[index + 3]
-                  }`
-                );
+                const addressValue = `${value}, ${values[index + 1]}, ${
+                  values[index + 2]
+                }, ${values[index + 3]}`;
+                const cleaned = addressValue.replace(/[@#$"]/g, "");
+                setValue("customer.address", cleaned);
                 break;
             }
           });
