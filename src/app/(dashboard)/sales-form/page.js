@@ -109,7 +109,7 @@ function SalesFormPage() {
         const formData = await transformSalesOffer(data.salesOffer);
         setSalesOfferData(formData);
         const breakdown =
-          formData.projects?.[0]?.units?.[0]?.preRegistrationPayment?.breakdown.reverse();
+          formData.projects?.[0]?.units?.[0]?.preRegistrationPayment?.breakdown;
         formData.extra.breakdown = breakdown || [];
         setUnitsData(
           formData.projects?.[0]?.units?.map((unit) => {
