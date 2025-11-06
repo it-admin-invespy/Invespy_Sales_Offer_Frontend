@@ -395,9 +395,9 @@ function SalesFormPage() {
                 setValue("customer.email", value);
                 break;
               case "address":
-                const addressValue = `${value}, ${values[index + 1]}, ${
-                  values[index + 2]
-                }, ${values[index + 3]}`;
+                const addressValue = `${value}, ${values[index + 1] || ""}, ${
+                  values[index + 2] || ""
+                }, ${values[index + 3] || ""}`;
                 const cleaned = addressValue.replace(/[@#$"]/g, "");
                 setValue("customer.address", cleaned);
                 break;
