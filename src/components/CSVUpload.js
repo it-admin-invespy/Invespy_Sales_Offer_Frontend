@@ -14,20 +14,6 @@ export default function CSVUpload({
     setCsvData(unitsData);
   }, [unitsData]);
 
-  const sanitizeText = (text) => {
-    if (typeof text !== "string") return "";
-    return text.replace(/[<>"'&]/g, (match) => {
-      const entities = {
-        "<": "&lt;",
-        ">": "&gt;",
-        '"': "&quot;",
-        "'": "&#x27;",
-        "&": "&amp;",
-      };
-      return entities[match];
-    });
-  };
-
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -44,11 +30,11 @@ export default function CSVUpload({
         .map((line) => {
           const values = line?.split(",") || [];
           return {
-            projectName: sanitizeText(values[0]?.trim() || ""),
-            unitNo: sanitizeText(values[1]?.trim() || ""),
-            floorNo: sanitizeText(values[2]?.trim() || ""),
-            unitType: sanitizeText(values[3]?.trim() || ""),
-            view: sanitizeText(values[4]?.trim() || ""),
+            projectName: values[0]?.trim() || "",
+            unitNo: values[1]?.trim() || "",
+            floorNo: values[2]?.trim() || "",
+            unitType: values[3]?.trim() || "",
+            view: values[4]?.trim() || "",
             grossArea: parseFloat(values[5]?.trim()) || 0,
             price: parseFloat(values[6]?.trim()) || 0,
           };
@@ -134,7 +120,7 @@ export default function CSVUpload({
                   className={selectedRow === index ? "bg-blue-50" : ""}
                 >
                   <td className="border border-gray-300 px-2 py-1">
-                    {sanitizeText(row.projectName)}
+                    {row.projectName}
                   </td>
                   <td className="border border-gray-300 px-2 py-1">
                     <input

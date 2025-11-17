@@ -17,6 +17,7 @@ import InvisibleTable from "../../../components/InvisibleTable";
 import SalesOffer from "../../../components/SalesOffer";
 import { SectionCard, InputField } from "../../../components/FormComponents";
 import DynamicButton from "../../../components/DynamicButton";
+import TermsConditions from "../../../components/TermsConditions";
 import { useRouter } from "next/navigation";
 import {
   createSalesOffer,
@@ -82,6 +83,7 @@ function SalesFormPage() {
           preRegistration: "PRE-REGISTRATION FEE TO BE PAID WITH RESERVATION",
         },
         breakdown: [],
+        termsConditions: [""],
       },
     },
   });
@@ -166,6 +168,7 @@ function SalesFormPage() {
             preRegistration: "PRE-REGISTRATION FEE TO BE PAID WITH RESERVATION",
           },
           breakdown: [],
+          termsConditions: [""],
         },
       });
     }
@@ -594,6 +597,10 @@ function SalesFormPage() {
               label="Elevation"
             />
           </div>
+        </SectionCard>
+
+        <SectionCard title={"Terms & Conditions"}>
+          <TermsConditions register={register} control={control} />
         </SectionCard>
 
         {/* CSV Upload */}

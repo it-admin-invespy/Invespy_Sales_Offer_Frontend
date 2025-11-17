@@ -47,7 +47,7 @@ export function LoginForm() {
       </DynamicButton>
 
       <p className="text-center text-gray-600">
-        {`Don't have an account?`}
+        {`Don't have an account? `}
         <a href="/signup" className="text-blue-600 hover:underline">
           Sign up
         </a>

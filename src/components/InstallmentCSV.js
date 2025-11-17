@@ -32,8 +32,8 @@ export default function InstallmentCSV({ setValue, disabled, price, units }) {
             installment: values[0]?.trim() || "",
             percentagePayable: values[1]?.trim()?.replace(/[^0-9.]/g, "") || "",
             milestone: values[2]?.trim() || "",
-            milestoneDate: values[3]?.trim() || "",
-            total: values[4]?.trim() || "",
+            // milestoneDate: values[3]?.trim() || "",
+            total: values[3]?.trim() || "",
           };
         });
       registerUnitInstallments(data);
@@ -52,9 +52,12 @@ export default function InstallmentCSV({ setValue, disabled, price, units }) {
             row?.percentagePayable?.replace(/[^0-9.]/g, "") || "0"
           ),
           milestone: row?.milestone || "",
-          milestoneDate: row?.milestoneDate || "",
+          // milestoneDate: row?.milestoneDate || "",
           total:
-            (parseFloat(row?.percentagePayable?.replace(/[^0-9.]/g, "") || "0") / 100) *
+            (parseFloat(
+              row?.percentagePayable?.replace(/[^0-9.]/g, "") || "0"
+            ) /
+              100) *
             (element?.price || 0),
         };
         Object.entries(values).forEach(([key, value]) => {
@@ -114,9 +117,9 @@ export default function InstallmentCSV({ setValue, disabled, price, units }) {
                 </th>
                 <th className="border border-gray-300 px-2 py-1">% Payable</th>
                 <th className="border border-gray-300 px-2 py-1">Milestone</th>
-                <th className="border border-gray-300 px-2 py-1">
+                {/* <th className="border border-gray-300 px-2 py-1">
                   Milestone Date
-                </th>
+                </th> */}
                 <th className="border border-gray-300 px-2 py-1">
                   Amount (AED)
                 </th>
@@ -134,9 +137,9 @@ export default function InstallmentCSV({ setValue, disabled, price, units }) {
                   <td className="border border-gray-300 px-2 py-1">
                     {row.milestone}
                   </td>
-                  <td className="border border-gray-300 px-2 py-1">
+                  {/* <td className="border border-gray-300 px-2 py-1">
                     {row.milestoneDate}
-                  </td>
+                  </td> */}
                   <td className="border border-gray-300 px-2 py-1">
                     {`${((row?.percentagePayable || 0) / 100) * (price || 0)}`}
                   </td>
