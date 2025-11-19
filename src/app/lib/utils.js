@@ -51,6 +51,7 @@ export const transformSalesOffer = async (data) => {
 
     salesConsultant: offer?.salesConsultant || "",
     brokerageAgency: offer?.brokerageAgency || "",
+    termsAndCondition: offer?.termsAndCondition || "",
     customer: {
       name: offer?.customers?.[0]?.name || "",
       date: offer?.customers?.[0]?.date || "",

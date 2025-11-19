@@ -61,6 +61,7 @@ function SalesFormPage() {
       ],
       salesConsultant: "",
       brokerageAgency: "",
+      termsAndCondition: "",
       customer: {
         name: "",
         date: "",
@@ -83,7 +84,6 @@ function SalesFormPage() {
           preRegistration: "PRE-REGISTRATION FEE TO BE PAID WITH RESERVATION",
         },
         breakdown: [],
-        termsConditions: [""],
       },
     },
   });
@@ -146,6 +146,7 @@ function SalesFormPage() {
         ],
         salesConsultant: "",
         brokerageAgency: "",
+        termsAndCondition: "",
         customer: {
           name: "",
           date: "",
@@ -168,7 +169,6 @@ function SalesFormPage() {
             preRegistration: "PRE-REGISTRATION FEE TO BE PAID WITH RESERVATION",
           },
           breakdown: [],
-          termsConditions: [""],
         },
       });
     }
@@ -389,10 +389,7 @@ function SalesFormPage() {
                 setValue("customer.name", value);
                 break;
               case "date":
-                setValue(
-                  "customer.date",
-                  new Date(value).toISOString().split("T")[0]
-                );
+                setValue("customer.date", value);
                 break;
               case "email-website":
                 setValue("customer.email", value);

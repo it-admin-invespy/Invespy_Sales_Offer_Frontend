@@ -86,7 +86,7 @@ export default function BulkImageUpload({ onImagesUpload, imageArray }) {
             <ul className="space-y-2 max-h-48 overflow-y-auto">
               {imageArray.map((image, index) => (
                 <li
-                  key={image?.url || index}
+                  key={index}
                   className="group p-3 bg-white border border-gray-200 rounded-md hover:border-blue-300 hover:shadow-sm transition-all duration-200 flex justify-between items-center cursor-pointer"
                 >
                   <div className="flex items-center space-x-3">

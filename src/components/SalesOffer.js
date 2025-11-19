@@ -39,6 +39,7 @@ const emptySalesOfferData = {
   ],
   salesConsultant: "",
   brokerageAgency: "",
+  termsAndCondition: "",
   customer: {
     name: "",
     date: "",
@@ -65,7 +66,6 @@ const emptySalesOfferData = {
       floorPlan: "INDIVIDUAL UNIT FLOOR PLAN",
       preRegistration: "PRE-REGISTRATION FEE TO BE PAID WITH RESERVATION",
     },
-    termsConditions: [],
   },
 };
 
@@ -73,9 +73,8 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
   const data = salesOfferData || emptySalesOfferData;
   const project = data?.projects?.[0];
   const unit = project?.units?.[selectedUnit] || project?.units?.[0];
-  const { customer, meta, extra } = data || {};
+  const { customer, meta, extra, termsAndCondition } = data || {};
   const brandColor = meta?.brandColors || "#007BFF";
-  const fontFamily = meta?.fonts?.[0] || "Arial, sans-serif";
 
   const formatNumber = (num) => {
     return Number(num || 0).toLocaleString();
@@ -312,9 +311,12 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
               marginBottom: "30px",
             }}
           >
-            {extra?.termsConditions?.length > 0 &&
-              extra?.termsConditions.map((term, i) => (
-                <div key={i}>{`*${term}`}</div>
+            {termsAndCondition &&
+              termsAndCondition.split("|").map((term, i) => (
+                <div key={i} className="flex items-center">
+                  <div className="font-bold text-black mr-1">*</div>
+                  <div>{term}</div>
+                </div>
               ))}
           </div>
           {/* Payment Plan */}
