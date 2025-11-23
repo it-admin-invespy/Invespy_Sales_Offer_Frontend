@@ -5,6 +5,8 @@ export const transformSalesOffer = async (data) => {
   const project = offer.project;
   const meta = project?.meta || {};
 
+  console.log("project : ", offer);
+
   return {
     projects: [
       {
@@ -78,6 +80,7 @@ export const transformSalesOffer = async (data) => {
         floorPlan: "INDIVIDUAL UNIT FLOOR PLAN",
         preRegistration: "PRE-REGISTRATION FEE TO BE PAID WITH RESERVATION",
       },
+      termsAndCondition: offer?.termsAndCondition?.split("|") || [],
     },
   };
 };
@@ -130,6 +133,7 @@ export const createPayloadForDuplicateObj = (objectA) => {
       ],
       salesConsultant: objectA?.salesConsultant || "",
       brokerageAgency: objectA?.brokerageAgency || "",
+      termsAndCondition: objectA?.termsAndCondition || "",
 
       // take first customer (assuming one)
       customer: objectA?.customers?.length

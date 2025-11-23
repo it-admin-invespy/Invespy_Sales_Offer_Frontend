@@ -61,7 +61,6 @@ function SalesFormPage() {
       ],
       salesConsultant: "",
       brokerageAgency: "",
-      termsAndCondition: "",
       customer: {
         name: "",
         date: "",
@@ -84,6 +83,7 @@ function SalesFormPage() {
           preRegistration: "PRE-REGISTRATION FEE TO BE PAID WITH RESERVATION",
         },
         breakdown: [],
+        termsAndCondition: ["", "", "", "", "", ""],
       },
     },
   });
@@ -146,7 +146,6 @@ function SalesFormPage() {
         ],
         salesConsultant: "",
         brokerageAgency: "",
-        termsAndCondition: "",
         customer: {
           name: "",
           date: "",
@@ -169,6 +168,7 @@ function SalesFormPage() {
             preRegistration: "PRE-REGISTRATION FEE TO BE PAID WITH RESERVATION",
           },
           breakdown: [],
+          termsAndCondition: ["", "", "", "", "", ""],
         },
       });
     }
@@ -210,7 +210,12 @@ function SalesFormPage() {
         breakdown: unitBreakdown,
       };
     });
+
     const { extra, ...rest } = data;
+
+    rest["termsAndCondition"] = extra?.termsAndCondition
+      .filter((t) => t.trim())
+      .join(" | ");
 
     // Remove empty string or null values
     const removeEmptyValues = (obj) => {
@@ -275,6 +280,8 @@ function SalesFormPage() {
         breakdown: unitBreakdown,
       };
     });
+    console.log("sales offer data", data);
+    data.meta.logoUrl = await convertImageToBase64(data.meta.logoUrl);
     setPdfData({ ...data });
     // Wait for the DOM to update (React render cycle)
     await new Promise((resolve) => setTimeout(resolve, 300));
@@ -292,6 +299,8 @@ function SalesFormPage() {
     setLoaderButton(true);
     const data = getValues();
     const breakdown = [...watch(`extra.breakdown`)];
+
+    data.meta.logoUrl = await convertImageToBase64(data.meta.logoUrl);
 
     for (let index = 0; index < unitsData.length; index++) {
       const unit = unitsData[index];
@@ -597,7 +606,7 @@ function SalesFormPage() {
         </SectionCard>
 
         <SectionCard title={"Terms & Conditions"}>
-          <TermsConditions register={register} control={control} />
+          <TermsConditions register={register} />
         </SectionCard>
 
         {/* CSV Upload */}

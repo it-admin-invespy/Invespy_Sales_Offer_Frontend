@@ -15,6 +15,7 @@ export default function ImageUpload({ onUpload, label }) {
     formData.append("file", file);
     try {
       const { data } = await uploadImage(formData);
+      console.log("Upload successful:", data);
       onUpload(data.url);
     } catch (error) {
       console.error("Upload failed:", error);
