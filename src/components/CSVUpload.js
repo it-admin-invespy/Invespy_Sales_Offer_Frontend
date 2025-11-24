@@ -38,6 +38,22 @@ export default function CSVUpload({
             grossArea: parseFloat(values[5]?.trim()) || 0,
             price: parseFloat(values[6]?.trim()) || 0,
           };
+        })
+        .sort((a, b) => {
+          // Sort by unit number (handle both numeric and alphanumeric unit numbers)
+          const unitA = a.unitNo;
+          const unitB = b.unitNo;
+          
+          // Try to parse as numbers first
+          const numA = parseFloat(unitA);
+          const numB = parseFloat(unitB);
+          
+          if (!isNaN(numA) && !isNaN(numB)) {
+            return numA - numB;
+          }
+          
+          // Fall back to string comparison
+          return unitA.localeCompare(unitB, undefined, { numeric: true, sensitivity: 'base' });
         });
 
       setCsvData(data);
@@ -156,20 +172,20 @@ export default function CSVUpload({
                   </td>
                   <td className="border border-gray-300 px-2 py-1">
                     <input
-                      type="number"
+                      type="text"
                       {...register(`${name}.${index}.grossArea`)}
-                      defaultValue={row.grossArea}
+                      value={Math.round(row.grossArea).toLocaleString('en-US')}
                       disabled
-                      className="w-full border-none outline-none bg-transparent"
+                      className="w-full border-none outline-none bg-transparent text-right"
                     />
                   </td>
                   <td className="border border-gray-300 px-2 py-1">
                     <input
-                      type="number"
+                      type="text"
                       {...register(`${name}.${index}.price`)}
-                      defaultValue={row.price}
+                      value={row.price.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                       disabled
-                      className="w-full border-none outline-none bg-transparent"
+                      className="w-full border-none outline-none bg-transparent text-right"
                     />
                   </td>
                   <td className="border border-gray-300 px-2 py-1">

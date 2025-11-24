@@ -400,6 +400,24 @@ function SalesFormPage() {
               case "date":
                 setValue("customer.date", value);
                 break;
+              case "term1":
+                setValue("extra.termsAndCondition.0", value);
+                break;
+              case "term2":
+                setValue("extra.termsAndCondition.1", value);
+                break;
+              case "term3":
+                setValue("extra.termsAndCondition.2", value);
+                break;
+              case "term4":
+                setValue("extra.termsAndCondition.3", value);
+                break;
+              case "term5":
+                setValue("extra.termsAndCondition.4", value);
+                break;
+              case "term6":
+                setValue("extra.termsAndCondition.5", value);
+                break;
               case "email-website":
                 setValue("customer.email", value);
                 break;

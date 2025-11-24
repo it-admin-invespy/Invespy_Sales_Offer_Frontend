@@ -132,7 +132,7 @@ export default function InstallmentCSV({ setValue, disabled, price, units }) {
                     {row.installment}
                   </td>
                   <td className="border border-gray-300 px-2 py-1">
-                    {row.percentagePayable}
+                    {Math.round(row.percentagePayable)}
                   </td>
                   <td className="border border-gray-300 px-2 py-1">
                     {row.milestone}
@@ -140,8 +140,8 @@ export default function InstallmentCSV({ setValue, disabled, price, units }) {
                   {/* <td className="border border-gray-300 px-2 py-1">
                     {row.milestoneDate}
                   </td> */}
-                  <td className="border border-gray-300 px-2 py-1">
-                    {`${((row?.percentagePayable || 0) / 100) * (price || 0)}`}
+                  <td className="border border-gray-300 px-2 py-1 text-right">
+                    {(((row?.percentagePayable || 0) / 100) * (price || 0)).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                   </td>
                 </tr>
               ))}
