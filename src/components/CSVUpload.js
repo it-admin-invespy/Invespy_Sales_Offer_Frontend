@@ -5,7 +5,6 @@ export default function CSVUpload({
   register,
   setSelectedUnit,
   unitsData = [],
-  setValue,
 }) {
   const name = "projects.0.units";
   const [csvData, setCsvData] = useState([]);
@@ -13,21 +12,7 @@ export default function CSVUpload({
 
   useEffect(() => {
     setCsvData(unitsData);
-    // Store numeric values in form when unitsData changes
-    if (setValue && unitsData.length > 0) {
-      unitsData.forEach((unit, index) => {
-        const numericGrossArea = typeof unit.grossArea === "number" 
-          ? unit.grossArea 
-          : parseFloat(String(unit.grossArea).replace(/,/g, "")) || 0;
-        const numericPrice = typeof unit.price === "number" 
-          ? unit.price 
-          : parseFloat(String(unit.price).replace(/,/g, "")) || 0;
-        
-        setValue(`${name}.${index}.grossArea`, numericGrossArea);
-        setValue(`${name}.${index}.price`, numericPrice);
-      });
-    }
-  }, [unitsData, setValue]);
+  }, [unitsData]);
 
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
@@ -145,13 +130,8 @@ export default function CSVUpload({
               </tr>
             </thead>
             <tbody>
-              {csvData.map((row, index) => {
-                const numericPrice =
-                  typeof row.price === "number"
-                    ? row.price
-                    : parseFloat(row.price) || 0;
-                return (
-                  <tr
+              {csvData.map((row, index) => (
+                <tr
                   key={index}
                   className={selectedRow === index ? "bg-blue-50" : ""}
                 >
@@ -192,37 +172,19 @@ export default function CSVUpload({
                   </td>
                   <td className="border border-gray-300 px-2 py-1">
                     <input
-                      type="hidden"
-                      {...register(`${name}.${index}.grossArea`)}
-                      defaultValue={typeof row.grossArea === "number" 
-                        ? row.grossArea 
-                        : parseFloat(String(row.grossArea).replace(/,/g, "")) || 0}
-                    />
-                    <input
                       type="text"
-                      value={Math.round(
-                        typeof row.grossArea === "number" 
-                          ? row.grossArea 
-                          : parseFloat(String(row.grossArea).replace(/,/g, "")) || 0
-                      ).toLocaleString('en-US')}
+                      {...register(`${name}.${index}.grossArea`)}
+                      value={Math.round(row.grossArea).toLocaleString('en-US')}
                       disabled
-                      readOnly
                       className="w-full border-none outline-none bg-transparent text-right"
                     />
                   </td>
                   <td className="border border-gray-300 px-2 py-1">
                     <input
-                      type="hidden"
-                      {...register(`${name}.${index}.price`)}
-                      defaultValue={numericPrice}
-                    />
-                    <input
                       type="text"
-                      value={numericPrice
-                        .toFixed(2)
-                        .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+                      {...register(`${name}.${index}.price`)}
+                      value={row.price.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                       disabled
-                      readOnly
                       className="w-full border-none outline-none bg-transparent text-right"
                     />
                   </td>
@@ -239,9 +201,8 @@ export default function CSVUpload({
                       {selectedRow === index ? "Remove" : "Calculate"}
                     </button>
                   </td>
-                  </tr>
-                );
-              })}
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>

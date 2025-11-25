@@ -242,57 +242,6 @@ function SalesFormPage() {
 
     removeEmptyValues(rest);
 
-    // Transform data: ensure numbers are numeric and date is ISO 8601
-    if (rest.projects?.[0]?.units) {
-      rest.projects[0].units = rest.projects[0].units.map((unit) => {
-        const transformedUnit = { ...unit };
-        
-        // Convert grossArea to number (remove commas if present)
-        if (transformedUnit.grossArea !== undefined) {
-          const grossAreaValue = typeof transformedUnit.grossArea === "string"
-            ? parseFloat(transformedUnit.grossArea.replace(/,/g, "")) || 0
-            : Number(transformedUnit.grossArea) || 0;
-          transformedUnit.grossArea = grossAreaValue;
-        }
-        
-        // Convert price to number (remove commas if present)
-        if (transformedUnit.price !== undefined) {
-          const priceValue = typeof transformedUnit.price === "string"
-            ? parseFloat(transformedUnit.price.replace(/,/g, "")) || 0
-            : Number(transformedUnit.price) || 0;
-          transformedUnit.price = priceValue;
-        }
-        
-        return transformedUnit;
-      });
-    }
-
-    // Convert date to ISO 8601 format
-    if (rest.customer?.date) {
-      const dateValue = rest.customer.date;
-      // Check if date is already in ISO format (YYYY-MM-DD)
-      if (!/^\d{4}-\d{2}-\d{2}/.test(dateValue)) {
-        // Try to parse common date formats
-        let parsedDate;
-        if (dateValue.includes("/")) {
-          // Format: M/D/YYYY or MM/DD/YYYY
-          const parts = dateValue.split("/");
-          if (parts.length === 3) {
-            const month = parts[0].padStart(2, "0");
-            const day = parts[1].padStart(2, "0");
-            const year = parts[2];
-            parsedDate = new Date(`${year}-${month}-${day}`);
-          }
-        } else {
-          parsedDate = new Date(dateValue);
-        }
-        
-        if (parsedDate && !isNaN(parsedDate.getTime())) {
-          rest.customer.date = parsedDate.toISOString().split("T")[0];
-        }
-      }
-    }
-
     console.log("Submitting form data:", rest);
 
     try {
@@ -651,10 +600,6 @@ function SalesFormPage() {
               placeholder="Project Name"
               label="Project Name"
               required
-              validation={{
-                required: "Project name is required",
-              }}
-              error={errors?.projects?.[0]?.projectName?.message}
             />
             <InputField
               register={register}
@@ -689,7 +634,6 @@ function SalesFormPage() {
             register={register}
             setSelectedUnit={setSelectedUnit}
             unitsData={unitsData}
-            setValue={setValue}
             units={salesOfferData?.projects?.[0]?.units || []}
           />
           {errors.projects?.[0]?.units && (

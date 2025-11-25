@@ -7,16 +7,7 @@ export function SectionCard({ title, children }) {
   );
 }
 
-export function InputField({
-  register,
-  name,
-  placeholder,
-  type = "text",
-  label,
-  required,
-  validation = {},
-  error,
-}) {
+export function InputField({ register, name, placeholder, type = "text", label, required }) {
   return (
     <div>
       {label && (
@@ -27,12 +18,10 @@ export function InputField({
       )}
       <input
         type={type}
-        {...register(name, validation)}
+        {...register(name)}
         placeholder={placeholder}
         className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-        aria-invalid={error ? "true" : "false"}
       />
-      {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
     </div>
   );
 }
