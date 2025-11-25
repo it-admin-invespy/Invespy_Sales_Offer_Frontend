@@ -103,3 +103,33 @@ export async function deleteSalesOffer(id) {
     throw new Error(error.response?.data?.message || error.message || 'Failed to delete sales offer');
   }
 }
+
+export async function deleteS3Image(url) {
+  try {
+    const response = await AxiosInstance.delete("/api/v1/sales-offers/s3/single", {
+      data: { url },
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting S3 image:", error);
+    throw new Error(error.response?.data?.message || error.message || 'Failed to delete image');
+  }
+}
+
+export async function deleteS3Images(urls) {
+  try {
+    const response = await AxiosInstance.delete("/api/v1/sales-offers/s3/bulk", {
+      data: { urls },
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting S3 images:", error);
+    throw new Error(error.response?.data?.message || error.message || 'Failed to delete images');
+  }
+}

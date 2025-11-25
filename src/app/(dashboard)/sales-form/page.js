@@ -112,7 +112,7 @@ function SalesFormPage() {
         setSalesOfferData(formData);
         const breakdown =
           formData.projects?.[0]?.units?.[0]?.preRegistrationPayment?.breakdown;
-        formData.extra.breakdown = breakdown || [];
+        formData.extra.breakdown = breakdown.reverse() || [];
         setUnitsData(
           formData.projects?.[0]?.units?.map((unit) => {
             return {
@@ -180,7 +180,7 @@ function SalesFormPage() {
     const breakdown = watch(`extra.breakdown`);
     if (breakdown.length > 0 && unitsData.length > 0) {
       const unitPrice = unitsData[selectedUnit]?.price || 0;
-      const amount = unitPrice * 0.04;
+      const amount = Math.round(unitPrice * 0.04);
       setValue("extra.breakdown.0.amount", amount);
     }
   }, [selectedUnit, unitsData]);
@@ -246,23 +246,25 @@ function SalesFormPage() {
     if (rest.projects?.[0]?.units) {
       rest.projects[0].units = rest.projects[0].units.map((unit) => {
         const transformedUnit = { ...unit };
-        
+
         // Convert grossArea to number (remove commas if present)
         if (transformedUnit.grossArea !== undefined) {
-          const grossAreaValue = typeof transformedUnit.grossArea === "string"
-            ? parseFloat(transformedUnit.grossArea.replace(/,/g, "")) || 0
-            : Number(transformedUnit.grossArea) || 0;
+          const grossAreaValue =
+            typeof transformedUnit.grossArea === "string"
+              ? parseFloat(transformedUnit.grossArea.replace(/,/g, "")) || 0
+              : Number(transformedUnit.grossArea) || 0;
           transformedUnit.grossArea = grossAreaValue;
         }
-        
+
         // Convert price to number (remove commas if present)
         if (transformedUnit.price !== undefined) {
-          const priceValue = typeof transformedUnit.price === "string"
-            ? parseFloat(transformedUnit.price.replace(/,/g, "")) || 0
-            : Number(transformedUnit.price) || 0;
+          const priceValue =
+            typeof transformedUnit.price === "string"
+              ? parseFloat(transformedUnit.price.replace(/,/g, "")) || 0
+              : Number(transformedUnit.price) || 0;
           transformedUnit.price = priceValue;
         }
-        
+
         return transformedUnit;
       });
     }
@@ -286,7 +288,7 @@ function SalesFormPage() {
         } else {
           parsedDate = new Date(dateValue);
         }
-        
+
         if (parsedDate && !isNaN(parsedDate.getTime())) {
           rest.customer.date = parsedDate.toISOString().split("T")[0];
         }

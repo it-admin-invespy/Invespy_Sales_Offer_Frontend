@@ -1,4 +1,19 @@
-import { useEffect, useState } from "react";
+import { formatCurrency, parseNumericValue, formatArea } from "@/app/lib/utils";
+import { useEffect, useState, useCallback, useMemo } from "react";
+
+const sortUnits = (a, b) => {
+  const numA = parseFloat(a.unitNo);
+  const numB = parseFloat(b.unitNo);
+
+  if (!isNaN(numA) && !isNaN(numB)) {
+    return numA - numB;
+  }
+
+  return a.unitNo.localeCompare(b.unitNo, undefined, {
+    numeric: true,
+    sensitivity: "base",
+  });
+};
 
 export default function CSVUpload({
   onDataLoad,
@@ -13,86 +28,80 @@ export default function CSVUpload({
 
   useEffect(() => {
     setCsvData(unitsData);
-    // Store numeric values in form when unitsData changes
     if (setValue && unitsData.length > 0) {
       unitsData.forEach((unit, index) => {
-        const numericGrossArea = typeof unit.grossArea === "number" 
-          ? unit.grossArea 
-          : parseFloat(String(unit.grossArea).replace(/,/g, "")) || 0;
-        const numericPrice = typeof unit.price === "number" 
-          ? unit.price 
-          : parseFloat(String(unit.price).replace(/,/g, "")) || 0;
-        
-        setValue(`${name}.${index}.grossArea`, numericGrossArea);
-        setValue(`${name}.${index}.price`, numericPrice);
+        setValue(
+          `${name}.${index}.grossArea`,
+          parseNumericValue(unit.grossArea)
+        );
+        setValue(`${name}.${index}.price`, parseNumericValue(unit.price));
       });
     }
-  }, [unitsData, setValue]);
+  }, [unitsData, setValue, name]);
 
-  const handleFileUpload = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+  const handleFileUpload = useCallback(
+    (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const csv = event.target.result;
-      const lines = csv.split("\n");
-      // const headers = lines[0].split(",");
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const csv = event.target.result;
+        const data = csv
+          .split("\n")
+          .slice(1)
+          .filter((line) => line?.trim())
+          .map((line) => {
+            const values = line.split(",");
+            return {
+              projectName: values[0]?.trim() || "",
+              unitNo: values[1]?.trim() || "",
+              floorNo: values[2]?.trim() || "",
+              unitType: values[3]?.trim() || "",
+              view: values[4]?.trim() || "",
+              grossArea: parseFloat(values[5]?.trim()) || 0,
+              price: parseFloat(values[6]?.trim()) || 0,
+            };
+          })
+          .sort(sortUnits);
 
-      const data = lines
-        .slice(1)
-        .filter((line) => line?.trim())
-        .map((line) => {
-          const values = line?.split(",") || [];
-          return {
-            projectName: values[0]?.trim() || "",
-            unitNo: values[1]?.trim() || "",
-            floorNo: values[2]?.trim() || "",
-            unitType: values[3]?.trim() || "",
-            view: values[4]?.trim() || "",
-            grossArea: parseFloat(values[5]?.trim()) || 0,
-            price: parseFloat(values[6]?.trim()) || 0,
-          };
-        })
-        .sort((a, b) => {
-          // Sort by unit number (handle both numeric and alphanumeric unit numbers)
-          const unitA = a.unitNo;
-          const unitB = b.unitNo;
-          
-          // Try to parse as numbers first
-          const numA = parseFloat(unitA);
-          const numB = parseFloat(unitB);
-          
-          if (!isNaN(numA) && !isNaN(numB)) {
-            return numA - numB;
-          }
-          
-          // Fall back to string comparison
-          return unitA.localeCompare(unitB, undefined, { numeric: true, sensitivity: 'base' });
-        });
+        setCsvData(data);
+        onDataLoad(data);
+      };
+      reader.readAsText(file);
+    },
+    [onDataLoad]
+  );
 
-      setCsvData(data);
-      onDataLoad(data);
-    };
-    reader.readAsText(file);
-  };
+  const handleCalculate = useCallback(
+    (index) => {
+      const newIndex = selectedRow === index ? 0 : index;
+      setSelectedRow(newIndex);
+      setSelectedUnit(newIndex);
+    },
+    [selectedRow, setSelectedUnit]
+  );
 
-  const handleCalculate = (index) => {
-    if (selectedRow === index) {
-      setSelectedRow(0);
-      setSelectedUnit(0);
-    } else {
-      setSelectedRow(index);
-      setSelectedUnit(index);
-    }
-  };
-
-  const handleRemoveCSV = () => {
+  const handleRemoveCSV = useCallback(() => {
     setCsvData([]);
     onDataLoad([]);
     setSelectedRow(0);
     document.getElementById("csv-upload").value = "";
-  };
+  }, [onDataLoad]);
+
+  const tableHeaders = useMemo(
+    () => [
+      "Project Name",
+      "Unit No",
+      "Floor No",
+      "Unit Type",
+      "View",
+      "Area (Sq/Ft)",
+      "Price (AED)",
+      "Action",
+    ],
+    []
+  );
 
   return (
     <div className="space-y-4">
@@ -128,117 +137,66 @@ export default function CSVUpload({
           <table className="w-full border border-gray-300 text-sm">
             <thead className="bg-gray-50">
               <tr>
-                <th className="border border-gray-300 px-2 py-1">
-                  Project Name
-                </th>
-                <th className="border border-gray-300 px-2 py-1">Unit No</th>
-                <th className="border border-gray-300 px-2 py-1">Floor No</th>
-                <th className="border border-gray-300 px-2 py-1">Unit Type</th>
-                <th className="border border-gray-300 px-2 py-1">View</th>
-                <th className="border border-gray-300 px-2 py-1">
-                  Area (Sq/Ft)
-                </th>
-                <th className="border border-gray-300 px-2 py-1">
-                  Price (AED)
-                </th>
-                <th className="border border-gray-300 px-2 py-1">Action</th>
+                {tableHeaders.map((header) => (
+                  <th key={header} className="border border-gray-300 px-2 py-1">
+                    {header}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody>
               {csvData.map((row, index) => {
-                const numericPrice =
-                  typeof row.price === "number"
-                    ? row.price
-                    : parseFloat(row.price) || 0;
+                const isSelected = selectedRow === index;
+                const numericPrice = parseNumericValue(row.price);
+                const numericArea = parseNumericValue(row.grossArea);
+
                 return (
-                  <tr
-                  key={index}
-                  className={selectedRow === index ? "bg-blue-50" : ""}
-                >
-                  <td className="border border-gray-300 px-2 py-1">
-                    {row.projectName}
-                  </td>
-                  <td className="border border-gray-300 px-2 py-1">
-                    <input
-                      {...register(`${name}.${index}.unitNo`)}
-                      defaultValue={row.unitNo}
-                      disabled
-                      className="w-full border-none outline-none bg-transparent"
-                    />
-                  </td>
-                  <td className="border border-gray-300 px-2 py-1">
-                    <input
-                      {...register(`${name}.${index}.floorNo`)}
-                      defaultValue={row.floorNo}
-                      disabled
-                      className="w-full border-none outline-none bg-transparent"
-                    />
-                  </td>
-                  <td className="border border-gray-300 px-2 py-1">
-                    <input
-                      {...register(`${name}.${index}.unitType`)}
-                      defaultValue={row.unitType}
-                      disabled
-                      className="w-full border-none outline-none bg-transparent"
-                    />
-                  </td>
-                  <td className="border border-gray-300 px-2 py-1">
-                    <input
-                      {...register(`${name}.${index}.view`)}
-                      defaultValue={row.view}
-                      disabled
-                      className="w-full border-none outline-none bg-transparent"
-                    />
-                  </td>
-                  <td className="border border-gray-300 px-2 py-1">
-                    <input
-                      type="hidden"
-                      {...register(`${name}.${index}.grossArea`)}
-                      defaultValue={typeof row.grossArea === "number" 
-                        ? row.grossArea 
-                        : parseFloat(String(row.grossArea).replace(/,/g, "")) || 0}
-                    />
-                    <input
-                      type="text"
-                      value={Math.round(
-                        typeof row.grossArea === "number" 
-                          ? row.grossArea 
-                          : parseFloat(String(row.grossArea).replace(/,/g, "")) || 0
-                      ).toLocaleString('en-US')}
-                      disabled
-                      readOnly
-                      className="w-full border-none outline-none bg-transparent text-right"
-                    />
-                  </td>
-                  <td className="border border-gray-300 px-2 py-1">
-                    <input
-                      type="hidden"
-                      {...register(`${name}.${index}.price`)}
-                      defaultValue={numericPrice}
-                    />
-                    <input
-                      type="text"
-                      value={numericPrice
-                        .toFixed(2)
-                        .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
-                      disabled
-                      readOnly
-                      className="w-full border-none outline-none bg-transparent text-right"
-                    />
-                  </td>
-                  <td className="border border-gray-300 px-2 py-1">
-                    <button
-                      type="button"
-                      onClick={() => handleCalculate(index)}
-                      className={`px-2 py-1 text-xs rounded ${
-                        selectedRow === index
-                          ? "bg-red-500 text-white"
-                          : "bg-blue-500 text-white"
-                      }`}
-                    >
-                      {selectedRow === index ? "Remove" : "Calculate"}
-                    </button>
-                  </td>
+                  <tr key={index} className={isSelected ? "bg-blue-50" : ""}>
+                    <td className="border border-gray-300 px-2 py-1">
+                      {row.projectName}
+                    </td>
+                    {["unitNo", "floorNo", "unitType", "view"].map((field) => (
+                      <td
+                        key={field}
+                        className="border border-gray-300 px-2 py-1"
+                      >
+                        <input
+                          {...register(`${name}.${index}.${field}`)}
+                          defaultValue={row[field]}
+                          disabled
+                          className="w-full border-none outline-none bg-transparent"
+                        />
+                      </td>
+                    ))}
+                    <td className="border border-gray-300 px-2 py-1 text-right">
+                      <input
+                        type="hidden"
+                        {...register(`${name}.${index}.grossArea`)}
+                        defaultValue={numericArea}
+                      />
+                      {formatArea(row.grossArea)}
+                    </td>
+                    <td className="border border-gray-300 px-2 py-1 text-right">
+                      <input
+                        type="hidden"
+                        {...register(`${name}.${index}.price`)}
+                        defaultValue={numericPrice}
+                      />
+                      {formatCurrency(row.price)}
+                    </td>
+                    <td className="border border-gray-300 px-2 py-1">
+                      <button
+                        type="button"
+                        onClick={() => handleCalculate(index)}
+                        className={`px-2 py-1 text-xs rounded ${
+                          isSelected
+                            ? "bg-red-500 text-white"
+                            : "bg-blue-500 text-white"
+                        }`}
+                      >
+                        {isSelected ? "Remove" : "Calculate"}
+                      </button>
+                    </td>
                   </tr>
                 );
               })}

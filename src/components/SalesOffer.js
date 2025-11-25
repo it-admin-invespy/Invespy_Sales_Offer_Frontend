@@ -89,6 +89,7 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
       <div
         style={{
           display: "flex",
+          flexShrink: 0,
           justifyContent: "center",
           marginBottom: 10,
         }}
@@ -96,21 +97,25 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
         <img
           src={meta?.logoUrl || null}
           alt="Logo"
-          style={{ width: 140, margin: 5 }}
+          className="w-auto h-auto max-h-[100px]"
+          style={{ margin: 5 }}
         />
       </div>
       <div
         style={{
           background: brandColor,
           color: "#fff",
+          height: "55px",
           textAlign: "center",
           fontSize: "16px",
           fontWeight: "600",
-          paddingBottom: "20px",
-          paddingTop: "10px",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          gap: "10px",
         }}
       >
-        *** {value} ***
+        <div>***</div> {value} <div>***</div>
       </div>
     </div>
   );

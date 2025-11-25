@@ -1,5 +1,9 @@
 import { useState, useCallback } from "react";
-import { uploadBulkImages } from "../app/(dashboard)/dashboard/actions";
+import {
+  uploadBulkImages,
+  deleteS3Image,
+  deleteS3Images,
+} from "../app/(dashboard)/dashboard/actions";
 import { convertImageToBase64 } from "@/app/lib/utils";
 
 export default function BulkImageUpload({ onImagesUpload, imageArray }) {
@@ -8,8 +12,35 @@ export default function BulkImageUpload({ onImagesUpload, imageArray }) {
   const [hoveredImage, setHoveredImage] = useState(null);
 
   const handleRemoveImage = useCallback(
-    (indexToRemove) => {
-      onImagesUpload(imageArray.filter((_, index) => index !== indexToRemove));
+    async (indexToRemove) => {
+      const imageToDelete = imageArray[indexToRemove];
+      
+      try {
+        if (imageToDelete?.url) {
+          await deleteS3Image(imageToDelete.url);
+        }
+        onImagesUpload(imageArray.filter((_, index) => index !== indexToRemove));
+      } catch (error) {
+        console.error("Failed to delete image:", error);
+        setError("Failed to delete image. Please try again.");
+      }
+    },
+    [imageArray, onImagesUpload]
+  );
+
+  const handleDeleteAllImages = useCallback(
+    async () => {
+      const imageUrls = imageArray.filter(img => img?.url).map(img => img.url);
+      
+      try {
+        if (imageUrls.length > 0) {
+          await deleteS3Images(imageUrls);
+        }
+        onImagesUpload([]);
+      } catch (error) {
+        console.error("Failed to delete all images:", error);
+        setError("Failed to delete all images. Please try again.");
+      }
     },
     [imageArray, onImagesUpload]
   );
@@ -67,22 +98,32 @@ export default function BulkImageUpload({ onImagesUpload, imageArray }) {
       {imageArray.length > 0 && (
         <div className="relative">
           <div className="bg-gray-50 rounded-lg p-4">
-            <h4 className="text-sm font-medium text-gray-700 mb-3 flex items-center">
-              <svg
-                className="w-4 h-4 mr-2"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+            <div className="flex justify-between items-center mb-3">
+              <h4 className="text-sm font-medium text-gray-700 flex items-center">
+                <svg
+                  className="w-4 h-4 mr-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  />
+                </svg>
+                Uploaded Images ({imageArray.length})
+              </h4>
+              <button
+                onClick={handleDeleteAllImages}
+                className="text-xs bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded transition-colors"
+                title="Delete all images"
+                type="button"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                />
-              </svg>
-              Uploaded Images ({imageArray.length})
-            </h4>
+                Delete All
+              </button>
+            </div>
             <ul className="space-y-2 max-h-48 overflow-y-auto">
               {imageArray.map((image, index) => (
                 <li

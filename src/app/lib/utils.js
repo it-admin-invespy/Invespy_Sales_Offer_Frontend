@@ -179,3 +179,25 @@ export const convertImageToBase64 = async (url) => {
     return url;
   }
 };
+
+export const formatCurrency = (amount) => {
+  const parsedAmount = parseFloat(amount);
+  return parsedAmount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+};
+
+export const parsePercentage = (value) => {
+  return parseFloat(value?.replace(/[^0-9.]/g, "") || "0");
+};
+
+export const calculateAmount = (percentage, price) => {
+  return ((percentage || 0) / 100) * (price || 0);
+};
+
+export const parseNumericValue = (value) => {
+  if (typeof value === "number") return value;
+  return parseFloat(String(value).replace(/,/g, "")) || 0;
+};
+
+export const formatArea = (value) => {
+  return Math.round(parseNumericValue(value)).toLocaleString("en-US");
+};
