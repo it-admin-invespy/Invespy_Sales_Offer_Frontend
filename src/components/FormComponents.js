@@ -1,7 +1,18 @@
-export function SectionCard({ title, children }) {
+export function SectionCard({ title, children, buttonText, onButtonClick }) {
   return (
     <div className="bg-white border border-gray-200 shadow-sm rounded-lg p-6 space-y-4">
-      <h3 className="text-lg font-semibold text-gray-700">{title}</h3>
+      <div className="flex justify-start gap-3 items-center">
+        <h3 className="text-lg font-semibold text-gray-700">{title}</h3>
+        {buttonText && onButtonClick && (
+          <button
+            type="button"
+            onClick={onButtonClick}
+            className="px-3 py-1 text-sm bg-blue-500 hover:bg-blue-600 text-white rounded transition-colors"
+          >
+            {buttonText}
+          </button>
+        )}
+      </div>
       {children}
     </div>
   );

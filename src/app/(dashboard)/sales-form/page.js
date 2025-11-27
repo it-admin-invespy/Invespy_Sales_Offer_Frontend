@@ -39,6 +39,16 @@ function SalesFormPage() {
   const [loaderButton, setLoaderButton] = useState(false);
   const csvImportRef = useRef();
 
+  const downloadSampleCSV = (csvContent, filename) => {
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const {
     register,
     handleSubmit,
@@ -686,7 +696,16 @@ function SalesFormPage() {
         </SectionCard>
 
         {/* CSV Upload */}
-        <SectionCard title="Project Units">
+        <SectionCard
+          title="Project Units"
+          buttonText={"Download Sample"}
+          onButtonClick={() =>
+            downloadSampleCSV(
+              "Project Name,Unit No,Floor No,Unit Type,View,Area (Sq/Ft),Price (AED)",
+              "project-units-sample.csv"
+            )
+          }
+        >
           <CSVUpload
             onDataLoad={setUnitsData}
             register={register}
@@ -721,7 +740,16 @@ function SalesFormPage() {
         </SectionCard>
 
         {/* Installment Summary */}
-        <SectionCard title="Installment Summary">
+        <SectionCard
+          title="Installment Summary"
+          buttonText={"Download Sample"}
+          onButtonClick={() =>
+            downloadSampleCSV(
+              "Installment,% Payable,Milestone",
+              "installment-summary-sample.csv"
+            )
+          }
+        >
           <InstallmentCSV
             setValue={setValue}
             disabled={unitsData.length === 0}
@@ -802,7 +830,7 @@ function SalesFormPage() {
                   />
                 </svg>
               </div>
-              <div>
+              <div className="flex gap-2">
                 <DynamicButton
                   type="button"
                   onClick={handleCSVImport}
@@ -811,9 +839,19 @@ function SalesFormPage() {
                 >
                   Import Fields from CSV
                 </DynamicButton>
-                <p className="text-xs text-gray-500 mt-1">
-                  Upload CSV to auto-fill form fields
-                </p>
+                <DynamicButton
+                  type="button"
+                  onClick={() =>
+                    downloadSampleCSV(
+                      "Brand Color,Font Family,Project Name,Country,Location,Elevation,Sales Consultant,Brokerage Agency,Signature,Date,term1,term2,term3,term4,term5,term6,email-website,address",
+                      "form-fields-sample.csv"
+                    )
+                  }
+                  className="px-4 py-3 rounded-lg font-medium transition-all duration-200 hover:shadow-md"
+                  variant="primary"
+                >
+                  Download Sample
+                </DynamicButton>
               </div>
             </div>
 
