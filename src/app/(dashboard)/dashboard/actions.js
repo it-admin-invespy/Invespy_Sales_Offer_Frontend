@@ -107,10 +107,11 @@ export async function deleteSalesOffer(id) {
   }
 }
 
-export async function deleteS3Image(url) {
+export async function deleteS3Image(url, projectName) {
   try {
     const response = await AxiosInstance.delete("/api/v1/sales-offers/s3/single", {
       data: { url },
+      params: projectName ? { projectName } : {},
       headers: {
         "Content-Type": "application/json",
       },
@@ -122,10 +123,11 @@ export async function deleteS3Image(url) {
   }
 }
 
-export async function deleteS3Images(urls) {
+export async function deleteS3Images(urls, projectName) {
   try {
     const response = await AxiosInstance.delete("/api/v1/sales-offers/s3/bulk", {
       data: { urls },
+      params: projectName ? { projectName } : {},
       headers: {
         "Content-Type": "application/json",
       },

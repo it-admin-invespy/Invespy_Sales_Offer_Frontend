@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import {
   uploadBulkImages,
   deleteS3Image,
@@ -14,6 +14,7 @@ export default function BulkImageUpload({
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState(null);
   const [hoveredImage, setHoveredImage] = useState(null);
+  const fileInputRef = useRef(null);
 
   const handleRemoveImage = useCallback(
     async (indexToRemove) => {
@@ -21,17 +22,20 @@ export default function BulkImageUpload({
 
       try {
         if (imageToDelete?.url) {
-          await deleteS3Image(imageToDelete.url);
+          await deleteS3Image(imageToDelete.url, projectName);
         }
         onImagesUpload(
           imageArray.filter((_, index) => index !== indexToRemove)
         );
+        if (fileInputRef.current) {
+          fileInputRef.current.value = "";
+        }
       } catch (error) {
         console.error("Failed to delete image:", error);
         setError("Failed to delete image. Please try again.");
       }
     },
-    [imageArray, onImagesUpload]
+    [imageArray, onImagesUpload, projectName]
   );
 
   const handleDeleteAllImages = useCallback(async () => {
@@ -41,14 +45,17 @@ export default function BulkImageUpload({
 
     try {
       if (imageUrls.length > 0) {
-        await deleteS3Images(imageUrls);
+        await deleteS3Images(imageUrls, projectName);
       }
       onImagesUpload([]);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
     } catch (error) {
       console.error("Failed to delete all images:", error);
       setError("Failed to delete all images. Please try again.");
     }
-  }, [imageArray, onImagesUpload]);
+  }, [imageArray, onImagesUpload, projectName]);
 
   const handleFileChange = async (e) => {
     const files = Array.from(e.target.files);
@@ -97,6 +104,7 @@ export default function BulkImageUpload({
   return (
     <div className="space-y-4">
       <input
+        ref={fileInputRef}
         type="file"
         accept="image/*"
         multiple
