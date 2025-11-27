@@ -1,7 +1,17 @@
 export default function FontDropdown({ register, name }) {
   const fonts = [
-    "Arial", "Helvetica", "Times New Roman", "Georgia", "Verdana", 
-    "Tahoma", "Trebuchet MS", "Impact", "Comic Sans MS", "Courier New"
+    "Arial",
+    "Helvetica",
+    "Times New Roman",
+    "Georgia",
+    "Verdana",
+    "Tahoma",
+    "Trebuchet MS",
+    "Impact",
+    "Comic Sans MS",
+    "Courier New",
+    "Fjalla One",
+    "Poppins",
   ];
 
   return (
