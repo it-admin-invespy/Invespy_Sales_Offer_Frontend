@@ -6,7 +6,11 @@ import {
 } from "../app/(dashboard)/dashboard/actions";
 import { convertImageToBase64 } from "@/app/lib/utils";
 
-export default function BulkImageUpload({ onImagesUpload, imageArray }) {
+export default function BulkImageUpload({
+  onImagesUpload,
+  imageArray,
+  projectName,
+}) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState(null);
   const [hoveredImage, setHoveredImage] = useState(null);
@@ -14,12 +18,14 @@ export default function BulkImageUpload({ onImagesUpload, imageArray }) {
   const handleRemoveImage = useCallback(
     async (indexToRemove) => {
       const imageToDelete = imageArray[indexToRemove];
-      
+
       try {
         if (imageToDelete?.url) {
           await deleteS3Image(imageToDelete.url);
         }
-        onImagesUpload(imageArray.filter((_, index) => index !== indexToRemove));
+        onImagesUpload(
+          imageArray.filter((_, index) => index !== indexToRemove)
+        );
       } catch (error) {
         console.error("Failed to delete image:", error);
         setError("Failed to delete image. Please try again.");
@@ -28,26 +34,31 @@ export default function BulkImageUpload({ onImagesUpload, imageArray }) {
     [imageArray, onImagesUpload]
   );
 
-  const handleDeleteAllImages = useCallback(
-    async () => {
-      const imageUrls = imageArray.filter(img => img?.url).map(img => img.url);
-      
-      try {
-        if (imageUrls.length > 0) {
-          await deleteS3Images(imageUrls);
-        }
-        onImagesUpload([]);
-      } catch (error) {
-        console.error("Failed to delete all images:", error);
-        setError("Failed to delete all images. Please try again.");
+  const handleDeleteAllImages = useCallback(async () => {
+    const imageUrls = imageArray
+      .filter((img) => img?.url)
+      .map((img) => img.url);
+
+    try {
+      if (imageUrls.length > 0) {
+        await deleteS3Images(imageUrls);
       }
-    },
-    [imageArray, onImagesUpload]
-  );
+      onImagesUpload([]);
+    } catch (error) {
+      console.error("Failed to delete all images:", error);
+      setError("Failed to delete all images. Please try again.");
+    }
+  }, [imageArray, onImagesUpload]);
 
   const handleFileChange = async (e) => {
     const files = Array.from(e.target.files);
     if (!files.length) return;
+
+    if (!projectName?.trim()) {
+      alert("Please enter a project name before uploading images.");
+      e.target.value = "";
+      return;
+    }
 
     setUploading(true);
     const uploadedImages = [];
@@ -58,7 +69,7 @@ export default function BulkImageUpload({ onImagesUpload, imageArray }) {
     }
 
     try {
-      const response = await uploadBulkImages(formData);
+      const response = await uploadBulkImages(formData, projectName);
 
       const imagePromises =
         response.data?.successful?.map(async (element) => ({

@@ -742,6 +742,7 @@ function SalesFormPage() {
           <BulkImageUpload
             onImagesUpload={setFloorPlanImages}
             imageArray={floorPlanImages}
+            projectName={watch("projects.0.projectName")}
           />
         </SectionCard>
 

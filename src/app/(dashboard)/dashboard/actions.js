@@ -40,8 +40,11 @@ export async function uploadImage(formData) {
   }
 }
 
-export async function uploadBulkImages(formData) {
+export async function uploadBulkImages(formData, projectName) {
   try {
+    if (projectName) {
+      formData.append('projectName', projectName);
+    }
     const response = await AxiosInstance.post(
       "/api/v1/sales-offers/upload/bulk",
       formData,
