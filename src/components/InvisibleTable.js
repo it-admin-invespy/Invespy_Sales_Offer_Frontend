@@ -18,7 +18,7 @@ export default function InvisibleTable({ register, meta, control }) {
   useEffect(() => {
     if (fields.length === 0) {
       append([
-        { description: "4% of Sales Price (DLD FEE)", amount: 0 },
+        { description: "4% Pre-Registration Charges (DLD Fee)", amount: 0 },
         { description: "Admin Fee + VAT", amount: 5250 },
       ]);
     }
@@ -56,7 +56,6 @@ export default function InvisibleTable({ register, meta, control }) {
               <td className="p-2 border border-gray-300">
                 <input
                   {...register(`${name}.${index}.description`)}
-                  disabled={index < 2}
                   className="w-full border-none outline-none bg-transparent"
                 />
               </td>
@@ -71,7 +70,6 @@ export default function InvisibleTable({ register, meta, control }) {
                 <button
                   type="button"
                   onClick={() => remove(index)}
-                  disabled={index < 2}
                   className={`px-2 py-1 rounded text-sm ${
                     index < 2
                       ? "bg-gray-400 text-gray-600 cursor-not-allowed"
