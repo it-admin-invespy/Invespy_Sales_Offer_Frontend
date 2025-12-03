@@ -80,7 +80,8 @@ export const transformSalesOffer = async (data) => {
         floorPlan: "INDIVIDUAL UNIT FLOOR PLAN",
         preRegistration: "PRE-REGISTRATION FEE TO BE PAID WITH RESERVATION",
       },
-      termsAndCondition: offer?.termsAndCondition?.split("|") || [],
+      termsAndCondition:
+        offer?.termsAndCondition?.split("|").map((t) => t.trim()) || [],
     },
   };
 };

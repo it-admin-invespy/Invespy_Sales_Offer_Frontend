@@ -224,9 +224,7 @@ function SalesFormPage() {
 
     const { extra, ...rest } = data;
 
-    rest["termsAndCondition"] = extra?.termsAndCondition
-      .filter((t) => t.trim())
-      .join(" | ");
+    rest["termsAndCondition"] = extra?.termsAndCondition.join(" | ");
 
     // Remove empty string or null values
     const removeEmptyValues = (obj) => {

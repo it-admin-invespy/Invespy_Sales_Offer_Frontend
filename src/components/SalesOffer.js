@@ -318,10 +318,14 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
           >
             {termsAndCondition &&
               termsAndCondition.split("|").map((term, i) => (
-                <div key={i} className="flex items-center">
-                  <div className="font-bold text-black mr-1">*</div>
-                  <div>{term}</div>
-                </div>
+                <>
+                  {i !== 5 && term.trim() !== "" && (
+                    <div key={i} className="flex items-center">
+                      <div className="font-bold text-black mr-1">*</div>
+                      <div>{term}</div>
+                    </div>
+                  )}
+                </>
               ))}
           </div>
           {/* Payment Plan */}
@@ -518,6 +522,27 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
               ))}
             </tbody>
           </table>
+          {/* Terms & Condition */}
+          <div
+            style={{
+              fontSize: "12px",
+              lineHeight: "1.4",
+              marginTop: "20px",
+              marginBottom: "30px",
+            }}
+          >
+            {termsAndCondition &&
+              termsAndCondition.split("|").map((term, i) => (
+                <>
+                  {i === 5 && (
+                    <div key={i} className="flex items-center">
+                      <div className="font-bold text-black mr-1">*</div>
+                      <div>{term}</div>
+                    </div>
+                  )}
+                </>
+              ))}
+          </div>
         </div>
         <Footer />
       </div>
