@@ -322,7 +322,7 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
               termsAndCondition.split("|").map((term, i) => (
                 <React.Fragment key={i}>
                   {i !== 5 && term.trim() !== "" && (
-                    <div className="flex items-center">
+                    <div className="flex items-start">
                       <div className="font-bold text-black mr-1">*</div>
                       <div>{term}</div>
                     </div>
@@ -537,7 +537,7 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
               termsAndCondition.split("|").map((term, i) => (
                 <React.Fragment key={i}>
                   {i === 5 && (
-                    <div className="flex items-center">
+                    <div className="flex items-start">
                       <div className="font-bold text-black mr-1">*</div>
                       <div>{term}</div>
                     </div>
