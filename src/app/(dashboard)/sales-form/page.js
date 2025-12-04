@@ -123,7 +123,7 @@ function SalesFormPage() {
         const breakdown =
           formData.projects?.[0]?.units?.[0]?.preRegistrationPayment
             ?.breakdown || [];
-        formData.extra.breakdown = breakdown.reverse();
+        formData.extra.breakdown = breakdown;
         setUnitsData(
           formData.projects?.[0]?.units?.map((unit) => {
             return {
