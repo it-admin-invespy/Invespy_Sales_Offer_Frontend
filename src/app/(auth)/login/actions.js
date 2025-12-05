@@ -1,5 +1,5 @@
 "use server";
-import AxiosInstance from "../../lib/axiosInstance";
+import AxiosInstance from "../../../lib/axiosInstance";
 
 import { z } from "zod";
 import { redirect } from "next/navigation";

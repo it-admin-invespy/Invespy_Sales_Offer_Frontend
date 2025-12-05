@@ -4,7 +4,7 @@ import {
   deleteS3Image,
   deleteS3Images,
 } from "../app/(dashboard)/dashboard/actions";
-import { convertImageToBase64 } from "@/app/lib/utils";
+import { convertImageToBase64 } from "@/lib/utils";
 
 export default function BulkImageUpload({
   onImagesUpload,

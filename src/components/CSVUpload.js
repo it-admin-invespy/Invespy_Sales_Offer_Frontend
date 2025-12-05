@@ -1,5 +1,6 @@
-import { formatCurrency, parseNumericValue, formatArea } from "@/app/lib/utils";
+import { formatCurrency, parseNumericValue, formatArea } from "@/lib/utils";
 import { useEffect, useState, useCallback, useMemo } from "react";
+import { set } from "zod";
 
 const sortUnits = (a, b) => {
   const numA = parseFloat(a.unitNo);
@@ -78,8 +79,12 @@ export default function CSVUpload({
       const newIndex = selectedRow === index ? 0 : index;
       setSelectedRow(newIndex);
       setSelectedUnit(newIndex);
+      setValue(
+        "extra.breakdown.0.amount",
+        (csvData[newIndex]?.price || 0) * 0.04
+      );
     },
-    [selectedRow, setSelectedUnit]
+    [selectedRow, setSelectedUnit, setValue, csvData]
   );
 
   const handleRemoveCSV = useCallback(() => {

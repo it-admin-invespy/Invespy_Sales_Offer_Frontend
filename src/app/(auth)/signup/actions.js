@@ -3,7 +3,7 @@
 import { z } from "zod";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
-import AxiosInstance from "@/app/lib/axiosInstance";
+import AxiosInstance from "@/lib/axiosInstance";
 
 const signupSchema = z
   .object({

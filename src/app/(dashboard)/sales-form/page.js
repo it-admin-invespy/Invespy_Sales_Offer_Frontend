@@ -4,27 +4,41 @@ import { useState, useEffect, Suspense, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { useSearchParams } from "next/navigation";
 import generatePDF from "react-to-pdf";
-import { convertImageToBase64 } from "@/app/lib/utils";
-import ImageUpload from "../../../components/ImageUpload";
-import ColorPicker from "../../../components/ColorPicker";
-import FontDropdown from "../../../components/FontDropdown";
-import CSVUpload from "../../../components/CSVUpload";
-import InstallmentCSV from "../../../components/InstallmentCSV";
-import BulkImageUpload from "../../../components/BulkImageUpload";
-import DynamicHeader from "../../../components/DynamicHeader";
-import ContactInfo from "../../../components/ContactInfo";
-import InvisibleTable from "../../../components/InvisibleTable";
-import SalesOffer from "../../../components/SalesOffer";
-import { SectionCard, InputField } from "../../../components/FormComponents";
-import DynamicButton from "../../../components/DynamicButton";
-import TermsConditions from "../../../components/TermsConditions";
+import { convertImageToBase64 } from "@/lib/utils";
+import {
+  ImageUpload,
+  ColorPicker,
+  FontDropdown,
+  CSVUpload,
+  InstallmentCSV,
+  BulkImageUpload,
+  DynamicHeader,
+  ContactInfo,
+  InvisibleTable,
+  SalesOffer,
+  SectionCard,
+  InputField,
+  DynamicButton,
+  TermsConditions,
+  ProjectDetailsCSVImport,
+} from "@/components";
 import { useRouter } from "next/navigation";
 import {
   createSalesOffer,
   getSalesOfferById,
   updateSalesOffer,
 } from "../dashboard/actions";
-import { transformSalesOffer } from "@/app/lib/utils";
+import { transformSalesOffer } from "@/lib/utils";
+
+const downloadSampleCSV = (csvContent, filename) => {
+  const blob = new Blob([csvContent], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+};
 
 function SalesFormPage() {
   const router = useRouter();
@@ -37,17 +51,6 @@ function SalesFormPage() {
   const [pdfData, setPdfData] = useState();
   const [loading, setLoading] = useState(false);
   const [loaderButton, setLoaderButton] = useState(false);
-  const csvImportRef = useRef();
-
-  const downloadSampleCSV = (csvContent, filename) => {
-    const blob = new Blob([csvContent], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
 
   const {
     register,
@@ -132,6 +135,7 @@ function SalesFormPage() {
             };
           }) || []
         );
+        console.log("Transformed form data:", formData);
         reset({ ...formData });
       } catch (error) {
         console.error("Error fetching sales offer:", error);
@@ -187,14 +191,14 @@ function SalesFormPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
-  useEffect(() => {
-    const breakdown = watch(`extra.breakdown`);
-    if (breakdown.length > 0 && unitsData.length > 0) {
-      const unitPrice = unitsData[selectedUnit]?.price || 0;
-      const amount = Math.round(unitPrice * 0.04);
-      setValue("extra.breakdown.0.amount", amount);
-    }
-  }, [selectedUnit, unitsData]);
+  // useEffect(() => {
+  //   const breakdown = watch(`extra.breakdown`);
+  //   if (breakdown.length > 0 && unitsData.length > 0) {
+  //     const unitPrice = unitsData[selectedUnit]?.price || 0;
+  //     const amount = Math.round(unitPrice * 0.04);
+  //     setValue("extra.breakdown.0.amount", amount);
+  //   }
+  // }, [selectedUnit, unitsData]);
 
   const onSubmit = async (formValue) => {
     const data = formValue;
@@ -211,6 +215,9 @@ function SalesFormPage() {
       const totalAmount = Object.values(breakdown).reduce((sum, item) => {
         return sum + (Number(item?.amount) || 0);
       }, 0);
+
+      breakdown[0].amount = Math.round(element.price * 0.04) || 0;
+
       const unitBreakdown = Object.values(breakdown).map((item) => ({
         description: item.description,
         amount: Number(item.amount) || 0,
@@ -332,6 +339,9 @@ function SalesFormPage() {
       const totalAmount = Object.values(breakdown).reduce((sum, item) => {
         return sum + (Number(item?.amount) || 0);
       }, 0);
+
+      breakdown[0].amount = currentUnit.price * 0.04 || 0;
+
       const unitBreakdown = Object.values(breakdown).map((item) => ({
         description: item.description,
         amount: Number(item.amount) || 0,
@@ -377,9 +387,16 @@ function SalesFormPage() {
         return sum + (Number(item?.amount) || 0);
       }, 0);
 
+      breakdown[0].amount = currentUnit.price * 0.04;
+
+      const unitBreakdown = Object.values(breakdown).map((item) => ({
+        description: item.description,
+        amount: Number(item.amount) || 0,
+      }));
+
       data.projects[0].units[index]["preRegistrationPayment"] = {
         totalAmount: totalAmount,
-        breakdown: breakdown,
+        breakdown: unitBreakdown,
       };
 
       setSelectedUnit(index);
@@ -408,95 +425,6 @@ function SalesFormPage() {
           layoutsImages: useLocalUrl ? image?.localUrl : image?.url,
         })) || []
     );
-  };
-
-  const handleCSVImport = () => {
-    csvImportRef.current?.click();
-  };
-
-  const handleCSVFileChange = (event) => {
-    const file = event.target.files[0];
-    if (file && file.type === "text/csv") {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const csv = e.target.result;
-        const lines = csv.split("\n");
-        const headers = lines[0].split(",").map((h) => h.trim());
-
-        if (lines.length > 1) {
-          console.log("CSV lines:", lines);
-          const values = lines[1].split(",").map((v) => v.trim());
-
-          // Map CSV headers to form fields
-          headers.forEach((header, index) => {
-            const value = values[index] || "";
-
-            switch (header.toLowerCase()) {
-              case "brand color":
-                setValue("meta.brandColors", value);
-                break;
-              case "font family":
-                setValue("meta.fonts.0", value);
-                break;
-              case "project name":
-                setValue("projects.0.projectName", value);
-                break;
-              case "country":
-                setValue("projects.0.country", value);
-                break;
-              case "location":
-                setValue("projects.0.location", value);
-                break;
-              case "elevation":
-                setValue("projects.0.elevation", value);
-                break;
-              case "sales consultant":
-                setValue("salesConsultant", value);
-                break;
-              case "brokerage agency":
-                setValue("brokerageAgency", value);
-                break;
-              case "signature":
-                setValue("customer.name", value);
-                break;
-              case "date":
-                setValue("customer.date", value);
-                break;
-              case "term1":
-                setValue("extra.termsAndCondition.0", value);
-                break;
-              case "term2":
-                setValue("extra.termsAndCondition.1", value);
-                break;
-              case "term3":
-                setValue("extra.termsAndCondition.2", value);
-                break;
-              case "term4":
-                setValue("extra.termsAndCondition.3", value);
-                break;
-              case "term5":
-                setValue("extra.termsAndCondition.4", value);
-                break;
-              case "term6":
-                setValue("extra.termsAndCondition.5", value);
-                break;
-              case "email-website":
-                setValue("customer.email", value);
-                break;
-              case "address":
-                const addressValue = `${value}, ${values[index + 1] || ""}, ${
-                  values[index + 2] || ""
-                }, ${values[index + 3] || ""}`;
-                const cleaned = addressValue.replace(/[@#$"]/g, "");
-                setValue("customer.address", cleaned);
-                break;
-            }
-          });
-        }
-      };
-      reader.readAsText(file);
-    }
-    event.target.value = "";
   };
 
   if (loading) {
@@ -812,54 +740,7 @@ function SalesFormPage() {
         <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-6 border border-gray-200 shadow-sm">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             {/* Import Section */}
-            <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-10 h-10 bg-blue-100 rounded-lg">
-                <svg
-                  className="w-5 h-5 text-blue-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"
-                  />
-                </svg>
-              </div>
-              <div className="flex gap-2">
-                <DynamicButton
-                  type="button"
-                  onClick={handleCSVImport}
-                  className="px-6 py-3 rounded-lg font-medium transition-all duration-200 hover:shadow-md"
-                  variant="secondary"
-                >
-                  Import Fields from CSV
-                </DynamicButton>
-                <DynamicButton
-                  type="button"
-                  onClick={() =>
-                    downloadSampleCSV(
-                      "Brand Color,Font Family,Project Name,Country,Location,Elevation,Sales Consultant,Brokerage Agency,Signature,Date,term1,term2,term3,term4,term5,term6,email-website,address",
-                      "form-fields-sample.csv"
-                    )
-                  }
-                  className="px-4 py-3 rounded-lg font-medium transition-all duration-200 hover:shadow-md"
-                  variant="primary"
-                >
-                  Download Sample
-                </DynamicButton>
-              </div>
-            </div>
-
-            <input
-              ref={csvImportRef}
-              type="file"
-              accept=".csv"
-              onChange={handleCSVFileChange}
-              className="hidden"
-            />
+            <ProjectDetailsCSVImport setValue={setValue} />
 
             {/* Action Buttons */}
             <div className="flex flex-wrap gap-3">

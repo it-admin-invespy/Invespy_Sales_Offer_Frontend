@@ -1,5 +1,6 @@
 "use client";
 
+import { formatCurrency } from "@/lib/utils";
 import { useEffect } from "react";
 import { useFieldArray } from "react-hook-form";
 
@@ -61,10 +62,11 @@ export default function InvisibleTable({ register, meta, control }) {
               </td>
               <td className="p-2 border border-gray-300">
                 <input
-                  type="number"
+                  type="hidden"
                   {...register(`${name}.${index}.amount`)}
                   className="w-full border-none outline-none bg-transparent"
                 />
+                {formatCurrency(field.amount)}
               </td>
               <td className="p-2 border border-gray-300 text-center">
                 <button

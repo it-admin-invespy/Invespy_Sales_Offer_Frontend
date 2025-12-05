@@ -1,10 +1,6 @@
 "use client";
 
-import {
-  formatCurrency,
-  parsePercentage,
-  calculateAmount,
-} from "@/app/lib/utils";
+import { formatCurrency, parsePercentage, calculateAmount } from "@/lib/utils";
 import { useEffect, useState, useCallback, useMemo } from "react";
 
 export default function InstallmentCSV({ setValue, disabled, price, units }) {

@@ -3,10 +3,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { getSalesOffers, deleteSalesOffer, createSalesOffer } from "./actions";
-import {
-  createPayloadForDuplicateObj,
-  transformSalesOffer,
-} from "@/app/lib/utils";
+import { createPayloadForDuplicateObj, transformSalesOffer } from "@/lib/utils";
 import { usePDF } from "react-to-pdf";
 import SalesOffer from "@/components/SalesOffer";
 import DynamicButton from "@/components/DynamicButton";
