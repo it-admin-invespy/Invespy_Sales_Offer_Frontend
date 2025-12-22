@@ -2,23 +2,34 @@
 
 import { useState } from "react";
 import { uploadImage } from "../app/(dashboard)/dashboard/actions";
+import { compressImage } from "../utils/imageCompression";
 
 export default function ImageUpload({ onUpload, label }) {
   const [uploading, setUploading] = useState(false);
+  const [compressionStatus, setCompressionStatus] = useState("");
 
   const handleFileChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
     setUploading(true);
-    const formData = new FormData();
-    formData.append("file", file);
+    setCompressionStatus("Compressing image...");
+    
     try {
+      // Compress the image before uploading
+      const compressedFile = await compressImage(file);
+      
+      setCompressionStatus("Uploading...");
+      const formData = new FormData();
+      formData.append("file", compressedFile);
+      
       const { data } = await uploadImage(formData);
       console.log("Upload successful:", data);
       onUpload(data.url);
+      setCompressionStatus("");
     } catch (error) {
       console.error("Upload failed:", error);
+      setCompressionStatus("");
     } finally {
       setUploading(false);
     }
@@ -52,7 +63,7 @@ export default function ImageUpload({ onUpload, label }) {
               d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
             />
           </svg>
-          Uploading...
+          {compressionStatus || "Processing..."}
         </div>
       )}
     </div>

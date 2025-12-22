@@ -68,10 +68,13 @@ export default function BulkImageUpload({
     }
 
     setUploading(true);
+    const compressedFiles = await Promise.all(
+      files.map(async (file) => compressImage(file))
+    );
     const uploadedImages = [];
     const formData = new FormData();
 
-    for (const file of files) {
+    for (const file of compressedFiles) {
       formData.append("image", file);
     }
 
