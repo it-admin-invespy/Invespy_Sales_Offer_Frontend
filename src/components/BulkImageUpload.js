@@ -147,11 +147,11 @@ export default function BulkImageUpload({
                 Delete All
               </button>
             </div>
-            <ul className="space-y-2 max-h-48 overflow-y-auto">
+            <div className="flex flex-wrap gap-2 max-h-72 overflow-y-auto">
               {imageArray.map((image, index) => (
-                <li
+                <div
                   key={index}
-                  className="group p-3 bg-white border border-gray-200 rounded-md hover:border-blue-300 hover:shadow-sm transition-all duration-200 flex justify-between items-center cursor-pointer"
+                  className="group p-3 bg-white border border-gray-200 rounded-md hover:border-blue-300 hover:shadow-sm transition-all duration-200 flex justify-between items-center cursor-pointer flex-shrink-0"
                 >
                   <div className="flex items-center space-x-3">
                     <div className="w-2 h-2 bg-green-400 rounded-full"></div>
@@ -183,9 +183,9 @@ export default function BulkImageUpload({
                       />
                     </svg>
                   </button>
-                </li>
+                </div>
               ))}
-            </ul>
+            </div>
           </div>
           {hoveredImage && (
             <div className="absolute top-0 right-0 z-20 p-3 bg-white border border-gray-300 rounded-lg shadow-xl">
