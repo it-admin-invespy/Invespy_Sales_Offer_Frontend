@@ -1,10 +1,17 @@
 "use client";
 
-import { useState, useEffect, Suspense, useRef } from "react";
+import {
+  useState,
+  useEffect,
+  Suspense,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
 import { useForm } from "react-hook-form";
 import { useSearchParams } from "next/navigation";
 import generatePDF from "react-to-pdf";
-import { convertImageToBase64 } from "@/lib/utils";
+import { convertImageToBase64, transformSalesOffer } from "@/lib/utils";
 import {
   ImageUpload,
   ColorPicker,
@@ -28,8 +35,159 @@ import {
   getSalesOfferById,
   updateSalesOffer,
 } from "../dashboard/actions";
-import { transformSalesOffer } from "@/lib/utils";
 
+// ============================================================================
+// CONSTANTS
+// ============================================================================
+
+const PRE_REGISTRATION_RATE = 0.04;
+const PDF_RENDER_DELAY = 300;
+
+const DEFAULT_FORM_VALUES = Object.freeze({
+  projects: [
+    {
+      projectName: "",
+      location: "",
+      country: "",
+      elevation: "",
+      units: [],
+    },
+  ],
+  salesConsultant: "",
+  brokerageAgency: "",
+  customer: {
+    name: "",
+    date: "",
+    email: "",
+    address: "",
+  },
+  meta: {
+    logoUrl: "",
+    brandColors: "",
+    fonts: [""],
+    styles: {
+      header: { fontSize: "18px", fontWeight: "600" },
+      table: { borderColor: "" },
+    },
+  },
+  extra: {
+    header: {
+      salesOffer: "OFFICIAL SALES OFFER",
+      floorPlan: "INDIVIDUAL UNIT FLOOR PLAN",
+      preRegistration: "PRE-REGISTRATION FEE TO BE PAID WITH RESERVATION",
+    },
+    breakdown: [],
+    termsAndCondition: ["", "", "", "", "", ""],
+  },
+});
+
+const PDF_OPTIONS = Object.freeze({
+  page: { margin: 10, format: "a4" },
+});
+
+const CSV_SAMPLES = Object.freeze({
+  projectUnits: {
+    content:
+      "Project Name,Unit No,Floor No,Unit Type,View,Area (Sq/Ft),Price (AED)",
+    filename: "project-units-sample.csv",
+  },
+  installment: {
+    content: "Installment,% Payable,Milestone",
+    filename: "installment-summary-sample.csv",
+  },
+});
+
+// ============================================================================
+// ICONS (Extracted for cleaner JSX)
+// ============================================================================
+
+const ImageIcon = () => (
+  <svg
+    className="w-5 h-5 mr-2 text-blue-600"
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+    />
+  </svg>
+);
+
+const StyleIcon = () => (
+  <svg
+    className="w-5 h-5 mr-2 text-purple-600"
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zM21 5a2 2 0 00-2-2h-4a2 2 0 00-2 2v12a4 4 0 004 4h4a2 2 0 002-2V5z"
+    />
+  </svg>
+);
+
+const CloseIcon = () => (
+  <svg
+    className="w-4 h-4"
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M6 18L18 6M6 6l12 12"
+    />
+  </svg>
+);
+
+const DownloadIcon = () => (
+  <svg
+    className="w-4 h-4"
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+    />
+  </svg>
+);
+
+const CheckIcon = () => (
+  <svg
+    className="w-4 h-4"
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M5 13l4 4L19 7"
+    />
+  </svg>
+);
+
+// ============================================================================
+// UTILITY FUNCTIONS (Pure functions - no React dependencies)
+// ============================================================================
+
+/**
+ * Downloads a CSV file with the given content
+ */
 const downloadSampleCSV = (csvContent, filename) => {
   const blob = new Blob([csvContent], { type: "text/csv" });
   const url = URL.createObjectURL(blob);
@@ -40,10 +198,159 @@ const downloadSampleCSV = (csvContent, filename) => {
   URL.revokeObjectURL(url);
 };
 
+/**
+ * Recursively removes empty string or null values from an object
+ */
+const removeEmptyValues = (obj) => {
+  Object.keys(obj).forEach((key) => {
+    const val = obj[key];
+    if (val === "" || val === null) {
+      delete obj[key];
+    } else if (val && typeof val === "object" && !Array.isArray(val)) {
+      removeEmptyValues(val);
+      if (!Object.keys(val).length) delete obj[key];
+    } else if (val && Array.isArray(val)) {
+      // Filter out empty values from arrays
+      for (let i = val.length - 1; i >= 0; i--) {
+        if (typeof val[i] === "object") {
+          removeEmptyValues(val[i]);
+        } else if (val[i] === "" || val[i] === null) {
+          val.splice(i, 1);
+        }
+      }
+      if (!val.length) delete obj[key];
+    }
+  });
+};
+
+/**
+ * Parses a numeric string (with potential commas) to a number
+ */
+const parseNumericValue = (value) => {
+  if (value === undefined) return undefined;
+  return typeof value === "string"
+    ? parseFloat(value.replace(/,/g, "")) || 0
+    : Number(value) || 0;
+};
+
+/**
+ * Converts a date string to ISO 8601 format (YYYY-MM-DD)
+ */
+const convertToISODate = (dateValue) => {
+  if (!dateValue) return dateValue;
+
+  // Already in ISO format
+  if (/^\d{4}-\d{2}-\d{2}/.test(dateValue)) return dateValue;
+
+  let parsedDate;
+  if (dateValue.includes("/")) {
+    // Format: M/D/YYYY or MM/DD/YYYY
+    const parts = dateValue.split("/");
+    if (parts.length === 3) {
+      const month = parts[0].padStart(2, "0");
+      const day = parts[1].padStart(2, "0");
+      const year = parts[2];
+      parsedDate = new Date(`${year}-${month}-${day}`);
+    }
+  } else {
+    parsedDate = new Date(dateValue);
+  }
+
+  return parsedDate && !isNaN(parsedDate.getTime())
+    ? parsedDate.toISOString().split("T")[0]
+    : dateValue;
+};
+
+/**
+ * Calculates breakdown data for a unit
+ */
+const calculateUnitBreakdown = (breakdown, unitPrice) => {
+  const breakdownCopy = { ...breakdown };
+  breakdownCopy[0] = {
+    ...breakdownCopy[0],
+    amount: Math.round(unitPrice * PRE_REGISTRATION_RATE) || 0,
+  };
+
+  const totalAmount = Object.values(breakdownCopy).reduce(
+    (sum, item) => sum + (Number(item?.amount) || 0),
+    0
+  );
+
+  const unitBreakdown = Object.values(breakdownCopy).map((item) => ({
+    description: item.description,
+    amount: Number(item.amount) || 0,
+  }));
+
+  return { totalAmount, breakdown: unitBreakdown };
+};
+
+/**
+ * Transforms unit data for submission
+ */
+const transformUnits = (units) => {
+  if (!units) return units;
+
+  return units.map((unit) => ({
+    ...unit,
+    grossArea: parseNumericValue(unit.grossArea),
+    price: parseNumericValue(unit.price),
+  }));
+};
+
+/**
+ * Fetches floor plan images in parallel and combines with metadata
+ */
+const fetchFloorPlanImages = async (unitsArray) => {
+  const imagePromises = [];
+  const imageMetadata = [];
+
+  for (const unit of unitsArray) {
+    const floorPlans = unit.floorPlans || [];
+    for (let j = 0; j < floorPlans.length; j++) {
+      imageMetadata.push({
+        url: floorPlans[j].layoutsImages,
+        name: `${unit.unitNo} - floorPlan - ${j + 1}`,
+      });
+      imagePromises.push(convertImageToBase64(floorPlans[j].layoutsImages));
+    }
+  }
+
+  const base64Results = await Promise.all(imagePromises);
+
+  return imageMetadata.map((meta, index) => ({
+    ...meta,
+    localUrl: base64Results[index],
+  }));
+};
+
+/**
+ * Delays execution for specified milliseconds
+ */
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// ============================================================================
+// LOADING COMPONENT
+// ============================================================================
+
+const LoadingSpinner = () => (
+  <div className="flex items-center justify-center min-h-screen bg-gray-50">
+    <div className="text-center">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4" />
+      <p className="text-gray-600">Loading sales offer data...</p>
+    </div>
+  </div>
+);
+
+// ============================================================================
+// MAIN COMPONENT
+// ============================================================================
+
 function SalesFormPage() {
   const router = useRouter();
   const targetRef = useRef();
   const searchParams = useSearchParams();
+
+  // State
   const [salesOfferData, setSalesOfferData] = useState([]);
   const [unitsData, setUnitsData] = useState([]);
   const [floorPlanImages, setFloorPlanImages] = useState([]);
@@ -52,6 +359,7 @@ function SalesFormPage() {
   const [loading, setLoading] = useState(false);
   const [loaderButton, setLoaderButton] = useState(false);
 
+  // Form
   const {
     register,
     handleSubmit,
@@ -62,80 +370,87 @@ function SalesFormPage() {
     formState: { errors },
     reset,
   } = useForm({
-    defaultValues: {
-      projects: [
-        {
-          projectName: "",
-          location: "",
-          country: "",
-          elevation: "",
-          units: [],
-        },
-      ],
-      salesConsultant: "",
-      brokerageAgency: "",
-      customer: {
-        name: "",
-        date: "",
-        email: "",
-        address: "",
-      },
-      meta: {
-        logoUrl: "",
-        brandColors: "",
-        fonts: [""],
-        styles: {
-          header: { fontSize: "18px", fontWeight: "600" },
-          table: { borderColor: "" },
-        },
-      },
-      extra: {
-        header: {
-          salesOffer: "OFFICIAL SALES OFFER",
-          floorPlan: "INDIVIDUAL UNIT FLOOR PLAN",
-          preRegistration: "PRE-REGISTRATION FEE TO BE PAID WITH RESERVATION",
-        },
-        breakdown: [],
-        termsAndCondition: ["", "", "", "", "", ""],
-      },
-    },
+    defaultValues: DEFAULT_FORM_VALUES,
   });
+
+  // Memoized values to prevent unnecessary re-renders
+  const meta = watch("meta");
+  const logoUrl = watch("meta.logoUrl");
+  const brandColors = watch("meta.brandColors");
+  const fontFamily = watch("meta.fonts.0");
+  const projectName = watch("projects.0.projectName");
+  const existingUnits = useMemo(
+    () => salesOfferData?.projects?.[0]?.units || [],
+    [salesOfferData]
+  );
+  const currentUnitPrice = useMemo(
+    () => unitsData[selectedUnit]?.price,
+    [unitsData, selectedUnit]
+  );
+  const hasUnits = unitsData.length > 0;
+
+  // ============================================================================
+  // HELPER FUNCTIONS (Memoized with useCallback)
+  // ============================================================================
+
+  const getFloorPlansForUnit = useCallback(
+    (unit, useLocalUrl = false) => {
+      return (
+        floorPlanImages
+          ?.filter((image) => image?.name?.includes(unit?.unitNo))
+          .map((image) => ({
+            layoutsImages: useLocalUrl ? image?.localUrl : image?.url,
+          })) || []
+      );
+    },
+    [floorPlanImages]
+  );
+
+  const resetToDefaults = useCallback(() => {
+    setSelectedUnit(0);
+    setUnitsData([]);
+    setFloorPlanImages([]);
+    reset(DEFAULT_FORM_VALUES);
+  }, [reset]);
+
+  // ============================================================================
+  // DATA FETCHING
+  // ============================================================================
 
   useEffect(() => {
     const id = searchParams.get("id");
-    const fetchSalesOffer = async (id) => {
+
+    if (!id) {
+      resetToDefaults();
+      return;
+    }
+
+    const fetchSalesOffer = async () => {
       setLoading(true);
       try {
         const data = await getSalesOfferById(id);
-        console.log("Fetched sales offer data:", data);
-        const floorPlanUnitImages = [];
-        const unitsArray = data.salesOffer?.project?.units;
-        for (let i = 0; i < unitsArray?.length; i++) {
-          const fp = unitsArray[i].floorPlans;
-          for (let j = 0; j < fp.length; j++) {
-            floorPlanUnitImages.push({
-              url: fp[j].layoutsImages,
-              name: `${unitsArray[i].unitNo} - floorPlan - ${j + 1}`,
-              localUrl: await convertImageToBase64(fp[j].layoutsImages),
-            });
-          }
-        }
+        const unitsArray = data.salesOffer?.project?.units || [];
+
+        // Fetch floor plan images in parallel
+        const floorPlanUnitImages = await fetchFloorPlanImages(unitsArray);
         setFloorPlanImages(floorPlanUnitImages);
+
+        // Transform and set form data
         const formData = await transformSalesOffer(data.salesOffer);
         setSalesOfferData(formData);
+
         const breakdown =
           formData.projects?.[0]?.units?.[0]?.preRegistrationPayment
             ?.breakdown || [];
         formData.extra.breakdown = breakdown;
+
         setUnitsData(
-          formData.projects?.[0]?.units?.map((unit) => {
-            return {
-              projectName: formData.projects?.[0]?.projectName,
-              ...unit,
-            };
-          }) || []
+          formData.projects?.[0]?.units?.map((unit) => ({
+            projectName: formData.projects?.[0]?.projectName,
+            ...unit,
+          })) || []
         );
-        console.log("Transformed form data:", formData);
+
         reset({ ...formData });
       } catch (error) {
         console.error("Error fetching sales offer:", error);
@@ -143,299 +458,191 @@ function SalesFormPage() {
         setLoading(false);
       }
     };
-    if (id) {
-      fetchSalesOffer(id);
-    } else {
-      setSelectedUnit(0);
-      setUnitsData([]);
-      setFloorPlanImages([]);
-      reset({
-        projects: [
-          {
-            projectName: "",
-            location: "",
-            country: "",
-            elevation: "",
-            units: [],
-          },
-        ],
-        salesConsultant: "",
-        brokerageAgency: "",
-        customer: {
-          name: "",
-          date: "",
-          email: "",
-          address: "",
-        },
-        meta: {
-          logoUrl: "",
-          brandColors: "",
-          fonts: [""],
-          styles: {
-            header: { fontSize: "18px", fontWeight: "600" },
-            table: { borderColor: "" },
-          },
-        },
-        extra: {
-          header: {
-            salesOffer: "OFFICIAL SALES OFFER",
-            floorPlan: "INDIVIDUAL UNIT FLOOR PLAN",
-            preRegistration: "PRE-REGISTRATION FEE TO BE PAID WITH RESERVATION",
-          },
-          breakdown: [],
-          termsAndCondition: ["", "", "", "", "", ""],
-        },
+
+    fetchSalesOffer();
+  }, [searchParams, reset, resetToDefaults]);
+
+  // ============================================================================
+  // FORM SUBMISSION
+  // ============================================================================
+
+  const prepareSubmissionData = useCallback(
+    (formValue) => {
+      const data = { ...formValue };
+      const breakdown = { ...watch("extra.breakdown") };
+
+      // Attach floor plans and payment breakdown to each unit
+      unitsData.forEach((unit, index) => {
+        if (data.projects?.[0]?.units?.[index]) {
+          data.projects[0].units[index].floorPlans = getFloorPlansForUnit(unit);
+          data.projects[0].units[index].preRegistrationPayment =
+            calculateUnitBreakdown(breakdown, unit.price);
+        }
       });
-    }
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]);
+      const { extra, ...rest } = data;
+      rest.termsAndCondition = extra?.termsAndCondition.join(" | ");
 
-  // useEffect(() => {
-  //   const breakdown = watch(`extra.breakdown`);
-  //   if (breakdown.length > 0 && unitsData.length > 0) {
-  //     const unitPrice = unitsData[selectedUnit]?.price || 0;
-  //     const amount = Math.round(unitPrice * 0.04);
-  //     setValue("extra.breakdown.0.amount", amount);
-  //   }
-  // }, [selectedUnit, unitsData]);
+      // Clean up empty values
+      removeEmptyValues(rest);
 
-  const onSubmit = async (formValue) => {
-    const data = formValue;
+      // Transform units
+      if (rest.projects?.[0]?.units) {
+        rest.projects[0].units = transformUnits(rest.projects[0].units);
+      }
+
+      // Convert date to ISO format
+      if (rest.customer?.date) {
+        rest.customer.date = convertToISODate(rest.customer.date);
+      }
+
+      return rest;
+    },
+    [unitsData, watch, getFloorPlansForUnit]
+  );
+
+  const onSubmit = useCallback(
+    async (formValue) => {
+      setLoaderButton(true);
+      const id = searchParams.get("id");
+
+      try {
+        const submissionData = prepareSubmissionData(formValue);
+        await (id
+          ? updateSalesOffer(submissionData, id)
+          : createSalesOffer(submissionData));
+        router.push("/dashboard");
+      } catch (error) {
+        console.error("Error submitting form:", error);
+        alert(`Error: ${error.message || "Failed to submit form"}`);
+      } finally {
+        setLoaderButton(false);
+      }
+    },
+    [searchParams, router, prepareSubmissionData]
+  );
+
+  // ============================================================================
+  // PDF GENERATION
+  // ============================================================================
+
+  const preparePdfData = useCallback(
+    async (useLocalUrl = false) => {
+      const data = getValues();
+      const breakdown = { ...watch("extra.breakdown") };
+
+      // Convert logo to base64
+      data.meta.logoUrl = await convertImageToBase64(data.meta.logoUrl);
+
+      // Attach floor plans to all units
+      unitsData.forEach((unit, index) => {
+        if (data.projects?.[0]?.units?.[index]) {
+          data.projects[0].units[index].floorPlans = getFloorPlansForUnit(
+            unit,
+            useLocalUrl
+          );
+        }
+      });
+
+      return { data, breakdown };
+    },
+    [getValues, watch, unitsData, getFloorPlansForUnit]
+  );
+
+  const downloadSalesOffer = useCallback(async () => {
     setLoaderButton(true);
-    const id = searchParams.get("id");
-    unitsData.forEach((unit, index) => {
-      const floorPlans = getFloorPlansForUnit(unit);
-      if (data.projects?.[0]?.units?.[index]) {
-        data.projects[0].units[index]["floorPlans"] = floorPlans;
-      }
-    });
-    const breakdown = { ...watch(`extra.breakdown`) };
-    unitsData.forEach((element, index) => {
-      const totalAmount = Object.values(breakdown).reduce((sum, item) => {
-        return sum + (Number(item?.amount) || 0);
-      }, 0);
-
-      breakdown[0].amount = Math.round(element.price * 0.04) || 0;
-
-      const unitBreakdown = Object.values(breakdown).map((item) => ({
-        description: item.description,
-        amount: Number(item.amount) || 0,
-      }));
-
-      data.projects[0].units[index]["preRegistrationPayment"] = {
-        totalAmount: totalAmount,
-        breakdown: unitBreakdown,
-      };
-    });
-
-    const { extra, ...rest } = data;
-
-    rest["termsAndCondition"] = extra?.termsAndCondition.join(" | ");
-
-    // Remove empty string or null values
-    const removeEmptyValues = (obj) => {
-      Object.keys(obj).forEach((key) => {
-        const val = obj[key];
-        if (val === "" || val === null) {
-          delete obj[key];
-        } else if (val && typeof val === "object" && !Array.isArray(val)) {
-          removeEmptyValues(val);
-          if (!Object.keys(val).length) delete obj[key];
-        } else if (val && Array.isArray(val)) {
-          val.forEach((item, index) => {
-            if (typeof item === "object") {
-              removeEmptyValues(item);
-            } else if (item === "" || item === null) {
-              val.splice(index, 1);
-            }
-          });
-          removeEmptyValues(val);
-          if (!Object.keys(val).length) delete obj[key];
-        }
-      });
-    };
-
-    removeEmptyValues(rest);
-
-    // Transform data: ensure numbers are numeric and date is ISO 8601
-    if (rest.projects?.[0]?.units) {
-      rest.projects[0].units = rest.projects[0].units.map((unit) => {
-        const transformedUnit = { ...unit };
-
-        // Convert grossArea to number (remove commas if present)
-        if (transformedUnit.grossArea !== undefined) {
-          const grossAreaValue =
-            typeof transformedUnit.grossArea === "string"
-              ? parseFloat(transformedUnit.grossArea.replace(/,/g, "")) || 0
-              : Number(transformedUnit.grossArea) || 0;
-          transformedUnit.grossArea = grossAreaValue;
-        }
-
-        // Convert price to number (remove commas if present)
-        if (transformedUnit.price !== undefined) {
-          const priceValue =
-            typeof transformedUnit.price === "string"
-              ? parseFloat(transformedUnit.price.replace(/,/g, "")) || 0
-              : Number(transformedUnit.price) || 0;
-          transformedUnit.price = priceValue;
-        }
-
-        return transformedUnit;
-      });
-    }
-
-    // Convert date to ISO 8601 format
-    if (rest.customer?.date) {
-      const dateValue = rest.customer.date;
-      // Check if date is already in ISO format (YYYY-MM-DD)
-      if (!/^\d{4}-\d{2}-\d{2}/.test(dateValue)) {
-        // Try to parse common date formats
-        let parsedDate;
-        if (dateValue.includes("/")) {
-          // Format: M/D/YYYY or MM/DD/YYYY
-          const parts = dateValue.split("/");
-          if (parts.length === 3) {
-            const month = parts[0].padStart(2, "0");
-            const day = parts[1].padStart(2, "0");
-            const year = parts[2];
-            parsedDate = new Date(`${year}-${month}-${day}`);
-          }
-        } else {
-          parsedDate = new Date(dateValue);
-        }
-
-        if (parsedDate && !isNaN(parsedDate.getTime())) {
-          rest.customer.date = parsedDate.toISOString().split("T")[0];
-        }
-      }
-    }
-
-    console.log("Submitting form data:", rest);
 
     try {
-      const response = id
-        ? await updateSalesOffer(rest, id)
-        : await createSalesOffer(rest);
-      router.push("/dashboard");
-    } catch (error) {
-      console.error("Error submitting form:", error);
-      alert(`Error: ${error.message || "Failed to submit form"}`);
+      const { data, breakdown } = await preparePdfData(true);
+      const currentUnit = data.projects[0].units[selectedUnit];
+
+      currentUnit.preRegistrationPayment = calculateUnitBreakdown(
+        breakdown,
+        currentUnit.price
+      );
+
+      setPdfData({ ...data });
+      await delay(PDF_RENDER_DELAY);
+
+      generatePDF(targetRef, {
+        method: "open",
+        filename: `${data.projects[0].projectName}-${currentUnit.unitNo}-sales-offer.pdf`,
+        ...PDF_OPTIONS,
+      });
     } finally {
       setLoaderButton(false);
     }
-  };
+  }, [preparePdfData, selectedUnit]);
 
-  const downloadSalesOffer = async () => {
+  const downloadSalesOfferAll = useCallback(async () => {
     setLoaderButton(true);
-    const data = getValues();
-    const breakdown = { ...watch(`extra.breakdown`) };
-    const currentUnit = data.projects[0].units[selectedUnit];
-    unitsData.forEach((unit, index) => {
-      const floorPlans = getFloorPlansForUnit(unit, true);
-      if (data.projects?.[0]?.units?.[index]) {
-        data.projects[0].units[index]["floorPlans"] = floorPlans;
+
+    try {
+      const { data, breakdown } = await preparePdfData(true);
+
+      for (let index = 0; index < unitsData.length; index++) {
+        const currentUnit = data.projects[0].units[index];
+
+        currentUnit.preRegistrationPayment = calculateUnitBreakdown(
+          breakdown,
+          currentUnit.price
+        );
+
+        setSelectedUnit(index);
+        setPdfData({ ...data });
+
+        await delay(PDF_RENDER_DELAY);
+
+        generatePDF(targetRef, {
+          method: "save",
+          filename: `${data.projects[0].projectName}-${currentUnit.unitNo}-sales-offer.pdf`,
+          ...PDF_OPTIONS,
+        });
       }
-      const totalAmount = Object.values(breakdown).reduce((sum, item) => {
-        return sum + (Number(item?.amount) || 0);
-      }, 0);
-
-      breakdown[0].amount = currentUnit.price * 0.04 || 0;
-
-      const unitBreakdown = Object.values(breakdown).map((item) => ({
-        description: item.description,
-        amount: Number(item.amount) || 0,
-      }));
-
-      currentUnit["preRegistrationPayment"] = {
-        totalAmount: totalAmount,
-        breakdown: unitBreakdown,
-      };
-    });
-    console.log("sales offer data", data);
-    data.meta.logoUrl = await convertImageToBase64(data.meta.logoUrl);
-    setPdfData({ ...data });
-    // Wait for the DOM to update (React render cycle)
-    await new Promise((resolve) => setTimeout(resolve, 300));
-
-    // Then trigger PDF for the updated view
-    generatePDF(targetRef, {
-      method: "open",
-      filename: `${data.projects[0].projectName}-${currentUnit.unitNo}-sales-offer.pdf`,
-      page: { margin: 10, format: "a4" },
-    });
-    setLoaderButton(false);
-  };
-
-  const downloadSalesOfferAll = async () => {
-    setLoaderButton(true);
-    const data = getValues();
-    const breakdown = [...watch(`extra.breakdown`)];
-
-    data.meta.logoUrl = await convertImageToBase64(data.meta.logoUrl);
-
-    for (let index = 0; index < unitsData.length; index++) {
-      const unit = unitsData[index];
-      const floorPlans = getFloorPlansForUnit(unit, true);
-
-      if (data.projects?.[0]?.units?.[index]) {
-        data.projects[0].units[index].floorPlans = floorPlans;
-      }
-
-      const currentUnit = data.projects[0].units[index];
-      const totalAmount = Object.values(breakdown).reduce((sum, item) => {
-        return sum + (Number(item?.amount) || 0);
-      }, 0);
-
-      breakdown[0].amount = currentUnit.price * 0.04;
-
-      const unitBreakdown = Object.values(breakdown).map((item) => ({
-        description: item.description,
-        amount: Number(item.amount) || 0,
-      }));
-
-      data.projects[0].units[index]["preRegistrationPayment"] = {
-        totalAmount: totalAmount,
-        breakdown: unitBreakdown,
-      };
-
-      setSelectedUnit(index);
-      setPdfData({ ...data });
-
-      // Wait for the DOM to update (React render cycle)
-      await new Promise((resolve) => setTimeout(resolve, 300));
-
-      // Then trigger PDF for the updated view
-      generatePDF(targetRef, {
-        method: "save",
-        filename: `${data.projects[0].projectName}-${currentUnit.unitNo}-sales-offer.pdf`,
-        page: { margin: 10, format: "a4" },
-      });
+    } finally {
       setLoaderButton(false);
     }
-  };
+  }, [preparePdfData, unitsData]);
 
-  const getFloorPlansForUnit = (unit, useLocalUrl = false) => {
-    return (
-      floorPlanImages
-        ?.filter((image) => {
-          return image?.name?.includes(unit?.unitNo);
-        })
-        .map((image) => ({
-          layoutsImages: useLocalUrl ? image?.localUrl : image?.url,
-        })) || []
+  // ============================================================================
+  // EVENT HANDLERS
+  // ============================================================================
+
+  const handleLogoUpload = useCallback(
+    (url) => setValue("meta.logoUrl", url),
+    [setValue]
+  );
+
+  const handleLogoRemove = useCallback(
+    () => setValue("meta.logoUrl", ""),
+    [setValue]
+  );
+
+  const handleBrandColorChange = useCallback(
+    (color) => setValue("meta.brandColors", color),
+    [setValue]
+  );
+
+  const handleProjectUnitsCSVDownload = useCallback(() => {
+    downloadSampleCSV(
+      CSV_SAMPLES.projectUnits.content,
+      CSV_SAMPLES.projectUnits.filename
     );
-  };
+  }, []);
+
+  const handleInstallmentCSVDownload = useCallback(() => {
+    downloadSampleCSV(
+      CSV_SAMPLES.installment.content,
+      CSV_SAMPLES.installment.filename
+    );
+  }, []);
+
+  // ============================================================================
+  // RENDER
+  // ============================================================================
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading sales offer data...</p>
-        </div>
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
   return (
@@ -444,42 +651,29 @@ function SalesFormPage() {
         onSubmit={handleSubmit(onSubmit)}
         className="max-w-[1400px] m-6 p-6 mx-auto space-y-8 bg-gray-50 min-h-screen"
       >
+        {/* Sales Offer Header */}
         <DynamicHeader
           register={register}
           name="extra.header.salesOffer"
-          meta={watch("meta")}
-          headerValue={"OFFICIAL SALES OFFER"}
+          meta={meta}
+          headerValue="OFFICIAL SALES OFFER"
         />
 
-        {/* Meta */}
+        {/* Form Styles Section */}
         <SectionCard title="Form Styles">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Logo Section */}
             <div className="lg:col-span-1 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-100">
               <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-                <svg
-                  className="w-5 h-5 mr-2 text-blue-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                  />
-                </svg>
+                <ImageIcon />
                 Brand Logo
               </h3>
               <ImageUpload
-                label={"Upload Logo"}
-                onUpload={(url) => {
-                  setValue("meta.logoUrl", url);
-                }}
-                currentUrl={watch("meta.logoUrl")}
+                label="Upload Logo"
+                onUpload={handleLogoUpload}
+                currentUrl={logoUrl}
               />
-              {watch("meta.logoUrl") && (
+              {logoUrl && (
                 <div className="mt-4 bg-white rounded-lg p-4 border-2 border-dashed border-gray-200 relative">
                   <div className="flex justify-between items-center mb-3">
                     <span className="text-sm font-medium text-gray-600 bg-gray-100 px-2 py-1 rounded">
@@ -487,27 +681,15 @@ function SalesFormPage() {
                     </span>
                     <button
                       type="button"
-                      onClick={() => setValue("meta.logoUrl", "")}
+                      onClick={handleLogoRemove}
                       className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1.5 rounded-full transition-colors"
                     >
-                      <svg
-                        className="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M6 18L18 6M6 6l12 12"
-                        />
-                      </svg>
+                      <CloseIcon />
                     </button>
                   </div>
                   <div className="flex justify-center items-center min-h-[80px] bg-gray-50 rounded">
                     <img
-                      src={watch("meta.logoUrl")}
+                      src={logoUrl}
                       alt="Logo Preview"
                       className="max-h-20 max-w-full object-contain"
                     />
@@ -519,32 +701,19 @@ function SalesFormPage() {
             {/* Styling Options */}
             <div className="lg:col-span-2 bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-6 border border-purple-100">
               <h3 className="text-lg font-semibold text-gray-800 mb-6 flex items-center">
-                <svg
-                  className="w-5 h-5 mr-2 text-purple-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zM21 5a2 2 0 00-2-2h-4a2 2 0 00-2 2v12a4 4 0 004 4h4a2 2 0 002-2V5z"
-                  />
-                </svg>
+                <StyleIcon />
                 Document Styling
               </h3>
 
               <div className="space-y-6">
-                {/* Input Row */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Brand Color
                     </label>
                     <ColorPicker
-                      onChange={(color) => setValue("meta.brandColors", color)}
-                      value={watch("meta.brandColors")}
+                      onChange={handleBrandColorChange}
+                      value={brandColors}
                       placeholder="Choose brand color"
                     />
                   </div>
@@ -565,14 +734,12 @@ function SalesFormPage() {
                   <div className="space-y-2">
                     <div
                       className="h-8 rounded flex items-center justify-center text-white text-sm font-medium"
-                      style={{
-                        backgroundColor: watch("meta.brandColors") || "#007BFF",
-                      }}
+                      style={{ backgroundColor: brandColors || "#007BFF" }}
                     >
                       Header Preview
                     </div>
                     <div className="text-xs text-gray-500 text-center">
-                      Font: {watch("meta.fonts.0") || "Default"}
+                      Font: {fontFamily || "Default"}
                     </div>
                   </div>
                 </div>
@@ -590,9 +757,7 @@ function SalesFormPage() {
               placeholder="Project Name"
               label="Project Name"
               required
-              validation={{
-                required: "Project name is required",
-              }}
+              validation={{ required: "Project name is required" }}
               error={errors?.projects?.[0]?.projectName?.message}
             />
             <InputField
@@ -601,7 +766,6 @@ function SalesFormPage() {
               placeholder="Country"
               label="Country"
             />
-
             <InputField
               register={register}
               name="projects.0.location"
@@ -617,20 +781,16 @@ function SalesFormPage() {
           </div>
         </SectionCard>
 
-        <SectionCard title={"Terms & Conditions"}>
+        {/* Terms & Conditions */}
+        <SectionCard title="Terms & Conditions">
           <TermsConditions register={register} />
         </SectionCard>
 
-        {/* CSV Upload */}
+        {/* Project Units */}
         <SectionCard
           title="Project Units"
-          buttonText={"Download Sample"}
-          onButtonClick={() =>
-            downloadSampleCSV(
-              "Project Name,Unit No,Floor No,Unit Type,View,Area (Sq/Ft),Price (AED)",
-              "project-units-sample.csv"
-            )
-          }
+          buttonText="Download Sample"
+          onButtonClick={handleProjectUnitsCSVDownload}
         >
           <CSVUpload
             onDataLoad={setUnitsData}
@@ -638,7 +798,7 @@ function SalesFormPage() {
             setSelectedUnit={setSelectedUnit}
             unitsData={unitsData}
             setValue={setValue}
-            units={salesOfferData?.projects?.[0]?.units || []}
+            units={existingUnits}
           />
           {errors.projects?.[0]?.units && (
             <p className="text-red-500 text-sm mt-2">
@@ -647,7 +807,7 @@ function SalesFormPage() {
           )}
         </SectionCard>
 
-        {/* Consultant */}
+        {/* Consultant & Agency */}
         <SectionCard title="Consultant & Agency">
           <div className="grid grid-cols-2 gap-4">
             <InputField
@@ -668,54 +828,48 @@ function SalesFormPage() {
         {/* Installment Summary */}
         <SectionCard
           title="Installment Summary"
-          buttonText={"Download Sample"}
-          onButtonClick={() =>
-            downloadSampleCSV(
-              "Installment,% Payable,Milestone",
-              "installment-summary-sample.csv"
-            )
-          }
+          buttonText="Download Sample"
+          onButtonClick={handleInstallmentCSVDownload}
         >
           <InstallmentCSV
             setValue={setValue}
-            disabled={unitsData.length === 0}
-            price={unitsData[selectedUnit]?.price}
+            disabled={!hasUnits}
+            price={currentUnitPrice}
             units={unitsData}
           />
         </SectionCard>
 
+        {/* Floor Plan Header */}
         <DynamicHeader
           register={register}
           name="extra.header.floorPlan"
-          meta={watch("meta")}
-          headerValue={"INDIVIDUAL UNIT FLOOR PLAN"}
+          meta={meta}
+          headerValue="INDIVIDUAL UNIT FLOOR PLAN"
         />
 
-        {/* Bulk Upload Floor Plans */}
+        {/* Floor Plans Upload */}
         <SectionCard title="Bulk Upload Floor Plans">
           <BulkImageUpload
             onImagesUpload={setFloorPlanImages}
             imageArray={floorPlanImages}
-            projectName={watch("projects.0.projectName")}
+            projectName={projectName}
           />
         </SectionCard>
 
+        {/* Pre-Registration Header */}
         <DynamicHeader
           register={register}
           name="extra.header.preRegistration"
-          meta={watch("meta")}
-          headerValue={"PRE-REGISTRATION FEE TO BE PAID WITH RESERVATION"}
+          meta={meta}
+          headerValue="PRE-REGISTRATION FEE TO BE PAID WITH RESERVATION"
         />
 
+        {/* Pre-Registration Payment */}
         <SectionCard title="Pre Registeration Payment">
-          <InvisibleTable
-            register={register}
-            meta={watch("meta")}
-            control={control}
-          />
+          <InvisibleTable register={register} meta={meta} control={control} />
         </SectionCard>
 
-        {/* Customer */}
+        {/* Signature */}
         <SectionCard title="Signature">
           <div className="grid grid-cols-2 gap-4">
             <InputField
@@ -734,15 +888,14 @@ function SalesFormPage() {
           </div>
         </SectionCard>
 
+        {/* Contact Info */}
         <ContactInfo register={register} />
 
         {/* Actions */}
         <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-6 border border-gray-200 shadow-sm">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            {/* Import Section */}
             <ProjectDetailsCSVImport setValue={setValue} />
 
-            {/* Action Buttons */}
             <div className="flex flex-wrap gap-3">
               <DynamicButton
                 type="button"
@@ -751,19 +904,7 @@ function SalesFormPage() {
                 variant="success"
                 loading={loaderButton}
               >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                  />
-                </svg>
+                <DownloadIcon />
                 Download All PDFs
               </DynamicButton>
 
@@ -774,19 +915,7 @@ function SalesFormPage() {
                 variant="success"
                 loading={loaderButton}
               >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                  />
-                </svg>
+                <DownloadIcon />
                 Download PDF
               </DynamicButton>
 
@@ -796,19 +925,7 @@ function SalesFormPage() {
                 variant="primary"
                 loading={loaderButton}
               >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
+                <CheckIcon />
                 Save Form
               </DynamicButton>
             </div>
@@ -816,19 +933,20 @@ function SalesFormPage() {
         </div>
       </form>
 
+      {/* Hidden PDF Preview */}
       <div
         ref={targetRef}
-        style={{
-          position: "absolute",
-          left: "-9999px",
-          top: "-9999px",
-        }}
+        style={{ position: "absolute", left: "-9999px", top: "-9999px" }}
       >
         <SalesOffer salesOfferData={pdfData} selectedUnit={selectedUnit} />
       </div>
     </>
   );
 }
+
+// ============================================================================
+// PAGE EXPORT WITH SUSPENSE
+// ============================================================================
 
 export default function Page() {
   return (
