@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect, useMemo, memo } from "react";
 import {
   uploadBulkImages,
   deleteS3Image,
@@ -6,6 +6,277 @@ import {
 } from "../app/(dashboard)/dashboard/actions";
 import { convertImageToBase64 } from "@/lib/utils";
 import { compressImage } from "../utils/imageCompression";
+
+// Reusable SVG Icons
+const Icons = {
+  check: (
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M5 13l4 4L19 7"
+    />
+  ),
+  close: (
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M6 18L18 6M6 6l12 12"
+    />
+  ),
+  warning: (
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+    />
+  ),
+  info: (
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+    />
+  ),
+  image: (
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+    />
+  ),
+};
+
+const Icon = memo(({ name, className = "w-4 h-4" }) => (
+  <svg
+    className={className}
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+  >
+    {Icons[name]}
+  </svg>
+));
+
+Icon.displayName = "Icon";
+
+// Reusable Image Preview Card Component
+const ImagePreviewCard = memo(
+  ({ item, index, onApprove, onReject, onUndo, extraInfo }) => (
+    <div
+      className={`relative border-2 rounded-lg overflow-hidden transition-all duration-200 ${
+        item.approved
+          ? "border-green-400 bg-green-50"
+          : "border-gray-200 hover:border-gray-300"
+      }`}
+    >
+      <div className="aspect-video bg-gray-100 relative">
+        <img
+          src={item.preview}
+          alt={item.name}
+          className="w-full h-full object-cover"
+          loading="lazy"
+        />
+        {item.approved && (
+          <div className="absolute inset-0 bg-green-500/20 flex items-center justify-center">
+            <div className="bg-green-500 rounded-full p-2">
+              <Icon name="check" className="w-6 h-6 text-white" />
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="p-3">
+        <p className="text-sm font-medium text-gray-700 truncate mb-1">
+          {item.name}
+        </p>
+        {extraInfo}
+        <div className="flex gap-2 mt-2">
+          {!item.approved ? (
+            <button
+              onClick={() => onApprove(index)}
+              className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-green-500 hover:bg-green-600 text-white text-sm font-medium rounded-md transition-colors"
+              type="button"
+            >
+              <Icon name="check" />
+              Approve
+            </button>
+          ) : (
+            <button
+              onClick={() => onUndo(index)}
+              className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm font-medium rounded-md transition-colors"
+              type="button"
+            >
+              Undo
+            </button>
+          )}
+          <button
+            onClick={() => onReject(index)}
+            className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-red-500 hover:bg-red-600 text-white text-sm font-medium rounded-md transition-colors"
+            type="button"
+          >
+            <Icon name="close" />
+            Reject
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+);
+
+ImagePreviewCard.displayName = "ImagePreviewCard";
+
+// Reusable Modal Component
+const PreviewModal = memo(
+  ({
+    isOpen,
+    title,
+    description,
+    iconName,
+    iconBgColor,
+    iconColor,
+    headerGradient,
+    previews,
+    emptyMessage,
+    onCancel,
+    onConfirm,
+    cancelText,
+    confirmText,
+    renderCard,
+  }) => {
+    const approvedCount = useMemo(
+      () => previews.filter((item) => item.approved).length,
+      [previews]
+    );
+
+    if (!isOpen) return null;
+
+    return (
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+        <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-hidden">
+          {/* Modal Header */}
+          <div
+            className={`px-6 py-4 border-b border-gray-200 bg-gradient-to-r ${headerGradient}`}
+          >
+            <div className="flex items-center gap-3">
+              <div className={`p-2 ${iconBgColor} rounded-full`}>
+                <Icon name={iconName} className={`w-5 h-5 ${iconColor}`} />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-800">{title}</h3>
+                <p className="text-sm text-gray-600">{description}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Modal Body */}
+          <div className="p-6 overflow-y-auto max-h-[50vh]">
+            {previews.length === 0 ? (
+              <p className="text-center text-gray-500 py-8">{emptyMessage}</p>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {previews.map((item, index) => renderCard(item, index))}
+              </div>
+            )}
+          </div>
+
+          {/* Modal Footer */}
+          <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex justify-between items-center">
+            <p className="text-sm text-gray-600">
+              {approvedCount} of {previews.length} approved
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={onCancel}
+                className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 text-sm font-medium transition-colors"
+                type="button"
+              >
+                {cancelText}
+              </button>
+              <button
+                onClick={onConfirm}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-sm font-medium transition-colors"
+                type="button"
+              >
+                {confirmText}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+);
+
+PreviewModal.displayName = "PreviewModal";
+
+// Custom hook for managing preview state
+const usePreviewState = (files, generatePreview) => {
+  const [previews, setPreviews] = useState([]);
+
+  useEffect(() => {
+    if (files.length === 0) {
+      setPreviews([]);
+      return;
+    }
+
+    const newPreviews = files.map(generatePreview);
+    setPreviews(newPreviews);
+
+    return () => {
+      newPreviews.forEach((p) => URL.revokeObjectURL(p.preview));
+    };
+  }, [files, generatePreview]);
+
+  const handleApprove = useCallback((index) => {
+    setPreviews((prev) =>
+      prev.map((item, i) => (i === index ? { ...item, approved: true } : item))
+    );
+  }, []);
+
+  const handleReject = useCallback((index) => {
+    setPreviews((prev) => {
+      const removed = prev[index];
+      if (removed?.preview) URL.revokeObjectURL(removed.preview);
+      return prev.filter((_, i) => i !== index);
+    });
+  }, []);
+
+  const handleUndo = useCallback((index) => {
+    setPreviews((prev) =>
+      prev.map((item, i) => (i === index ? { ...item, approved: false } : item))
+    );
+  }, []);
+
+  const cleanup = useCallback(() => {
+    previews.forEach((p) => {
+      if (p?.preview) URL.revokeObjectURL(p.preview);
+    });
+    setPreviews([]);
+  }, [previews]);
+
+  const getApprovedFiles = useCallback(() => {
+    return previews.filter((item) => item.approved).map((item) => item.file);
+  }, [previews]);
+
+  return {
+    previews,
+    handleApprove,
+    handleReject,
+    handleUndo,
+    cleanup,
+    getApprovedFiles,
+  };
+};
+
+// Helper function to get filename parts for duplicate check
+const getFileNameParts = (fileName) => {
+  return fileName.trim().split(".")[0].split("_");
+};
 
 export default function BulkImageUpload({
   onImagesUpload,
@@ -17,30 +288,63 @@ export default function BulkImageUpload({
   const [hoveredImage, setHoveredImage] = useState(null);
   const fileInputRef = useRef(null);
 
-  // State for duplicate preview modal
+  // Modal visibility states
   const [showDuplicateModal, setShowDuplicateModal] = useState(false);
+  const [showMismatchModal, setShowMismatchModal] = useState(false);
+
+  // File states
   const [duplicateFiles, setDuplicateFiles] = useState([]);
   const [pendingNewFiles, setPendingNewFiles] = useState([]);
-  const [duplicatePreviews, setDuplicatePreviews] = useState([]);
+  const [mismatchedFiles, setMismatchedFiles] = useState([]);
+  const [matchedFiles, setMatchedFiles] = useState([]);
 
-  // Generate previews for duplicate files
-  useEffect(() => {
-    if (duplicateFiles.length > 0) {
-      const previews = duplicateFiles.map((file) => ({
-        file,
-        name: file.name,
-        preview: URL.createObjectURL(file),
-        approved: false,
-      }));
-      setDuplicatePreviews(previews);
+  // Preview generators
+  const generateDuplicatePreview = useCallback(
+    (file) => ({
+      file,
+      name: file.name,
+      preview: URL.createObjectURL(file),
+      approved: false,
+    }),
+    []
+  );
 
-      // Cleanup object URLs on unmount
-      return () => {
-        previews.forEach((p) => URL.revokeObjectURL(p.preview));
-      };
+  const generateMismatchPreview = useCallback((file) => {
+    const fileProjectName =
+      file.name.trim().split(".")[0].split("_") || "Unknown";
+    return {
+      file,
+      name: file.name,
+      fileProjectName,
+      preview: URL.createObjectURL(file),
+      approved: false,
+    };
+  }, []);
+
+  // Use custom hooks for preview management
+  const duplicatePreviewState = usePreviewState(
+    duplicateFiles,
+    generateDuplicatePreview
+  );
+  const mismatchPreviewState = usePreviewState(
+    mismatchedFiles,
+    generateMismatchPreview
+  );
+
+  // Memoized existing image names set for duplicate checking
+  const existingImageNames = useMemo(
+    () => new Set(imageArray.map((img) => img?.name?.split("-")[0].trim())),
+    [imageArray]
+  );
+
+  // Reset file input
+  const resetFileInput = useCallback(() => {
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
     }
-  }, [duplicateFiles]);
+  }, []);
 
+  // Image removal handlers
   const handleRemoveImage = useCallback(
     async (indexToRemove) => {
       const imageToDelete = imageArray[indexToRemove];
@@ -52,15 +356,13 @@ export default function BulkImageUpload({
         onImagesUpload(
           imageArray.filter((_, index) => index !== indexToRemove)
         );
-        if (fileInputRef.current) {
-          fileInputRef.current.value = "";
-        }
-      } catch (error) {
-        console.error("Failed to delete image:", error);
+        resetFileInput();
+      } catch (err) {
+        console.error("Failed to delete image:", err);
         setError("Failed to delete image. Please try again.");
       }
     },
-    [imageArray, onImagesUpload, projectName]
+    [imageArray, onImagesUpload, projectName, resetFileInput]
   );
 
   const handleDeleteAllImages = useCallback(async () => {
@@ -73,159 +375,225 @@ export default function BulkImageUpload({
         await deleteS3Images(imageUrls, projectName);
       }
       onImagesUpload([]);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
-    } catch (error) {
-      console.error("Failed to delete all images:", error);
+      resetFileInput();
+    } catch (err) {
+      console.error("Failed to delete all images:", err);
       setError("Failed to delete all images. Please try again.");
     }
-  }, [imageArray, onImagesUpload, projectName]);
+  }, [imageArray, onImagesUpload, projectName, resetFileInput]);
 
-  // Handle approving a duplicate image
-  const handleApproveDuplicate = (index) => {
-    setDuplicatePreviews((prev) =>
-      prev.map((item, i) => (i === index ? { ...item, approved: true } : item))
-    );
-  };
+  // Process upload function
+  const processUpload = useCallback(
+    async (filesToUpload) => {
+      if (filesToUpload.length === 0) {
+        resetFileInput();
+        return;
+      }
 
-  // Handle rejecting/deleting a duplicate image
-  const handleRejectDuplicate = (index) => {
-    setDuplicatePreviews((prev) => prev.filter((_, i) => i !== index));
-  };
+      setUploading(true);
+      try {
+        const compressedFiles = await Promise.all(
+          filesToUpload.map((file) => compressImage(file))
+        );
 
-  // Close modal and cancel all duplicates
-  const handleCancelDuplicates = () => {
-    duplicatePreviews.forEach((p) => URL.revokeObjectURL(p.preview));
+        const formData = new FormData();
+        compressedFiles.forEach((file) => formData.append("image", file));
+
+        const response = await uploadBulkImages(formData, projectName);
+
+        const uploadedImages = await Promise.all(
+          (response.data?.successful || []).map(async (element) => ({
+            url: element?.url,
+            name: element?.originalName,
+            localUrl: await convertImageToBase64(element?.url),
+          }))
+        );
+
+        if (uploadedImages.length > 0) {
+          onImagesUpload([...imageArray, ...uploadedImages]);
+          setError(null);
+        }
+      } catch (err) {
+        console.error("Upload failed:", err);
+        setError("Upload failed. Please try again.");
+      } finally {
+        setUploading(false);
+        resetFileInput();
+      }
+    },
+    [imageArray, onImagesUpload, projectName, resetFileInput]
+  );
+
+  // Check for duplicates and proceed
+  const proceedWithDuplicateCheck = useCallback(
+    (filesToCheck) => {
+      const newFiles = [];
+      const foundDuplicates = [];
+
+      filesToCheck.forEach((file) => {
+        const fileNameParts = getFileNameParts(file.name);
+        const isDuplicate = fileNameParts.some((part) =>
+          existingImageNames.has(part)
+        );
+
+        if (isDuplicate) {
+          foundDuplicates.push(file);
+        } else {
+          newFiles.push(file);
+        }
+      });
+
+      if (foundDuplicates.length > 0) {
+        setDuplicateFiles(foundDuplicates);
+        setPendingNewFiles(newFiles);
+        setShowDuplicateModal(true);
+        return;
+      }
+
+      processUpload(newFiles);
+    },
+    [existingImageNames, processUpload]
+  );
+
+  // Modal handlers
+  const handleCancelDuplicates = useCallback(() => {
+    duplicatePreviewState.cleanup();
     setShowDuplicateModal(false);
     setDuplicateFiles([]);
-    setDuplicatePreviews([]);
-    // Continue with only new files if any
+
     if (pendingNewFiles.length > 0) {
       processUpload(pendingNewFiles);
     } else {
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
+      resetFileInput();
     }
-  };
+    setPendingNewFiles([]);
+  }, [duplicatePreviewState, pendingNewFiles, processUpload, resetFileInput]);
 
-  // Confirm approved duplicates and proceed with upload
-  const handleConfirmDuplicates = () => {
-    const approvedFiles = duplicatePreviews
-      .filter((item) => item.approved)
-      .map((item) => item.file);
-
-    // Cleanup previews
-    duplicatePreviews.forEach((p) => URL.revokeObjectURL(p.preview));
+  const handleConfirmDuplicates = useCallback(() => {
+    const approvedFiles = duplicatePreviewState.getApprovedFiles();
+    duplicatePreviewState.cleanup();
     setShowDuplicateModal(false);
     setDuplicateFiles([]);
-    setDuplicatePreviews([]);
 
-    // Combine approved duplicates with new files
     const allFilesToUpload = [...pendingNewFiles, ...approvedFiles];
+    setPendingNewFiles([]);
 
-    if (allFilesToUpload.length > 0) {
-      processUpload(allFilesToUpload);
+    processUpload(allFilesToUpload);
+  }, [duplicatePreviewState, pendingNewFiles, processUpload]);
+
+  const handleCancelMismatched = useCallback(() => {
+    mismatchPreviewState.cleanup();
+    setShowMismatchModal(false);
+    setMismatchedFiles([]);
+
+    if (matchedFiles.length > 0) {
+      proceedWithDuplicateCheck(matchedFiles);
     } else {
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
+      resetFileInput();
+    }
+    setMatchedFiles([]);
+  }, [
+    mismatchPreviewState,
+    matchedFiles,
+    proceedWithDuplicateCheck,
+    resetFileInput,
+  ]);
+
+  const handleConfirmMismatched = useCallback(() => {
+    const approvedFiles = mismatchPreviewState.getApprovedFiles();
+    mismatchPreviewState.cleanup();
+    setShowMismatchModal(false);
+    setMismatchedFiles([]);
+
+    const allFiles = [...matchedFiles, ...approvedFiles];
+    setMatchedFiles([]);
+
+    if (allFiles.length > 0) {
+      proceedWithDuplicateCheck(allFiles);
+    } else {
+      resetFileInput();
+    }
+  }, [
+    mismatchPreviewState,
+    matchedFiles,
+    proceedWithDuplicateCheck,
+    resetFileInput,
+  ]);
+
+  // File change handler
+  const handleFileChange = useCallback(
+    (e) => {
+      const files = Array.from(e.target.files);
+      if (!files.length) return;
+
+      if (!projectName?.trim()) {
+        alert("Please enter a project name before uploading images.");
+        e.target.value = "";
+        return;
       }
-    }
-  };
 
-  // Process upload function
-  const processUpload = async (filesToUpload) => {
-    setUploading(true);
-    const compressedFiles = await Promise.all(
-      filesToUpload.map(async (file) => compressImage(file))
-    );
-    const uploadedImages = [];
-    const formData = new FormData();
+      const normalizedProjectName = projectName
+        .trim()
+        .toLowerCase()
+        .replace(/\s+/g, "_");
+      const matched = [];
+      const mismatched = [];
 
-    for (const file of compressedFiles) {
-      formData.append("image", file);
-    }
+      files.forEach((file) => {
+        if (file.name.toLowerCase().includes(normalizedProjectName)) {
+          matched.push(file);
+        } else {
+          mismatched.push(file);
+        }
+      });
 
-    try {
-      const response = await uploadBulkImages(formData, projectName);
+      if (mismatched.length > 0) {
+        setMismatchedFiles(mismatched);
+        setMatchedFiles(matched);
+        setShowMismatchModal(true);
+        return;
+      }
 
-      const imagePromises =
-        response.data?.successful?.map(async (element) => ({
-          url: element?.url,
-          name: element?.originalName,
-          localUrl: await convertImageToBase64(element?.url),
-        })) || [];
+      proceedWithDuplicateCheck(files);
+    },
+    [projectName, proceedWithDuplicateCheck]
+  );
 
-      uploadedImages.push(...(await Promise.all(imagePromises)));
-    } catch (error) {
-      console.error("Upload failed:", error);
-      setError("Upload failed. Please try again.");
-    } finally {
-      setUploading(false);
-    }
+  // Render card for duplicate modal
+  const renderDuplicateCard = useCallback(
+    (item, index) => (
+      <ImagePreviewCard
+        key={index}
+        item={item}
+        index={index}
+        onApprove={duplicatePreviewState.handleApprove}
+        onReject={duplicatePreviewState.handleReject}
+        onUndo={duplicatePreviewState.handleUndo}
+      />
+    ),
+    [duplicatePreviewState]
+  );
 
-    if (uploadedImages.length > 0) {
-      const newImages = [...imageArray, ...uploadedImages];
-      console.log("New images:", newImages);
-      onImagesUpload(newImages);
-      setError(null);
-    }
-
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
-  };
-
-  const handleFileChange = async (e) => {
-    const files = Array.from(e.target.files);
-    if (!files.length) return;
-
-    if (!projectName?.trim()) {
-      alert("Please enter a project name before uploading images.");
-      e.target.value = "";
-      return;
-    }
-
-    // Check for duplicate images by comparing file names with existing imageArray
-    const existingImageNames = new Set(
-      imageArray.map((img) => img?.name?.split("-")[0].trim())
-    );
-
-    existingImageNames.forEach((name) => console.log("Existing name:", name));
-
-    const newFiles = files.filter((file) => {
-      const fileNameParts = file.name.trim().split(".")[0].split("_");
-      // Check if any part of the filename matches existing names
-      return !fileNameParts.some((part) => existingImageNames.has(part));
-    });
-
-    console.log("New files:", newFiles);
-
-    const foundDuplicates = files.filter((file) => {
-      const fileNameParts = file.name.trim().split(".")[0].split("_");
-      // Check if any part of the filename matches existing names
-      return fileNameParts.some((part) => existingImageNames.has(part));
-    });
-
-    console.log("Found duplicates:", foundDuplicates);
-
-    // If duplicates found, show modal for approval
-    if (foundDuplicates.length > 0) {
-      setDuplicateFiles(foundDuplicates);
-      setPendingNewFiles(newFiles);
-      setShowDuplicateModal(true);
-      return;
-    }
-
-    // If no duplicates, proceed with upload
-    if (newFiles.length === 0) {
-      e.target.value = "";
-      return;
-    }
-
-    await processUpload(newFiles);
-  };
+  // Render card for mismatch modal
+  const renderMismatchCard = useCallback(
+    (item, index) => (
+      <ImagePreviewCard
+        key={index}
+        item={item}
+        index={index}
+        onApprove={mismatchPreviewState.handleApprove}
+        onReject={mismatchPreviewState.handleReject}
+        onUndo={mismatchPreviewState.handleUndo}
+        extraInfo={
+          <p className="text-xs text-red-500">
+            Project in file:{" "}
+            <span className="font-semibold">{item.fileProjectName}</span>
+          </p>
+        }
+      />
+    ),
+    [mismatchPreviewState]
+  );
 
   return (
     <div className="space-y-4">
@@ -242,199 +610,53 @@ export default function BulkImageUpload({
       {error && <p className="text-sm text-red-600">{error}</p>}
 
       {/* Duplicate Preview Modal */}
-      {showDuplicateModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-hidden">
-            {/* Modal Header */}
-            <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-amber-50 to-orange-50">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-amber-100 rounded-full">
-                  <svg
-                    className="w-5 h-5 text-amber-600"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                    />
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-800">
-                    Duplicate Images Found
-                  </h3>
-                  <p className="text-sm text-gray-600">
-                    The following images already exist. Approve to replace or
-                    reject to skip.
-                  </p>
-                </div>
-              </div>
-            </div>
+      <PreviewModal
+        isOpen={showDuplicateModal}
+        title="Duplicate Images Found"
+        description="The following images already exist. Approve to replace or reject to skip."
+        iconName="warning"
+        iconBgColor="bg-amber-100"
+        iconColor="text-amber-600"
+        headerGradient="from-amber-50 to-orange-50"
+        previews={duplicatePreviewState.previews}
+        emptyMessage="No duplicate images to review."
+        onCancel={handleCancelDuplicates}
+        onConfirm={handleConfirmDuplicates}
+        cancelText="Skip All Duplicates"
+        confirmText="Confirm & Upload"
+        renderCard={renderDuplicateCard}
+      />
 
-            {/* Modal Body */}
-            <div className="p-6 overflow-y-auto max-h-[50vh]">
-              {duplicatePreviews.length === 0 ? (
-                <p className="text-center text-gray-500 py-8">
-                  No duplicate images to review.
-                </p>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {duplicatePreviews.map((item, index) => (
-                    <div
-                      key={index}
-                      className={`relative border-2 rounded-lg overflow-hidden transition-all duration-200 ${
-                        item.approved
-                          ? "border-green-400 bg-green-50"
-                          : "border-gray-200 hover:border-gray-300"
-                      }`}
-                    >
-                      {/* Image Preview */}
-                      <div className="aspect-video bg-gray-100 relative">
-                        <img
-                          src={item.preview}
-                          alt={item.name}
-                          className="w-full h-full object-cover"
-                        />
-                        {item.approved && (
-                          <div className="absolute inset-0 bg-green-500/20 flex items-center justify-center">
-                            <div className="bg-green-500 rounded-full p-2">
-                              <svg
-                                className="w-6 h-6 text-white"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M5 13l4 4L19 7"
-                                />
-                              </svg>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Image Info & Actions */}
-                      <div className="p-3">
-                        <p className="text-sm font-medium text-gray-700 truncate mb-3">
-                          {item.name}
-                        </p>
-                        <div className="flex gap-2">
-                          {!item.approved ? (
-                            <button
-                              onClick={() => handleApproveDuplicate(index)}
-                              className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-green-500 hover:bg-green-600 text-white text-sm font-medium rounded-md transition-colors"
-                              type="button"
-                            >
-                              <svg
-                                className="w-4 h-4"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M5 13l4 4L19 7"
-                                />
-                              </svg>
-                              Approve
-                            </button>
-                          ) : (
-                            <button
-                              onClick={() =>
-                                setDuplicatePreviews((prev) =>
-                                  prev.map((p, i) =>
-                                    i === index ? { ...p, approved: false } : p
-                                  )
-                                )
-                              }
-                              className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm font-medium rounded-md transition-colors"
-                              type="button"
-                            >
-                              Undo
-                            </button>
-                          )}
-                          <button
-                            onClick={() => handleRejectDuplicate(index)}
-                            className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-red-500 hover:bg-red-600 text-white text-sm font-medium rounded-md transition-colors"
-                            type="button"
-                          >
-                            <svg
-                              className="w-4 h-4"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M6 18L18 6M6 6l12 12"
-                              />
-                            </svg>
-                            Reject
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Modal Footer */}
-            <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex justify-between items-center">
-              <p className="text-sm text-gray-600">
-                {duplicatePreviews.filter((item) => item.approved).length} of{" "}
-                {duplicatePreviews.length} approved
-              </p>
-              <div className="flex gap-3">
-                <button
-                  onClick={handleCancelDuplicates}
-                  className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 text-sm font-medium transition-colors"
-                  type="button"
-                >
-                  Skip All Duplicates
-                </button>
-                <button
-                  onClick={handleConfirmDuplicates}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-sm font-medium transition-colors"
-                  type="button"
-                >
-                  Confirm & Upload
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Project Name Mismatch Modal */}
+      <PreviewModal
+        isOpen={showMismatchModal}
+        title="Project Name Mismatch"
+        description={
+          <>
+            The following images have a different project name than{" "}
+            <span className="font-semibold text-blue-600">"{projectName}"</span>
+            . Are you sure you want to upload them?
+          </>
+        }
+        iconName="info"
+        iconBgColor="bg-red-100"
+        iconColor="text-red-600"
+        headerGradient="from-red-50 to-orange-50"
+        previews={mismatchPreviewState.previews}
+        emptyMessage="No mismatched images to review."
+        onCancel={handleCancelMismatched}
+        onConfirm={handleConfirmMismatched}
+        cancelText="Skip All Mismatched"
+        confirmText="Confirm & Continue"
+        renderCard={renderMismatchCard}
+      />
 
       {imageArray.length > 0 && (
         <div className="relative">
           <div className="bg-gray-50 rounded-lg p-4">
             <div className="flex justify-between items-center mb-3">
               <h4 className="text-sm font-medium text-gray-700 flex items-center">
-                <svg
-                  className="w-4 h-4 mr-2"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                  />
-                </svg>
+                <Icon name="image" className="w-4 h-4 mr-2" />
                 Uploaded Images ({imageArray.length})
               </h4>
               <button
@@ -453,7 +675,7 @@ export default function BulkImageUpload({
                   className="group p-3 bg-white border border-gray-200 rounded-md hover:border-blue-300 hover:shadow-sm transition-all duration-200 flex justify-between items-center cursor-pointer flex-shrink-0"
                 >
                   <div className="flex items-center space-x-3">
-                    <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                    <div className="w-2 h-2 bg-green-400 rounded-full" />
                     <span
                       className="text-sm text-gray-700 font-medium truncate"
                       onMouseEnter={() => setHoveredImage(image)}
@@ -468,19 +690,7 @@ export default function BulkImageUpload({
                     title="Remove image"
                     type="button"
                   >
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M6 18L18 6M6 6l12 12"
-                      />
-                    </svg>
+                    <Icon name="close" />
                   </button>
                 </div>
               ))}
