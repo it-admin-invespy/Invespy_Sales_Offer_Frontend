@@ -278,6 +278,45 @@ const getFileNameParts = (fileName) => {
   return fileName.trim().split(".")[0].split("_");
 };
 
+// Toast notification component
+const Toast = memo(({ message, isVisible, onClose }) => {
+  useEffect(() => {
+    if (isVisible) {
+      const timer = setTimeout(() => {
+        onClose();
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [isVisible, onClose]);
+
+  if (!isVisible) return null;
+
+  return (
+    <div className="fixed top-4 right-4 z-50 animate-slide-in">
+      <div className="bg-amber-50 border border-amber-200 rounded-lg shadow-lg p-4 max-w-md">
+        <div className="flex items-start gap-3">
+          <div className="p-1.5 bg-amber-100 rounded-full flex-shrink-0">
+            <Icon name="warning" className="w-4 h-4 text-amber-600" />
+          </div>
+          <div className="flex-1">
+            <p className="text-sm font-medium text-amber-800">Files Removed</p>
+            <p className="text-sm text-amber-700 mt-1">{message}</p>
+          </div>
+          <button
+            onClick={onClose}
+            className="text-amber-500 hover:text-amber-700 flex-shrink-0"
+            type="button"
+          >
+            <Icon name="close" className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+});
+
+Toast.displayName = "Toast";
+
 export default function BulkImageUpload({
   onImagesUpload,
   imageArray,
@@ -288,15 +327,15 @@ export default function BulkImageUpload({
   const [hoveredImage, setHoveredImage] = useState(null);
   const fileInputRef = useRef(null);
 
-  // Modal visibility states
+  // Toast state
+  const [toast, setToast] = useState({ isVisible: false, message: "" });
+
+  // Modal visibility state
   const [showDuplicateModal, setShowDuplicateModal] = useState(false);
-  const [showMismatchModal, setShowMismatchModal] = useState(false);
 
   // File states
   const [duplicateFiles, setDuplicateFiles] = useState([]);
   const [pendingNewFiles, setPendingNewFiles] = useState([]);
-  const [mismatchedFiles, setMismatchedFiles] = useState([]);
-  const [matchedFiles, setMatchedFiles] = useState([]);
 
   // Preview generators
   const generateDuplicatePreview = useCallback(
@@ -309,31 +348,21 @@ export default function BulkImageUpload({
     []
   );
 
-  const generateMismatchPreview = useCallback((file) => {
-    const fileProjectName =
-      file.name.trim().split(".")[0].split("_") || "Unknown";
-    return {
-      file,
-      name: file.name,
-      fileProjectName,
-      preview: URL.createObjectURL(file),
-      approved: false,
-    };
-  }, []);
-
   // Use custom hooks for preview management
   const duplicatePreviewState = usePreviewState(
     duplicateFiles,
     generateDuplicatePreview
   );
-  const mismatchPreviewState = usePreviewState(
-    mismatchedFiles,
-    generateMismatchPreview
-  );
+
+  // Toast close handler
+  const closeToast = useCallback(() => {
+    setToast({ isVisible: false, message: "" });
+  }, []);
 
   // Memoized existing image names set for duplicate checking
   const existingImageNames = useMemo(
-    () => new Set(imageArray.map((img) => img?.name?.split("-")[0].trim())),
+    () =>
+      new Set(imageArray.map((img) => img?.name?.split("_").at(-1)?.trim())),
     [imageArray]
   );
 
@@ -404,7 +433,7 @@ export default function BulkImageUpload({
         const uploadedImages = await Promise.all(
           (response.data?.successful || []).map(async (element) => ({
             url: element?.url,
-            name: element?.originalName,
+            name: element?.originalName.split(".")[0].trim(),
             localUrl: await convertImageToBase64(element?.url),
           }))
         );
@@ -429,6 +458,8 @@ export default function BulkImageUpload({
     (filesToCheck) => {
       const newFiles = [];
       const foundDuplicates = [];
+
+      console.log(existingImageNames);
 
       filesToCheck.forEach((file) => {
         const fileNameParts = getFileNameParts(file.name);
@@ -481,45 +512,6 @@ export default function BulkImageUpload({
     processUpload(allFilesToUpload);
   }, [duplicatePreviewState, pendingNewFiles, processUpload]);
 
-  const handleCancelMismatched = useCallback(() => {
-    mismatchPreviewState.cleanup();
-    setShowMismatchModal(false);
-    setMismatchedFiles([]);
-
-    if (matchedFiles.length > 0) {
-      proceedWithDuplicateCheck(matchedFiles);
-    } else {
-      resetFileInput();
-    }
-    setMatchedFiles([]);
-  }, [
-    mismatchPreviewState,
-    matchedFiles,
-    proceedWithDuplicateCheck,
-    resetFileInput,
-  ]);
-
-  const handleConfirmMismatched = useCallback(() => {
-    const approvedFiles = mismatchPreviewState.getApprovedFiles();
-    mismatchPreviewState.cleanup();
-    setShowMismatchModal(false);
-    setMismatchedFiles([]);
-
-    const allFiles = [...matchedFiles, ...approvedFiles];
-    setMatchedFiles([]);
-
-    if (allFiles.length > 0) {
-      proceedWithDuplicateCheck(allFiles);
-    } else {
-      resetFileInput();
-    }
-  }, [
-    mismatchPreviewState,
-    matchedFiles,
-    proceedWithDuplicateCheck,
-    resetFileInput,
-  ]);
-
   // File change handler
   const handleFileChange = useCallback(
     (e) => {
@@ -547,16 +539,30 @@ export default function BulkImageUpload({
         }
       });
 
+      // If there are mismatched files, show toast and remove them
       if (mismatched.length > 0) {
-        setMismatchedFiles(mismatched);
-        setMatchedFiles(matched);
-        setShowMismatchModal(true);
+        const mismatchedNames = mismatched.map((f) => f.name).join(", ");
+        const message =
+          mismatched.length === 1
+            ? `"${mismatchedNames}" was removed (project name mismatch).`
+            : `${mismatched.length} files removed (project name mismatch): ${mismatchedNames}`;
+
+        setToast({ isVisible: true, message });
+
+        // If no matched files, just reset and return
+        if (matched.length === 0) {
+          resetFileInput();
+          return;
+        }
+
+        // Proceed with only matched files
+        proceedWithDuplicateCheck(matched);
         return;
       }
 
       proceedWithDuplicateCheck(files);
     },
-    [projectName, proceedWithDuplicateCheck]
+    [projectName, proceedWithDuplicateCheck, resetFileInput]
   );
 
   // Render card for duplicate modal
@@ -574,29 +580,15 @@ export default function BulkImageUpload({
     [duplicatePreviewState]
   );
 
-  // Render card for mismatch modal
-  const renderMismatchCard = useCallback(
-    (item, index) => (
-      <ImagePreviewCard
-        key={index}
-        item={item}
-        index={index}
-        onApprove={mismatchPreviewState.handleApprove}
-        onReject={mismatchPreviewState.handleReject}
-        onUndo={mismatchPreviewState.handleUndo}
-        extraInfo={
-          <p className="text-xs text-red-500">
-            Project in file:{" "}
-            <span className="font-semibold">{item.fileProjectName}</span>
-          </p>
-        }
-      />
-    ),
-    [mismatchPreviewState]
-  );
-
   return (
     <div className="space-y-4">
+      {/* Toast Notification */}
+      <Toast
+        message={toast.message}
+        isVisible={toast.isVisible}
+        onClose={closeToast}
+      />
+
       <input
         ref={fileInputRef}
         type="file"
@@ -622,33 +614,9 @@ export default function BulkImageUpload({
         emptyMessage="No duplicate images to review."
         onCancel={handleCancelDuplicates}
         onConfirm={handleConfirmDuplicates}
-        cancelText="Skip All Duplicates"
+        cancelText="Cancel"
         confirmText="Confirm & Upload"
         renderCard={renderDuplicateCard}
-      />
-
-      {/* Project Name Mismatch Modal */}
-      <PreviewModal
-        isOpen={showMismatchModal}
-        title="Project Name Mismatch"
-        description={
-          <>
-            The following images have a different project name than{" "}
-            <span className="font-semibold text-blue-600">"{projectName}"</span>
-            . Are you sure you want to upload them?
-          </>
-        }
-        iconName="info"
-        iconBgColor="bg-red-100"
-        iconColor="text-red-600"
-        headerGradient="from-red-50 to-orange-50"
-        previews={mismatchPreviewState.previews}
-        emptyMessage="No mismatched images to review."
-        onCancel={handleCancelMismatched}
-        onConfirm={handleConfirmMismatched}
-        cancelText="Skip All Mismatched"
-        confirmText="Confirm & Continue"
-        renderCard={renderMismatchCard}
       />
 
       {imageArray.length > 0 && (

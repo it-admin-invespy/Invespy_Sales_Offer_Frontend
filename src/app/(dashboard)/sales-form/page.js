@@ -300,16 +300,18 @@ const transformUnits = (units) => {
 /**
  * Fetches floor plan images in parallel and combines with metadata
  */
-const fetchFloorPlanImages = async (unitsArray) => {
+const fetchFloorPlanImages = async (unitsArray, projectName) => {
   const imagePromises = [];
   const imageMetadata = [];
+  const normalizedProjectName =
+    projectName?.trim().toUpperCase().replace(/\s+/g, "_") || "";
 
   for (const unit of unitsArray) {
     const floorPlans = unit.floorPlans || [];
     for (let j = 0; j < floorPlans.length; j++) {
       imageMetadata.push({
         url: floorPlans[j].layoutsImages,
-        name: `${unit.unitNo} - floorPlan - ${j + 1}`,
+        name: `${normalizedProjectName}_${unit.unitNo}`,
       });
       imagePromises.push(convertImageToBase64(floorPlans[j].layoutsImages));
     }
@@ -430,9 +432,13 @@ function SalesFormPage() {
       try {
         const data = await getSalesOfferById(id);
         const unitsArray = data.salesOffer?.project?.units || [];
+        const fetchedProjectName = data.salesOffer?.project?.projectName || "";
 
         // Fetch floor plan images in parallel
-        const floorPlanUnitImages = await fetchFloorPlanImages(unitsArray);
+        const floorPlanUnitImages = await fetchFloorPlanImages(
+          unitsArray,
+          fetchedProjectName
+        );
         setFloorPlanImages(floorPlanUnitImages);
 
         // Transform and set form data
