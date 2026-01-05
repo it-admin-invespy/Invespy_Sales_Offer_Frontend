@@ -5,7 +5,6 @@ export const transformSalesOffer = async (data) => {
   const project = offer.project;
   const meta = project?.meta || {};
 
-  console.log("project : ", offer);
 
   return {
     projects: [

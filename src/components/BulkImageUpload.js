@@ -1,11 +1,11 @@
 import { useState, useCallback, useRef, useEffect, useMemo, memo } from "react";
 import {
-  uploadBulkImages,
   deleteS3Image,
   deleteS3Images,
 } from "../app/(dashboard)/dashboard/actions";
 import { convertImageToBase64 } from "@/lib/utils";
 import { compressImage } from "../utils/imageCompression";
+import { uploadBulkImages } from "@/constant/services";
 
 // Reusable SVG Icons
 const Icons = {
@@ -429,7 +429,7 @@ export default function BulkImageUpload({
         compressedFiles.forEach((file) => formData.append("image", file));
 
         const response = await uploadBulkImages(formData, projectName);
-
+        console.log("response", response);
         const uploadedImages = await Promise.all(
           (response.data?.successful || []).map(async (element) => ({
             url: element?.url,

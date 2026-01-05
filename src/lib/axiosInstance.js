@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 import axios from "axios";
 
 const AxiosInstance = axios.create({
-  baseURL: process.env.BASE_URL,
+  baseURL: process.env.NEXT_PUBLIC_BASE_URL,
 });
 
 AxiosInstance.interceptors.request.use(
