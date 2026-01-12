@@ -13,6 +13,7 @@ const axiosClient = axios.create({
 axiosClient.interceptors.response.use(
     (response) => response,
     (error) => {
+        console.log("error on axiosClient" , error)
         if (error.response?.status === 401 && typeof window !== "undefined") {
             window.location.href = "/login"
         }

@@ -138,7 +138,7 @@ export default function CSVUpload({
       </div>
 
       {csvData.length > 0 && (
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto h-[500px]">
           <table className="w-full border border-gray-300 text-sm">
             <thead className="bg-gray-50">
               <tr>

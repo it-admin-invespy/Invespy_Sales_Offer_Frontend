@@ -53,10 +53,8 @@ export async function uploadImage(formData) {
 export async function uploadBulkImages(formData, projectName) {
   try {
     if (projectName) {
-      console.log("projectName" , projectName);
       formData.append("projectName", projectName);
     }
-    console.log("formData" , formData);
     const response = await AxiosInstance.post(
       "/api/v1/sales-offers/upload/bulk",
       formData,
@@ -64,6 +62,8 @@ export async function uploadBulkImages(formData, projectName) {
         headers: {
           "Content-Type": "multipart/form-data",
         },
+        maxContentLength: Infinity,
+        maxBodyLength: Infinity
       }
     );
     return response.data;

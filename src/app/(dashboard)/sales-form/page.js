@@ -360,6 +360,8 @@ function SalesFormPage() {
   const [pdfData, setPdfData] = useState();
   const [loading, setLoading] = useState(false);
   const [loaderButton, setLoaderButton] = useState(false);
+  const [isDownloadLoader, setIsDownloadLoader] = useState(false);
+  const [isAllDownloadLoader, setIsAllDownloadLoader] = useState(false);
 
   // Form
   const {
@@ -556,7 +558,7 @@ function SalesFormPage() {
   );
 
   const downloadSalesOffer = useCallback(async () => {
-    setLoaderButton(true);
+    setIsDownloadLoader(true);
 
     try {
       const { data, breakdown } = await preparePdfData(true);
@@ -576,12 +578,12 @@ function SalesFormPage() {
         ...PDF_OPTIONS,
       });
     } finally {
-      setLoaderButton(false);
+      setIsDownloadLoader(false);
     }
   }, [preparePdfData, selectedUnit]);
 
   const downloadSalesOfferAll = useCallback(async () => {
-    setLoaderButton(true);
+    setIsAllDownloadLoader(true);
 
     try {
       const { data, breakdown } = await preparePdfData(true);
@@ -606,7 +608,7 @@ function SalesFormPage() {
         });
       }
     } finally {
-      setLoaderButton(false);
+      setIsAllDownloadLoader(false);
     }
   }, [preparePdfData, unitsData]);
 
@@ -908,7 +910,8 @@ function SalesFormPage() {
                 onClick={downloadSalesOfferAll}
                 className="px-6 py-3 rounded-lg font-medium transition-all duration-200 hover:shadow-md flex items-center gap-2"
                 variant="success"
-                loading={loaderButton}
+                disabled={loaderButton || isAllDownloadLoader}
+                loading={isAllDownloadLoader}
               >
                 <DownloadIcon />
                 Download All PDFs
@@ -919,7 +922,8 @@ function SalesFormPage() {
                 onClick={downloadSalesOffer}
                 className="px-6 py-3 rounded-lg font-medium transition-all duration-200 hover:shadow-md flex items-center gap-2"
                 variant="success"
-                loading={loaderButton}
+                disabled={isDownloadLoader || loaderButton}
+                loading={isDownloadLoader}
               >
                 <DownloadIcon />
                 Download PDF
@@ -930,6 +934,7 @@ function SalesFormPage() {
                 className="px-8 py-3 rounded-lg font-semibold transition-all duration-200 hover:shadow-md flex items-center gap-2"
                 variant="primary"
                 loading={loaderButton}
+                disabled={loaderButton}
               >
                 <CheckIcon />
                 Save Form
