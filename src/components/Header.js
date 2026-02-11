@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { logout } from "../app/(auth)/login/actions";
 import DynamicButton from "./DynamicButton";
 
@@ -11,6 +11,9 @@ export default function Header() {
   const handleLogout = async () => {
     await logout();
   };
+
+  const pathName = usePathname();
+  const isSalesForm = pathName.includes('sales-form')
 
   return (
     <header className="bg-white shadow-sm border-b border-gray-200">
@@ -27,16 +30,29 @@ export default function Header() {
             </p>
           </div>
           <div className="flex items-center gap-4">
-            <DynamicButton
-              onClick={() => router.push("/sales-form")}
-              variant="primary"
-              className="px-6 py-3 text-sm font-medium"
-            >
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              New Form
-            </DynamicButton>
+            {
+              !isSalesForm ?
+              <DynamicButton
+                onClick={() => router.push("/sales-form")}
+                variant="primary"
+                className="px-6 py-3 text-sm font-medium"
+              >
+                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                New Form
+              </DynamicButton> :
+               <DynamicButton
+                onClick={() => router.push("/dashboard")}
+                variant="primary"
+                className="px-6 py-3 text-sm font-medium"
+              >
+                {/* <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg> */}
+                Back to Home
+              </DynamicButton>
+            }
             <button
               onClick={handleLogout}
               className="text-gray-400 hover:text-gray-600 transition-colors p-2"

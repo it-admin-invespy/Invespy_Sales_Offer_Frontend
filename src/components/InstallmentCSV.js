@@ -5,35 +5,70 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 
 export default function InstallmentCSV({ setValue, disabled, price, units }) {
   const [csvData, setCsvData] = useState([]);
+  const [hasVatColumn, setHasVatColumn] = useState(false);
 
   useEffect(() => {
-    setCsvData(units?.[0]?.installments || []);
+    const installments = units?.[0]?.installments || [];
+    setCsvData(installments);
+    setHasVatColumn(installments.some((row) => row.vat != null && row.vat !== ""));
   }, [units]);
 
   const handleChooseFile = useCallback(() => {
     document.getElementById("installment-csv-upload").click();
   }, []);
 
+  // const registerUnitInstallments = useCallback(
+  //   (data, hasVat) => {
+  //     units.forEach((unit, unitIndex) => {
+  //       data.forEach((row, rowIndex) => {
+  //         const basePath = `projects.0.units.${unitIndex}.installments.${rowIndex}`;
+  //         const percentage = parsePercentage(row.percentagePayable);
+  //         const amount = calculateAmount(percentage, unit.price || 0);
+  //         const vatNum = hasVat ? (parseFloat(row.vat) || 0) : undefined;
+  //         const values = {
+  //           installment: row.installment || "",
+  //           percentagePayable: percentage,
+  //           milestone: row.milestone || "",
+  //           total: amount,
+  //           ...(hasVat && { vat: vatNum }),
+  //         };
+  //         Object.entries(values).forEach(([key, value]) => {
+  //           setValue(`${basePath}.${key}`, value);
+  //         });
+  //         // if (!hasVat) {
+  //         //   setValue(`${basePath}.vat`, undefined);
+  //         // }
+  //       });
+  //     });
+  //   },
+  //   [units, setValue]
+  // );
+
   const registerUnitInstallments = useCallback(
-    (data) => {
+    (data, hasVat) => {
       units.forEach((unit, unitIndex) => {
-        data.forEach((row, rowIndex) => {
-          const basePath = `projects.0.units.${unitIndex}.installments.${rowIndex}`;
+        const newInstallments = data.map((row) => {
           const percentage = parsePercentage(row.percentagePayable);
-          const values = {
+          const amount = calculateAmount(percentage, unit.price || 0);
+          const installment = {
             installment: row.installment || "",
             percentagePayable: percentage,
             milestone: row.milestone || "",
-            total: calculateAmount(percentage, unit.price || 0),
+            total: amount,
           };
-          Object.entries(values).forEach(([key, value]) => {
-            setValue(`${basePath}.${key}`, value);
-          });
+          if (hasVat) {
+            installment.vat = parseFloat(row.vat) || 0;
+          } else {
+            installment.vat = undefined;
+          }
+          return installment;
         });
+        setValue(`projects.0.units.${unitIndex}.installments`, newInstallments);
       });
     },
     [units, setValue]
   );
+
 
   const handleUpload = useCallback(
     (e) => {
@@ -42,21 +77,35 @@ export default function InstallmentCSV({ setValue, disabled, price, units }) {
 
       const reader = new FileReader();
       reader.onload = (event) => {
-        const data = event.target.result
+        const lines = (event.target.result || "")
           .split("\n")
-          .slice(1)
-          .filter((line) => line?.trim())
-          .map((line) => {
-            const values = line.split(",");
-            return {
-              installment: values[0]?.trim() || "",
-              percentagePayable:
-                values[1]?.trim()?.replace(/[^0-9.]/g, "") || "",
-              milestone: values[2]?.trim() || "",
-              total: values[3]?.trim() || "",
-            };
-          });
-        registerUnitInstallments(data);
+          .map((l) => l.trim())
+          .filter(Boolean);
+        if (lines.length === 0) return;
+        // lines == ['header' , row1 , row2]
+        const headerLine = lines[0];
+        const headers = headerLine.split(",").map((h) => h.trim().toLowerCase());
+        const vatIndex = headers.findIndex((h) => h === "vat");
+        // if not found will return -1
+        const hasVat = vatIndex >= 0;
+
+        // skipping index 0 which is header 
+        const data = lines.slice(1).map((line) => {
+          const values = line.split(",");
+          const row = {
+            installment: values[0]?.trim() || "",
+            percentagePayable:
+              values[1]?.trim()?.replace(/[^0-9.]/g, "") || "",
+            milestone: values[2]?.trim() || "",
+          };
+          if (hasVat && values[vatIndex] != null) {
+            row.vat = parseFloat(values[vatIndex].trim()) || 0;
+          }
+          return row;
+        });
+
+        setHasVatColumn(hasVat);
+        registerUnitInstallments(data, hasVat);
         setCsvData(data);
       };
       reader.readAsText(file);
@@ -66,12 +115,23 @@ export default function InstallmentCSV({ setValue, disabled, price, units }) {
 
   const handleRemove = useCallback(() => {
     setCsvData([]);
+    setHasVatColumn(false);
     document.getElementById("installment-csv-upload").value = "";
   }, []);
 
   const tableHeaders = useMemo(
-    () => ["Installment", "% Payable", "Milestone", "Amount (AED)"],
-    []
+    () =>
+      hasVatColumn
+        ? [
+          "Installment",
+          "% Payable",
+          "Milestone",
+          "Amount (AED)",
+          "VAT",
+          "Amount after VAT",
+        ]
+        : ["Installment", "% Payable", "Milestone", "Amount (AED)"],
+    [hasVatColumn]
   );
 
   return (
@@ -89,13 +149,12 @@ export default function InstallmentCSV({ setValue, disabled, price, units }) {
           type="button"
           disabled={disabled && csvData.length === 0}
           onClick={csvData.length === 0 ? handleChooseFile : handleRemove}
-          className={`${
-            csvData.length === 0
+          className={`${csvData.length === 0
               ? disabled
                 ? "bg-gray-400 cursor-not-allowed"
                 : "bg-blue-500 hover:bg-blue-600"
               : "bg-red-500 hover:bg-red-600"
-          } text-white font-medium py-2 px-4 rounded-md transition-colors`}
+            } text-white font-medium py-2 px-4 rounded-md transition-colors`}
         >
           {csvData.length === 0 ? "Choose CSV File" : "Remove CSV File"}
         </button>
@@ -117,6 +176,8 @@ export default function InstallmentCSV({ setValue, disabled, price, units }) {
               {csvData.map((row, index) => {
                 const percentage = parsePercentage(row.percentagePayable);
                 const amount = calculateAmount(percentage, price);
+                const vat = hasVatColumn ? (parseFloat(row.vat) || 0) : 0;
+                const amountAfterVat = amount + vat;
 
                 return (
                   <tr key={index}>
@@ -132,6 +193,16 @@ export default function InstallmentCSV({ setValue, disabled, price, units }) {
                     <td className="border border-gray-300 px-2 py-1 text-right">
                       {formatCurrency(amount)}
                     </td>
+                    {hasVatColumn && (
+                      <>
+                        <td className="border border-gray-300 px-2 py-1 text-right">
+                          {formatCurrency(vat)}
+                        </td>
+                        <td className="border border-gray-300 px-2 py-1 text-right">
+                          {formatCurrency(amountAfterVat)}
+                        </td>
+                      </>
+                    )}
                   </tr>
                 );
               })}

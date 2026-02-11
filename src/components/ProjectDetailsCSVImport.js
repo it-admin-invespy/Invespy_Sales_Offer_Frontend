@@ -23,6 +23,9 @@ const fieldMapping = {
   term6: "extra.termsAndCondition.5",
   email_website: "customer.email",
   address: "customer.address",
+  term7: "extra.termsAndCondition.6",
+  term8: "extra.termsAndCondition.7",
+  term9: "extra.termsAndCondition.8",
 };
 
 const csvHeaders = Object.keys(fieldMapping).join(",");

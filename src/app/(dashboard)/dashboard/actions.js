@@ -62,6 +62,8 @@ export async function uploadBulkImages(formData, projectName) {
         headers: {
           "Content-Type": "multipart/form-data",
         },
+        maxContentLength: Infinity,
+        maxBodyLength: Infinity
       }
     );
     return response.data;

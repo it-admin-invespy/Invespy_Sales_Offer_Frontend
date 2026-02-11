@@ -319,9 +319,9 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
             }}
           >
             {termsAndCondition &&
-              termsAndCondition.split("|").map((term, i) => (
+              termsAndCondition.split("|").splice(0, 6).map((term, i) => (
                 <React.Fragment key={i}>
-                  {i !== 5 && term.trim() !== "" && (
+                  {term.trim() !== "" && (
                     <div className="flex items-start">
                       <div className="font-bold text-black mr-1">*</div>
                       <div>{term}</div>
@@ -359,8 +359,12 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
                     "Installment",
                     "% Payable",
                     "Milestone",
-                    // "Milestone Date",
                     "Amount (AED)",
+                    ...((unit?.installments || []).some(
+                      (inst) => inst?.vat != null && inst?.vat !== ""
+                    )
+                      ? ["VAT", "Amount after VAT"]
+                      : []),
                   ].map((heading) => (
                     <th
                       key={heading}
@@ -378,68 +382,93 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
                 </tr>
               </thead>
               <tbody>
-                {(unit?.installments || []).map((inst, i) => (
-                  <tr
-                    key={i}
-                    style={{
-                      backgroundColor: "#fff",
-                    }}
-                  >
-                    <td
+                {(unit?.installments || []).map((inst, i) => {
+                  const totalNum = Number(inst?.total) || 0;
+                  const vatNum = Number(inst?.vat) || 0;
+                  const amountAfterVat = totalNum + vatNum;
+                  const showVatColumns = (unit?.installments || []).some(
+                    (instItem) =>
+                      instItem?.vat != null && instItem?.vat !== ""
+                  );
+                  return (
+                    <tr
+                      key={i}
                       style={{
-                        border: "1px solid #000",
-                        textAlign: "center",
-                        padding: "8px 6px",
-                        fontWeight: "500",
-                        fontSize: "12px",
+                        backgroundColor: "#fff",
                       }}
                     >
-                      {inst?.installment}
-                    </td>
-                    <td
-                      style={{
-                        border: "1px solid #000",
-                        textAlign: "center",
-                        padding: "8px 6px",
-                        fontWeight: "600",
-                        fontSize: "12px",
-                      }}
-                    >
-                      {Number(inst?.percentagePayable || 0)}%
-                    </td>
-                    <td
-                      style={{
-                        border: "1px solid #000",
-                        textAlign: "center",
-                        padding: "8px 6px",
-                        fontSize: "12px",
-                      }}
-                    >
-                      {inst?.milestone}
-                    </td>
-                    {/* <td
-                      style={{
-                        border: "1px solid #000",
-                        textAlign: "center",
-                        padding: "8px 6px",
-                        fontSize: "12px",
-                      }}
-                    >
-                      {inst?.milestoneDate}
-                    </td> */}
-                    <td
-                      style={{
-                        border: "1px solid #000",
-                        textAlign: "center",
-                        padding: "8px 6px",
-                        fontWeight: "600",
-                        fontSize: "12px",
-                      }}
-                    >
-                      {formatNumber(inst?.total)}
-                    </td>
-                  </tr>
-                ))}
+                      <td
+                        style={{
+                          border: "1px solid #000",
+                          textAlign: "center",
+                          padding: "8px 6px",
+                          fontWeight: "500",
+                          fontSize: "12px",
+                        }}
+                      >
+                        {inst?.installment}
+                      </td>
+                      <td
+                        style={{
+                          border: "1px solid #000",
+                          textAlign: "center",
+                          padding: "8px 6px",
+                          fontWeight: "600",
+                          fontSize: "12px",
+                        }}
+                      >
+                        {Number(inst?.percentagePayable || 0)}%
+                      </td>
+                      <td
+                        style={{
+                          border: "1px solid #000",
+                          textAlign: "center",
+                          padding: "8px 6px",
+                          fontSize: "12px",
+                        }}
+                      >
+                        {inst?.milestone}
+                      </td>
+                      <td
+                        style={{
+                          border: "1px solid #000",
+                          textAlign: "center",
+                          padding: "8px 6px",
+                          fontWeight: "600",
+                          fontSize: "12px",
+                        }}
+                      >
+                        {formatNumber(inst?.total)}
+                      </td>
+                      {showVatColumns && (
+                        <>
+                          <td
+                            style={{
+                              border: "1px solid #000",
+                              textAlign: "center",
+                              padding: "8px 6px",
+                              fontWeight: "600",
+                              fontSize: "12px",
+                            }}
+                          >
+                            {formatNumber(inst?.vat)}
+                          </td>
+                          <td
+                            style={{
+                              border: "1px solid #000",
+                              textAlign: "center",
+                              padding: "8px 6px",
+                              fontWeight: "600",
+                              fontSize: "12px",
+                            }}
+                          >
+                            {formatNumber(amountAfterVat)}
+                          </td>
+                        </>
+                      )}
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -534,15 +563,13 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
             }}
           >
             {termsAndCondition &&
-              termsAndCondition.split("|").map((term, i) => (
-                <React.Fragment key={i}>
-                  {i === 5 && (
-                    <div className="flex items-start">
-                      <div className="font-bold text-black mr-1">*</div>
-                      <div>{term}</div>
-                    </div>
-                  )}
-                </React.Fragment>
+              termsAndCondition.split("|").splice(6).map((term, i) => (
+                term.trim() != "" && (
+                  <div className="flex items-start">
+                    <div className="font-bold text-black mr-1">*</div>
+                    <div>{term}</div>
+                  </div>
+                )
               ))}
           </div>
         </div>

@@ -5,7 +5,6 @@ export const transformSalesOffer = async (data) => {
   const project = offer.project;
   const meta = project?.meta || {};
 
-  console.log("project : ", offer);
 
   return {
     projects: [
@@ -28,6 +27,7 @@ export const transformSalesOffer = async (data) => {
               milestone: inst?.milestone || "",
               milestoneDate: inst?.milestoneDate || "",
               total: inst?.total || "",
+              vat: inst?.vat != null ? inst.vat : undefined,
             })),
             preRegistrationPayment: {
               totalAmount:
