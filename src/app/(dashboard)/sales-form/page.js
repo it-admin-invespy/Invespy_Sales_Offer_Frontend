@@ -876,7 +876,7 @@ function SalesFormPage() {
         />
 
         {/* Pre-Registration Payment */}
-        <SectionCard title="">
+        <SectionCard title="Pre Registeration Payment">
           <InvisibleTable register={register} meta={meta} control={control} />
           <PreRegistrationDetails register={register}/>
         </SectionCard>

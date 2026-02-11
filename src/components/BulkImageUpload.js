@@ -2,10 +2,11 @@ import { useState, useCallback, useRef, useEffect, useMemo, memo } from "react";
 import {
   deleteS3Image,
   deleteS3Images,
+  uploadBulkImages,
 } from "../app/(dashboard)/dashboard/actions";
 import { convertImageToBase64 } from "@/lib/utils";
 import { compressImage } from "../utils/imageCompression";
-import { uploadBulkImages } from "@/constant/services";
+
 
 // Reusable SVG Icons
 const Icons = {
