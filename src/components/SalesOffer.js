@@ -319,9 +319,9 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
             }}
           >
             {termsAndCondition &&
-              termsAndCondition.split("|").map((term, i) => (
+              termsAndCondition.split("|").splice(0, 6).map((term, i) => (
                 <React.Fragment key={i}>
-                  {i !== 5 && term.trim() !== "" && (
+                  {term.trim() !== "" && (
                     <div className="flex items-start">
                       <div className="font-bold text-black mr-1">*</div>
                       <div>{term}</div>
@@ -563,15 +563,13 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
             }}
           >
             {termsAndCondition &&
-              termsAndCondition.split("|").map((term, i) => (
-                <React.Fragment key={i}>
-                  {i === 5 && (
-                    <div className="flex items-start">
-                      <div className="font-bold text-black mr-1">*</div>
-                      <div>{term}</div>
-                    </div>
-                  )}
-                </React.Fragment>
+              termsAndCondition.split("|").splice(6).map((term, i) => (
+                term.trim() != "" && (
+                  <div className="flex items-start">
+                    <div className="font-bold text-black mr-1">*</div>
+                    <div>{term}</div>
+                  </div>
+                )
               ))}
           </div>
         </div>

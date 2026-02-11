@@ -35,6 +35,7 @@ import {
   getSalesOfferById,
   updateSalesOffer,
 } from "../dashboard/actions";
+import PreRegistrationDetails from "@/components/PreRegistrationDetails";
 
 // ============================================================================
 // CONSTANTS
@@ -77,7 +78,7 @@ const DEFAULT_FORM_VALUES = Object.freeze({
       preRegistration: "PRE-REGISTRATION FEE TO BE PAID WITH RESERVATION",
     },
     breakdown: [],
-    termsAndCondition: ["", "", "", "", "", ""],
+    termsAndCondition: ["", "", "", "", "", "", "" , "" , ""],
   },
 });
 
@@ -409,6 +410,8 @@ function SalesFormPage() {
     },
     [floorPlanImages]
   );
+
+  console.log("salesOfferData" , salesOfferData)
 
   const resetToDefaults = useCallback(() => {
     setSelectedUnit(0);
@@ -873,8 +876,9 @@ function SalesFormPage() {
         />
 
         {/* Pre-Registration Payment */}
-        <SectionCard title="Pre Registeration Payment">
+        <SectionCard title="">
           <InvisibleTable register={register} meta={meta} control={control} />
+          <PreRegistrationDetails register={register}/>
         </SectionCard>
 
         {/* Signature */}
