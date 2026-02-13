@@ -206,11 +206,15 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
           >
             <div style={{ fontSize: "12px", marginBottom: "8px" }}>
               <strong>{project?.projectName || ""}</strong>,{" "}
-              {project?.location || ""} - {project?.country || ""}
+              {project?.location || project?.country && (
+                project?.location || "" - project?.country || ""
+              )
+              }
             </div>
             <div style={{ fontSize: "12px", color: "#333" }}>
               {`(${project?.elevation || ""})`}
             </div>
+
           </div>
           {/* Greeting */}
           <div style={{ width: "100%" }}>

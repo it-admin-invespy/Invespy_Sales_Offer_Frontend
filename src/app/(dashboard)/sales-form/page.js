@@ -286,16 +286,27 @@ const calculateUnitBreakdown = (breakdown, unitPrice) => {
 };
 
 /**
- * Transforms unit data for submission
+ * Transforms unit data for submission.
+ * Omits `vat` from each installment when there is no VAT (undefined or empty).
  */
 const transformUnits = (units) => {
   if (!units) return units;
 
-  return units.map((unit) => ({
-    ...unit,
-    grossArea: parseNumericValue(unit.grossArea),
-    price: parseNumericValue(unit.price),
-  }));
+  return units.map((unit) => {
+    const installments = (unit.installments || []).map((inst) => {
+      const { vat, ...rest } = inst;
+      if (vat != null && vat !== "") {
+        return { ...rest, vat };
+      }
+      return rest;
+    });
+    return {
+      ...unit,
+      grossArea: parseNumericValue(unit.grossArea),
+      price: parseNumericValue(unit.price),
+      installments,
+    };
+  });
 };
 
 /**
@@ -569,7 +580,7 @@ function SalesFormPage() {
 
       currentUnit.preRegistrationPayment = calculateUnitBreakdown(
         breakdown,
-        currentUnit.price
+        currentUnit?.price
       );
 
       setPdfData({ ...data });

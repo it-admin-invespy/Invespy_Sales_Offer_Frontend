@@ -10,7 +10,7 @@ export default function InstallmentCSV({ setValue, disabled, price, units }) {
   useEffect(() => {
     const installments = units?.[0]?.installments || [];
     setCsvData(installments);
-    setHasVatColumn(installments.some((row) => row.vat != null && row.vat !== ""));
+    setHasVatColumn(installments.some((row) => row.vat != null && row.vat !== "" && row.vat > 0));
   }, [units]);
 
   const handleChooseFile = useCallback(() => {
@@ -58,9 +58,7 @@ export default function InstallmentCSV({ setValue, disabled, price, units }) {
           };
           if (hasVat) {
             installment.vat = parseFloat(row.vat) || 0;
-          } else {
-            installment.vat = undefined;
-          }
+          } 
           return installment;
         });
         setValue(`projects.0.units.${unitIndex}.installments`, newInstallments);
