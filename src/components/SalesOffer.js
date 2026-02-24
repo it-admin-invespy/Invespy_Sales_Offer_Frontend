@@ -206,11 +206,15 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
           >
             <div style={{ fontSize: "12px", marginBottom: "8px" }}>
               <strong>{project?.projectName || ""}</strong>,{" "}
-              {project?.location || ""} - {project?.country || ""}
+              {project?.location || project?.country && (
+                project?.location || "" - project?.country || ""
+              )
+              }
             </div>
             <div style={{ fontSize: "12px", color: "#333" }}>
               {`(${project?.elevation || ""})`}
             </div>
+
           </div>
           {/* Greeting */}
           <div style={{ width: "100%" }}>
@@ -361,7 +365,7 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
                     "Milestone",
                     "Amount (AED)",
                     ...((unit?.installments || []).some(
-                      (inst) => inst?.vat != null && inst?.vat !== ""
+                      (inst) => inst?.vat != null && inst?.vat !== "" && inst.vat > 0
                     )
                       ? ["VAT", "Amount after VAT"]
                       : []),
@@ -388,7 +392,7 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
                   const amountAfterVat = totalNum + vatNum;
                   const showVatColumns = (unit?.installments || []).some(
                     (instItem) =>
-                      instItem?.vat != null && instItem?.vat !== ""
+                      instItem?.vat != null && instItem?.vat !== "" && instItem.vat > 0
                   );
                   return (
                     <tr

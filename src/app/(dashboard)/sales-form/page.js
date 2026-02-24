@@ -93,7 +93,7 @@ const CSV_SAMPLES = Object.freeze({
     filename: "project-units-sample.csv",
   },
   installment: {
-    content: "Installment,% Payable,Milestone",
+    content: "Installment,% Payable,Milestone,VAT",
     filename: "installment-summary-sample.csv",
   },
 });
@@ -286,16 +286,27 @@ const calculateUnitBreakdown = (breakdown, unitPrice) => {
 };
 
 /**
- * Transforms unit data for submission
+ * Transforms unit data for submission.
+ * Omits `vat` from each installment when there is no VAT (undefined or empty).
  */
 const transformUnits = (units) => {
   if (!units) return units;
 
-  return units.map((unit) => ({
-    ...unit,
-    grossArea: parseNumericValue(unit.grossArea),
-    price: parseNumericValue(unit.price),
-  }));
+  return units.map((unit) => {
+    const installments = (unit.installments || []).map((inst) => {
+      const { vat, ...rest } = inst;
+      if (vat != null && vat !== "") {
+        return { ...rest, vat };
+      }
+      return rest;
+    });
+    return {
+      ...unit,
+      grossArea: parseNumericValue(unit.grossArea),
+      price: parseNumericValue(unit.price),
+      installments,
+    };
+  });
 };
 
 /**
@@ -411,8 +422,6 @@ function SalesFormPage() {
     [floorPlanImages]
   );
 
-  console.log("salesOfferData" , salesOfferData)
-
   const resetToDefaults = useCallback(() => {
     setSelectedUnit(0);
     setUnitsData([]);
@@ -482,7 +491,7 @@ function SalesFormPage() {
       const data = { ...formValue };
       const breakdown = { ...watch("extra.breakdown") };
 
-      // Attach floor plans and payment breakdown to each unit
+      // Attach floor plans, payment breakdown, and installments from unitsData (source of truth)
       unitsData.forEach((unit, index) => {
         if (data.projects?.[0]?.units?.[index]) {
           data.projects[0].units[index].floorPlans = getFloorPlansForUnit(unit);
@@ -516,7 +525,6 @@ function SalesFormPage() {
     async (formValue) => {
       setLoaderButton(true);
       const id = searchParams.get("id");
-
       try {
         const submissionData = prepareSubmissionData(formValue);
         await (id
@@ -569,7 +577,7 @@ function SalesFormPage() {
 
       currentUnit.preRegistrationPayment = calculateUnitBreakdown(
         breakdown,
-        currentUnit.price
+        currentUnit?.price
       );
 
       setPdfData({ ...data });
@@ -647,6 +655,7 @@ function SalesFormPage() {
       CSV_SAMPLES.installment.filename
     );
   }, []);
+
 
   // ============================================================================
   // RENDER
@@ -847,6 +856,7 @@ function SalesFormPage() {
             disabled={!hasUnits}
             price={currentUnitPrice}
             units={unitsData}
+            setUnitsData={setUnitsData}
           />
         </SectionCard>
 
