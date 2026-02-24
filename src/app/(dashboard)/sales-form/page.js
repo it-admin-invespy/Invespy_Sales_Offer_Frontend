@@ -93,7 +93,7 @@ const CSV_SAMPLES = Object.freeze({
     filename: "project-units-sample.csv",
   },
   installment: {
-    content: "Installment,% Payable,Milestone",
+    content: "Installment,% Payable,Milestone,VAT",
     filename: "installment-summary-sample.csv",
   },
 });
@@ -422,8 +422,6 @@ function SalesFormPage() {
     [floorPlanImages]
   );
 
-  console.log("salesOfferData" , salesOfferData)
-
   const resetToDefaults = useCallback(() => {
     setSelectedUnit(0);
     setUnitsData([]);
@@ -493,7 +491,7 @@ function SalesFormPage() {
       const data = { ...formValue };
       const breakdown = { ...watch("extra.breakdown") };
 
-      // Attach floor plans and payment breakdown to each unit
+      // Attach floor plans, payment breakdown, and installments from unitsData (source of truth)
       unitsData.forEach((unit, index) => {
         if (data.projects?.[0]?.units?.[index]) {
           data.projects[0].units[index].floorPlans = getFloorPlansForUnit(unit);
@@ -527,7 +525,6 @@ function SalesFormPage() {
     async (formValue) => {
       setLoaderButton(true);
       const id = searchParams.get("id");
-
       try {
         const submissionData = prepareSubmissionData(formValue);
         await (id
@@ -658,6 +655,7 @@ function SalesFormPage() {
       CSV_SAMPLES.installment.filename
     );
   }, []);
+
 
   // ============================================================================
   // RENDER
@@ -858,6 +856,7 @@ function SalesFormPage() {
             disabled={!hasUnits}
             price={currentUnitPrice}
             units={unitsData}
+            setUnitsData={setUnitsData}
           />
         </SectionCard>
 

@@ -365,7 +365,7 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
                     "Milestone",
                     "Amount (AED)",
                     ...((unit?.installments || []).some(
-                      (inst) => inst?.vat != null && inst?.vat !== ""
+                      (inst) => inst?.vat != null && inst?.vat !== "" && inst.vat > 0
                     )
                       ? ["VAT", "Amount after VAT"]
                       : []),
@@ -392,7 +392,7 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
                   const amountAfterVat = totalNum + vatNum;
                   const showVatColumns = (unit?.installments || []).some(
                     (instItem) =>
-                      instItem?.vat != null && instItem?.vat !== ""
+                      instItem?.vat != null && instItem?.vat !== "" && instItem.vat > 0
                   );
                   return (
                     <tr
