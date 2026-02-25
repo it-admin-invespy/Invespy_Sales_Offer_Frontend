@@ -88,12 +88,17 @@ const PDF_OPTIONS = Object.freeze({
 
 const CSV_SAMPLES = Object.freeze({
   projectUnits: {
-    content:
+    content: [
       "Project Name,Unit No,Floor No,Unit Type,View,Area (Sq/Ft),Price (AED)",
+      "Sample Residency,101,1,2BR,Sea View,1200,1500000",
+    ].join("\n"),
     filename: "project-units-sample.csv",
   },
   installment: {
-    content: "Installment,% Payable,Milestone,VAT",
+    content: [
+      "Installment,% Payable,Milestone,VAT",
+      "On Booking,20,Contract Signing,100",
+    ].join("\n"),
     filename: "installment-summary-sample.csv",
   },
 });
