@@ -553,6 +553,12 @@ function SalesFormPage() {
       // Convert logo to base64
       data.meta.logoUrl = await convertImageToBase64(data.meta.logoUrl);
 
+      // SalesOffer expects top-level termsAndCondition (string); form stores extra.termsAndCondition (array)
+      const termsArray = data.extra?.termsAndCondition || [];
+      data.termsAndCondition = Array.isArray(termsArray)
+        ? termsArray.join(" | ")
+        : String(termsArray || "");
+
       // Attach floor plans to all units
       unitsData.forEach((unit, index) => {
         if (data.projects?.[0]?.units?.[index]) {
