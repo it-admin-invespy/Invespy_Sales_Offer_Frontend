@@ -28,9 +28,37 @@ const fieldMapping = {
   term9: "extra.termsAndCondition.8",
 };
 
-const csvHeaders = Object.keys(fieldMapping).join(",");
+/** Single row of dummy content for the sample CSV download */
+const sampleRow = {
+  brand_color: "#007BFF",
+  font_family: "Arial",
+  project_name: "Sample Residency",
+  country: "UAE",
+  location: "Dubai",
+  elevation: "Sea Level",
+  sales_consultant: "John Smith",
+  brokerage_agency: "Sample Agency LLC",
+  signature: "Customer Name",
+  date: "2025-01-15",
+  term1: "Sample term and condition 1",
+  term2: "Sample term and condition 2",
+  term3: "Sample term and condition 3",
+  term4: "Sample term and condition 4",
+  term5: "Sample term and condition 5",
+  term6: "Sample term and condition 6",
+  email_website: "contact@example.com",
+  address: "123 Sample Street, Dubai",
+  term7: "Pre-registration term 1",
+  term8: "Pre-registration term 2",
+  term9: "Pre-registration term 3",
+};
 
-const downloadSampleCSV = (csvContent, filename) => {
+/** Normalize CSV header for lookup: lowercase and replace spaces with underscores */
+const normalizeHeader = (key) =>
+  (key || "").toLowerCase().trim().replace(/\s+/g, "_");
+
+const downloadSampleCSV = (filename) => {
+  const csvContent = Papa.unparse([sampleRow]);
   const blob = new Blob([csvContent], { type: "text/csv" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -59,7 +87,8 @@ const ProjectDetailsCSVImport = ({ setValue }) => {
           complete: (parsedData) => {
             const details = parsedData.data[0];
             Object.keys(details).forEach((key) => {
-              const fieldPath = fieldMapping[key.toLowerCase()];
+              const normalizedKey = normalizeHeader(key);
+              const fieldPath = fieldMapping[normalizedKey];
               if (fieldPath) {
                 setValue(fieldPath, details[key]);
               }
@@ -107,9 +136,7 @@ const ProjectDetailsCSVImport = ({ setValue }) => {
         </DynamicButton>
         <DynamicButton
           type="button"
-          onClick={() =>
-            downloadSampleCSV(csvHeaders, "form-fields-sample.csv")
-          }
+          onClick={() => downloadSampleCSV("form-fields-sample.csv")}
           className="px-4 py-3 rounded-lg font-medium transition-all duration-200 hover:shadow-md"
           variant="primary"
         >
