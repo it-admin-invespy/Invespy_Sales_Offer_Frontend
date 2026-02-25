@@ -15,6 +15,7 @@ export const transformSalesOffer = async (data) => {
         elevation: project?.elevation || "",
         units: await Promise.all(
           (project?.units || []).map(async (unit) => ({
+            unitId: unit?._id || unit?.id || unit?.unitId || "",
             unitNo: unit?.unitNo || "",
             floorNo: unit?.floorNo || "",
             unitType: unit?.unitType || "",
@@ -164,15 +165,27 @@ export const createPayloadForDuplicateObj = (objectA) => {
 
 export const convertImageToBase64 = async (url) => {
   if (!url || typeof url !== "string") return url;
+  const normalizedUrl = url.trim();
+
+  // Skip proxy conversion for non-HTTP URL formats.
+  if (
+    !normalizedUrl ||
+    normalizedUrl.startsWith("data:") ||
+    normalizedUrl.startsWith("blob:") ||
+    normalizedUrl.startsWith("/") ||
+    !/^https?:\/\//i.test(normalizedUrl)
+  ) {
+    return url;
+  }
 
   try {
-    const parsedUrl = new URL(url);
+    const parsedUrl = new URL(normalizedUrl);
     if (!["http:", "https:"].includes(parsedUrl.protocol)) {
       return url;
     }
 
     const response = await fetch(
-      `/api/proxy-image?url=${encodeURIComponent(url)}`
+      `/api/proxy-image?url=${encodeURIComponent(normalizedUrl)}`
     );
     return response.url;
   } catch (error) {

@@ -1,6 +1,6 @@
 import { formatCurrency, parseNumericValue, formatArea } from "@/lib/utils";
 import { useEffect, useState, useCallback, useMemo } from "react";
-import { set } from "zod";
+import { deleteProjectUnits, deleteUnit } from "@/app/(dashboard)/dashboard/actions";
 
 const sortUnits = (a, b) => {
   const numA = parseFloat(a.unitNo);
@@ -22,10 +22,13 @@ export default function CSVUpload({
   setSelectedUnit,
   unitsData = [],
   setValue,
+  projectId,
 }) {
   const name = "projects.0.units";
   const [csvData, setCsvData] = useState([]);
   const [selectedRow, setSelectedRow] = useState(0);
+  const [isDeletingAll, setIsDeletingAll] = useState(false);
+  const [deletingRowIndex, setDeletingRowIndex] = useState(null);
 
   useEffect(() => {
     setCsvData(unitsData);
@@ -90,9 +93,105 @@ export default function CSVUpload({
   const handleRemoveCSV = useCallback(() => {
     setCsvData([]);
     onDataLoad([]);
+    setValue(name, []);
     setSelectedRow(0);
+    setSelectedUnit(0);
+    setValue("extra.breakdown.0.amount", 0);
     document.getElementById("csv-upload").value = "";
-  }, [onDataLoad]);
+  }, [name, onDataLoad, setSelectedUnit, setValue]);
+
+  const handleDeleteRow = useCallback(
+    async (indexToDelete) => {
+      const unitToDelete = csvData[indexToDelete];
+      const unitLabel = unitToDelete?.unitNo
+        ? `unit ${unitToDelete.unitNo}`
+        : "this unit";
+      const confirmed = window.confirm(
+        `Are you sure you want to delete ${unitLabel}?`
+      );
+      if (!confirmed) return;
+
+      setDeletingRowIndex(indexToDelete);
+
+      try {
+        const unitIdToDelete =
+          unitToDelete?.unitId || unitToDelete?._id || unitToDelete?.id;
+
+        if (unitIdToDelete) {
+          await deleteUnit(unitIdToDelete);
+        }
+
+        const updatedCsvData = csvData.filter(
+          (_, index) => index !== indexToDelete
+        );
+        setCsvData(updatedCsvData);
+        onDataLoad(updatedCsvData);
+        setValue(name, updatedCsvData);
+
+        if (updatedCsvData.length === 0) {
+          setSelectedRow(0);
+          setSelectedUnit(0);
+          setValue("extra.breakdown.0.amount", 0);
+          return;
+        }
+
+        let nextSelectedRow = selectedRow;
+        if (indexToDelete === selectedRow) {
+          nextSelectedRow = Math.min(indexToDelete, updatedCsvData.length - 1);
+        } else if (indexToDelete < selectedRow) {
+          nextSelectedRow = selectedRow - 1;
+        }
+
+        setSelectedRow(nextSelectedRow);
+        setSelectedUnit(nextSelectedRow);
+        setValue(
+          "extra.breakdown.0.amount",
+          (updatedCsvData[nextSelectedRow]?.price || 0) * 0.04
+        );
+      } catch (error) {
+        console.error("Failed to delete unit:", error);
+        alert(error?.message || "Failed to delete unit");
+      } finally {
+        setDeletingRowIndex(null);
+      }
+    },
+    [csvData, onDataLoad, selectedRow, setSelectedUnit, setValue]
+  );
+
+  const clearAllUnits = useCallback(() => {
+    setCsvData([]);
+    onDataLoad([]);
+    setValue(name, []);
+    setSelectedRow(0);
+    setSelectedUnit(0);
+    setValue("extra.breakdown.0.amount", 0);
+    document.getElementById("csv-upload").value = "";
+  }, [name, onDataLoad, setSelectedUnit, setValue]);
+
+  const handleDeleteAllUnits = useCallback(async () => {
+    if (csvData.length === 0) return;
+
+    const confirmed = window.confirm(
+      `Are you sure you want to delete all ${csvData.length} units?`
+    );
+    if (!confirmed) return;
+
+    if (!projectId) {
+      alert("Project ID is missing. Unable to delete all units.");
+      return;
+    }
+
+    setIsDeletingAll(true);
+    try {
+      await deleteProjectUnits(projectId);
+      clearAllUnits();
+    } catch (error) {
+      console.error("Failed to delete all units:", error);
+      alert(error?.message || "Failed to delete all units");
+    } finally {
+      setIsDeletingAll(false);
+    }
+  }, [clearAllUnits, csvData.length, projectId]);
 
   const tableHeaders = useMemo(
     () => [
@@ -144,7 +243,21 @@ export default function CSVUpload({
               <tr>
                 {tableHeaders.map((header) => (
                   <th key={header} className="border border-gray-300 px-2 py-1">
-                    {header}
+                    {header === "Action" ? (
+                      <div className="flex items-center justify-between gap-2">
+                        <span>{header}</span>
+                        <button
+                          type="button"
+                          onClick={handleDeleteAllUnits}
+                          disabled={isDeletingAll || csvData.length === 0}
+                          className="px-2 py-1 text-xs rounded bg-red-600 text-white hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                        >
+                          {isDeletingAll ? "Deleting..." : "Delete All"}
+                        </button>
+                      </div>
+                    ) : (
+                      header
+                    )}
                   </th>
                 ))}
               </tr>
@@ -190,17 +303,27 @@ export default function CSVUpload({
                       {formatCurrency(row.price)}
                     </td>
                     <td className="border border-gray-300 px-2 py-1">
-                      <button
-                        type="button"
-                        onClick={() => handleCalculate(index)}
-                        className={`px-2 py-1 text-xs rounded ${
-                          isSelected
-                            ? "bg-red-500 text-white"
-                            : "bg-blue-500 text-white"
-                        }`}
-                      >
-                        {isSelected ? "Remove" : "Calculate"}
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleCalculate(index)}
+                          className={`px-2 py-1 text-xs rounded ${
+                            isSelected
+                              ? "bg-red-500 text-white"
+                              : "bg-blue-500 text-white"
+                          }`}
+                        >
+                          {isSelected ? "Remove" : "Calculate"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteRow(index)}
+                          disabled={deletingRowIndex === index || isDeletingAll}
+                          className="px-2 py-1 text-xs rounded bg-red-600 text-white hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                        >
+                          {deletingRowIndex === index ? "Deleting..." : "Delete"}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );

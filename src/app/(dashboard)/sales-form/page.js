@@ -374,6 +374,7 @@ function SalesFormPage() {
   const [loaderButton, setLoaderButton] = useState(false);
   const [isDownloadLoader, setIsDownloadLoader] = useState(false);
   const [isAllDownloadLoader, setIsAllDownloadLoader] = useState(false);
+  const [projectId, setProjectId] = useState("");
 
   // Form
   const {
@@ -401,6 +402,14 @@ function SalesFormPage() {
   );
   const currentUnitPrice = useMemo(
     () => unitsData[selectedUnit]?.price,
+    [unitsData, selectedUnit]
+  );
+  const currentUnitId = useMemo(
+    () =>
+      unitsData[selectedUnit]?.unitId ||
+      unitsData[selectedUnit]?._id ||
+      unitsData[selectedUnit]?.id ||
+      "",
     [unitsData, selectedUnit]
   );
   const hasUnits = unitsData.length > 0;
@@ -445,6 +454,12 @@ function SalesFormPage() {
       setLoading(true);
       try {
         const data = await getSalesOfferById(id);
+        setProjectId(
+          data.salesOffer?.project?._id ||
+            data.salesOffer?.project?.id ||
+            data.salesOffer?.project?.projectId ||
+            ""
+        );
         const unitsArray = data.salesOffer?.project?.units || [];
         const fetchedProjectName = data.salesOffer?.project?.projectName || "";
 
@@ -465,8 +480,14 @@ function SalesFormPage() {
         formData.extra.breakdown = breakdown;
 
         setUnitsData(
-          formData.projects?.[0]?.units?.map((unit) => ({
+          formData.projects?.[0]?.units?.map((unit, index) => ({
             projectName: formData.projects?.[0]?.projectName,
+            unitId:
+              unitsArray[index]?._id ||
+              unitsArray[index]?.id ||
+              unitsArray[index]?.unitId ||
+              unit?.unitId ||
+              "",
             ...unit,
           })) || []
         );
@@ -490,10 +511,22 @@ function SalesFormPage() {
     (formValue) => {
       const data = { ...formValue };
       const breakdown = { ...watch("extra.breakdown") };
+      const selectedUnits = unitsData || [];
+
+      if (!data.projects?.[0]) {
+        data.projects = [{ units: [] }];
+      }
+
+      // Units from table state are source of truth; avoid sending stale form units.
+      data.projects[0].units = (data.projects[0].units || []).slice(
+        0,
+        selectedUnits.length
+      );
 
       // Attach floor plans, payment breakdown, and installments from unitsData (source of truth)
-      unitsData.forEach((unit, index) => {
+      selectedUnits.forEach((unit, index) => {
         if (data.projects?.[0]?.units?.[index]) {
+          data.projects[0].units[index].installments = unit.installments || [];
           data.projects[0].units[index].floorPlans = getFloorPlansForUnit(unit);
           data.projects[0].units[index].preRegistrationPayment =
             calculateUnitBreakdown(breakdown, unit.price);
@@ -825,6 +858,7 @@ function SalesFormPage() {
             unitsData={unitsData}
             setValue={setValue}
             units={existingUnits}
+            projectId={projectId}
           />
           {errors.projects?.[0]?.units && (
             <p className="text-red-500 text-sm mt-2">
@@ -863,6 +897,8 @@ function SalesFormPage() {
             price={currentUnitPrice}
             units={unitsData}
             setUnitsData={setUnitsData}
+            selectedUnit={selectedUnit}
+            selectedUnitId={currentUnitId}
           />
         </SectionCard>
 

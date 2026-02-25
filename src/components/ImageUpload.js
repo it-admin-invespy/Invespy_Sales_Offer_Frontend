@@ -24,7 +24,6 @@ export default function ImageUpload({ onUpload, label }) {
       formData.append("file", compressedFile);
       
       const { data } = await uploadImage(formData);
-      console.log("Upload successful:", data);
       onUpload(data.url);
       setCompressionStatus("");
     } catch (error) {

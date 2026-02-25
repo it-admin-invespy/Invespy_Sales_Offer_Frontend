@@ -430,7 +430,6 @@ export default function BulkImageUpload({
         compressedFiles.forEach((file) => formData.append("image", file));
 
         const response = await uploadBulkImages(formData, projectName);
-        console.log("response", response);
         const uploadedImages = await Promise.all(
           (response.data?.successful || []).map(async (element) => ({
             url: element?.url,
@@ -459,8 +458,6 @@ export default function BulkImageUpload({
     (filesToCheck) => {
       const newFiles = [];
       const foundDuplicates = [];
-
-      console.log(existingImageNames);
 
       filesToCheck.forEach((file) => {
         const fileNameParts = getFileNameParts(file.name);

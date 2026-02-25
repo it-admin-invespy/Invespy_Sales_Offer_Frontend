@@ -25,7 +25,6 @@ AxiosInstance.interceptors.request.use(
 
 AxiosInstance.interceptors.response.use(
   (response) => {
-    console.log("response", response.data);
     // Can be modified response
     return response;
   },

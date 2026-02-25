@@ -2,6 +2,7 @@
 
 import { formatCurrency, parsePercentage, calculateAmount } from "@/lib/utils";
 import { useEffect, useState, useCallback, useMemo } from "react";
+import { deleteUnitInstallments } from "@/app/(dashboard)/dashboard/actions";
 
 export default function InstallmentCSV({
   setValue,
@@ -9,15 +10,20 @@ export default function InstallmentCSV({
   price,
   units,
   setUnitsData,
+  selectedUnit = 0,
+  selectedUnitId = "",
 }) {
   const [csvData, setCsvData] = useState([]);
   const [hasVatColumn, setHasVatColumn] = useState(false);
+  const [isDeletingAllInstallments, setIsDeletingAllInstallments] = useState(false);
 
   useEffect(() => {
-    const installments = units?.[0]?.installments || [];
+    const installments = units?.[selectedUnit]?.installments || [];
     setCsvData(installments);
-    setHasVatColumn(installments.some((row) => row.vat != null && row.vat !== "" && row.vat > 0));
-  }, [units]);
+    setHasVatColumn(
+      installments.some((row) => row.vat != null && row.vat !== "" && row.vat > 0)
+    );
+  }, [units, selectedUnit]);
 
   const handleChooseFile = useCallback(() => {
     document.getElementById("installment-csv-upload").click();
@@ -25,10 +31,10 @@ export default function InstallmentCSV({
 
   const registerUnitInstallments = useCallback(
     (data, hasVat) => {
-      units.forEach((unit, unitIndex) => {
-        const newInstallments = data.map((row) => {
+      const buildInstallmentsForUnit = (unitPrice) =>
+        data.map((row) => {
           const percentage = parsePercentage(row.percentagePayable);
-          const amount = calculateAmount(percentage, unit.price || 0);
+          const amount = calculateAmount(percentage, unitPrice || 0);
           const installment = {
             installment: row.installment || "",
             percentagePayable: percentage,
@@ -40,10 +46,21 @@ export default function InstallmentCSV({
           }
           return installment;
         });
+
+      units.forEach((unit, unitIndex) => {
+        const newInstallments = buildInstallmentsForUnit(unit.price);
         setValue(`projects.0.units.${unitIndex}.installments`, newInstallments);
       });
+
+      // Keep unitsData synchronized with form values to avoid stale installments on save.
+      setUnitsData((prev) =>
+        prev.map((unit) => ({
+          ...unit,
+          installments: buildInstallmentsForUnit(unit.price),
+        }))
+      );
     },
-    [units, setValue]
+    [units, setUnitsData, setValue]
   );
 
 
@@ -96,21 +113,52 @@ export default function InstallmentCSV({
       setHasVatColumn(false);
       // Clear installments in React state
 
-      setUnitsData((prev) =>
-        prev.map((project , unitIndex) => {
-          //  setValue(`projects.0.units.${unitIndex}.installments`, []);
-          return ({
+      setUnitsData((prev) => {
+        prev.forEach((_, unitIndex) => {
+          setValue(`projects.0.units.${unitIndex}.installments`, []);
+        });
+
+        return prev.map((project) => ({
           ...project,
           installments: [],
-        })
-        })
-      );
+        }));
+      });
       const input = document.getElementById("installment-csv-upload");
       if (input) input.value = "";
     } catch (error) {
       console.log("error on removing csv", error)
     }
-  }, [setUnitsData]);
+  }, [setUnitsData, setValue]);
+
+  const handleDeleteAllInstallments = useCallback(async () => {
+    if (!selectedUnitId) {
+      alert("Unit ID is missing. Unable to delete installments.");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      "Are you sure you want to delete all installments for this unit?"
+    );
+    if (!confirmed) return;
+
+    setIsDeletingAllInstallments(true);
+    try {
+      await deleteUnitInstallments(selectedUnitId);
+      setCsvData([]);
+      setHasVatColumn(false);
+      setUnitsData((prev) =>
+        prev.map((unit, index) =>
+          index === selectedUnit ? { ...unit, installments: [] } : unit
+        )
+      );
+      setValue(`projects.0.units.${selectedUnit}.installments`, []);
+    } catch (error) {
+      console.error("Failed to delete installments:", error);
+      alert(error?.message || "Failed to delete installments");
+    } finally {
+      setIsDeletingAllInstallments(false);
+    }
+  }, [selectedUnit, selectedUnitId, setUnitsData, setValue]);
 
   const tableHeaders = useMemo(
     () =>
@@ -150,6 +198,14 @@ export default function InstallmentCSV({
             } text-white font-medium py-2 px-4 rounded-md transition-colors`}
         >
           {csvData.length === 0 ? "Choose CSV File" : "Remove CSV File"}
+        </button>
+        <button
+          type="button"
+          onClick={handleDeleteAllInstallments}
+          disabled={disabled || isDeletingAllInstallments || !selectedUnitId}
+          className="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-md transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+        >
+          {isDeletingAllInstallments ? "Deleting..." : "Delete All"}
         </button>
       </div>
 

@@ -178,3 +178,49 @@ export async function deleteS3Images(urls, projectName) {
     );
   }
 }
+
+export async function deleteProjectUnits(projectId) {
+  try {
+    const response = await AxiosInstance.delete(
+      `/api/v1/sales-offers/projects/${projectId}/units`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting project units:", error);
+    throw new Error(
+      error.response?.data?.message ||
+        error.message ||
+        "Failed to delete project units"
+    );
+  }
+}
+
+export async function deleteUnit(unitId) {
+  try {
+    const response = await AxiosInstance.delete(
+      `/api/v1/sales-offers/units/${unitId}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting unit:", error);
+    throw new Error(
+      error.response?.data?.message || error.message || "Failed to delete unit"
+    );
+  }
+}
+
+export async function deleteUnitInstallments(unitId) {
+  try {
+    const response = await AxiosInstance.delete(
+      `/api/v1/sales-offers/units/${unitId}/installments`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting installments:", error);
+    throw new Error(
+      error.response?.data?.message ||
+        error.message ||
+        "Failed to delete installments"
+    );
+  }
+}
