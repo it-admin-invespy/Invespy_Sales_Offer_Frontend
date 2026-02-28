@@ -200,7 +200,9 @@ export const formatCurrency = (amount) => {
 };
 
 export const parsePercentage = (value) => {
-  return parseFloat(value?.replace(/[^0-9.]/g, "") || "0");
+  if (value == null) return 0;
+  if (typeof value === "number") return Number.isFinite(value) ? value : 0;
+  return parseFloat(String(value).replace(/[^0-9.]/g, "") || "0") || 0;
 };
 
 export const calculateAmount = (percentage, price) => {
