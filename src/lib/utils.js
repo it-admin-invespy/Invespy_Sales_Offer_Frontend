@@ -79,7 +79,7 @@ export const transformSalesOffer = async (data) => {
       header: {
         salesOffer: "OFFICIAL SALES OFFER",
         floorPlan: "INDIVIDUAL UNIT FLOOR PLAN",
-        preRegistration: "PRE-REGISTRATION FEE TO BE PAID WITH RESERVATION",
+        preRegistration: "PRE-REGISTRATION FEE TO BE PAID AT THE TIME OF COMPLETION",
       },
       termsAndCondition:
         offer?.termsAndCondition?.split("|").map((t) => t.trim()) || [],

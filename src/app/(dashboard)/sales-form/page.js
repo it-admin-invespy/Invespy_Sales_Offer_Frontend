@@ -75,7 +75,7 @@ const DEFAULT_FORM_VALUES = Object.freeze({
     header: {
       salesOffer: "OFFICIAL SALES OFFER",
       floorPlan: "INDIVIDUAL UNIT FLOOR PLAN",
-      preRegistration: "PRE-REGISTRATION FEE TO BE PAID WITH RESERVATION",
+      preRegistration: "PRE-REGISTRATION FEE TO BE PAID AT THE TIME OF COMPLETION",
     },
     breakdown: [],
     termsAndCondition: ["", "", "", "", "", "", "" , "" , ""],
@@ -929,7 +929,7 @@ function SalesFormPage() {
           register={register}
           name="extra.header.preRegistration"
           meta={meta}
-          headerValue="PRE-REGISTRATION FEE TO BE PAID WITH RESERVATION"
+          headerValue="PRE-REGISTRATION FEE TO BE PAID AT THE TIME OF COMPLETION"
         />
 
         {/* Pre-Registration Payment */}
