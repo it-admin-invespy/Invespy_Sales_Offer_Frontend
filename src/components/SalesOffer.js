@@ -66,7 +66,7 @@ const emptySalesOfferData = {
     header: {
       salesOffer: "OFFICIAL SALES OFFER",
       floorPlan: "INDIVIDUAL UNIT FLOOR PLAN",
-      preRegistration: "PRE-REGISTRATION FEE TO BE PAID AT THE TIME OF COMPLETION",
+      preRegistration: "PRE-REGISTRATION FEE TO BE PAID WITH RESERVATION",
     },
   },
 };
