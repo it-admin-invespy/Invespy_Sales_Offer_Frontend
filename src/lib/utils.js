@@ -1,6 +1,3 @@
-/** Default admin row amount in pre-registration breakdown (keep in sync with InvisibleTable + CSVUpload). */
-export const PRE_REG_ADMIN_FEE_AMOUNT = 5250;
-
 export const transformSalesOffer = async (data) => {
   if (!data) return null;
 

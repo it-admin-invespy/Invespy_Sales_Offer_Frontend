@@ -1,9 +1,4 @@
-import {
-  formatCurrency,
-  parseNumericValue,
-  formatArea,
-  PRE_REG_ADMIN_FEE_AMOUNT,
-} from "@/lib/utils";
+import { formatCurrency, parseNumericValue, formatArea } from "@/lib/utils";
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { deleteProjectUnits, deleteUnit } from "@/app/(dashboard)/dashboard/actions";
 
@@ -91,7 +86,6 @@ export default function CSVUpload({
         "extra.breakdown.0.amount",
         (csvData[newIndex]?.price || 0) * 0.04
       );
-      setValue("extra.breakdown.1.amount", PRE_REG_ADMIN_FEE_AMOUNT);
     },
     [selectedRow, setSelectedUnit, setValue, csvData]
   );
@@ -103,7 +97,6 @@ export default function CSVUpload({
     setSelectedRow(0);
     setSelectedUnit(0);
     setValue("extra.breakdown.0.amount", 0);
-    setValue("extra.breakdown.1.amount", PRE_REG_ADMIN_FEE_AMOUNT);
     document.getElementById("csv-upload").value = "";
   }, [name, onDataLoad, setSelectedUnit, setValue]);
 
@@ -139,7 +132,6 @@ export default function CSVUpload({
           setSelectedRow(0);
           setSelectedUnit(0);
           setValue("extra.breakdown.0.amount", 0);
-          setValue("extra.breakdown.1.amount", PRE_REG_ADMIN_FEE_AMOUNT);
           return;
         }
 
@@ -156,7 +148,6 @@ export default function CSVUpload({
           "extra.breakdown.0.amount",
           (updatedCsvData[nextSelectedRow]?.price || 0) * 0.04
         );
-        setValue("extra.breakdown.1.amount", PRE_REG_ADMIN_FEE_AMOUNT);
       } catch (error) {
         console.error("Failed to delete unit:", error);
         alert(error?.message || "Failed to delete unit");
@@ -174,7 +165,6 @@ export default function CSVUpload({
     setSelectedRow(0);
     setSelectedUnit(0);
     setValue("extra.breakdown.0.amount", 0);
-    setValue("extra.breakdown.1.amount", PRE_REG_ADMIN_FEE_AMOUNT);
     document.getElementById("csv-upload").value = "";
   }, [name, onDataLoad, setSelectedUnit, setValue]);
 
