@@ -12,6 +12,8 @@ export default function FontDropdown({ register, name }) {
     "Courier New",
     "Fjalla One",
     "Poppins",
+    "Lora",
+    "Montserrat"
   ];
 
   return (
