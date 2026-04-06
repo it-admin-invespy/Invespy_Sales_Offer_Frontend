@@ -406,7 +406,6 @@ function SalesFormPage() {
     [fontFamily]
   );
 
-  console.log("previewTypography" ,previewTypography)
   const projectName = watch("projects.0.projectName");
   const existingUnits = useMemo(
     () => salesOfferData?.projects?.[0]?.units || [],
