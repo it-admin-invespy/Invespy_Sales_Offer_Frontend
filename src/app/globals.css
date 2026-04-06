@@ -6,7 +6,7 @@
  */
 @font-face {
   font-family: "The Seasons";
-  src: url("/fonts/the-seasons.otf") format("opentype");
+  src: url("/fonts/The-Seasons.ttf") format("truetype");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
