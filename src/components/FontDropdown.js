@@ -13,7 +13,11 @@ export default function FontDropdown({ register, name }) {
     "Fjalla One",
     "Poppins",
     "Lora",
-    "Montserrat"
+    "Montserrat",
+    "The Seasons",
+    "Founders Grotesk",
+    "Helvetica Neue Ultra Light",
+    "Helvetica Neue Light",
   ];
 
   return (

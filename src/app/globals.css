@@ -1,5 +1,43 @@
 @import "tailwindcss";
 
+/*
+ * Custom fonts (NOT on Google Fonts) — add licensed .woff2 files under public/fonts/
+ * and match filenames below. Until files exist, the browser falls back to sans-serif.
+ */
+@font-face {
+  font-family: "The Seasons";
+  src: url("/fonts/the-seasons.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Founders Grotesk";
+  src: url("/fonts/founders-grotesk.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Helvetica light*/
+@font-face {
+  font-family: "Helvetica Neue Light";
+  src: url("/fonts/HelveticaNeueLight.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Helvetica Ultra light*/
+@font-face {
+  font-family: "Helvetica Neue Ultra Light";
+  src: url("/fonts/HelveticaNeueUltraLight.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* Toast animation */
 @keyframes slide-in {
   from {

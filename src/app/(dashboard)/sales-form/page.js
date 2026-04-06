@@ -12,6 +12,7 @@ import { useForm } from "react-hook-form";
 import { useSearchParams } from "next/navigation";
 import generatePDF from "react-to-pdf";
 import { convertImageToBase64, transformSalesOffer } from "@/lib/utils";
+import { resolvePdfTypography } from "@/lib/pdfTypography";
 import {
   ImageUpload,
   ColorPicker,
@@ -400,6 +401,12 @@ function SalesFormPage() {
   const logoUrl = watch("meta.logoUrl");
   const brandColors = watch("meta.brandColors");
   const fontFamily = watch("meta.fonts.0");
+  const previewTypography = useMemo(
+    () => resolvePdfTypography(fontFamily),
+    [fontFamily]
+  );
+
+  console.log("previewTypography" ,previewTypography)
   const projectName = watch("projects.0.projectName");
   const existingUnits = useMemo(
     () => salesOfferData?.projects?.[0]?.units || [],
@@ -797,8 +804,18 @@ function SalesFormPage() {
                   </h4>
                   <div className="space-y-2">
                     <div
-                      className="h-8 rounded flex items-center justify-center text-white text-sm font-medium"
-                      style={{ backgroundColor: brandColors || "#007BFF" }}
+                      className={`h-8 rounded flex items-center justify-center text-white text-sm ${
+                        previewTypography.fontWeight === undefined
+                          ? "font-medium"
+                          : ""
+                      }`}
+                      style={{
+                        backgroundColor: brandColors || "#007BFF",
+                        fontFamily: previewTypography.fontFamily,
+                        ...(previewTypography.fontWeight !== undefined
+                          ? { fontWeight: previewTypography.fontWeight }
+                          : {}),
+                      }}
                     >
                       Header Preview
                     </div>
