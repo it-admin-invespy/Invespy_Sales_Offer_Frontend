@@ -9,6 +9,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <head>
+        {/* Inter: sans fallback when self-hosted Helvetica Neue Light/Ultra Light .otf is missing */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
           rel="preconnect"
@@ -16,7 +17,7 @@ export default function RootLayout({ children }) {
           crossOrigin="anonymous"
         />
         <link
-          href="https://fonts.googleapis.com/css2?family=Fjalla+One&family=Lora:ital,wght@0,400;0,600;0,700;1,400&family=Montserrat:wght@400;600;700&family=Poppins:wght@400;600;700&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Fjalla+One&family=Inter:wght@100;200;300;400;500;600;700&family=Lora:ital,wght@0,400;0,600;0,700;1,400&family=Montserrat:wght@400;600;700&family=Poppins:wght@400;600;700&display=swap"
           rel="stylesheet"
         />
       </head>

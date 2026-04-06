@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { resolvePdfTypography } from "@/lib/pdfTypography";
 
 const emptySalesOfferData = {
   projects: [
@@ -78,10 +79,12 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
   const { customer, meta, extra, termsAndCondition } = data || {};
   const brandColor = meta?.brandColors || "#007BFF";
 
-  const selectedFont = (meta?.fonts?.[0] ?? "").trim();
-  const fontFamily = selectedFont
-    ? `"${selectedFont.replace(/"/g, "")}", ui-sans-serif, system-ui, sans-serif`
-    : 'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+  const { fontFamily, fontWeight } = resolvePdfTypography(meta?.fonts?.[0]);
+  const pdfRootFontStyle = {
+    fontFamily,
+    ...(fontWeight !== undefined ? { fontWeight } : {}),
+  };
+
 
   const formatNumber = (num) => {
     return Number(num || 0).toLocaleString();
@@ -194,7 +197,7 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
           gap: "0.5rem",
           flexDirection: "column",
           alignItems: "center",
-          fontFamily,
+          ...pdfRootFontStyle,
         }}
       >
         <Header value={extra?.header?.salesOffer} />
@@ -495,7 +498,7 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
           flexDirection: "column",
           justifyContent: "space-between",
           alignItems: "center",
-          fontFamily,
+          ...pdfRootFontStyle,
         }}
       >
         <Header value={extra?.header?.preRegistration} />
@@ -596,7 +599,7 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
           flexDirection: "column",
           justifyContent: "space-between",
           alignItems: "center",
-          fontFamily,
+          ...pdfRootFontStyle,
         }}
       >
         <Header value={extra?.header?.floorPlan} />
