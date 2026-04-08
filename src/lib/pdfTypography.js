@@ -37,6 +37,12 @@ export function resolvePdfTypography(rawFont) {
       fontWeight: 400,
     };
   }
+  if (key === "proxima nova light") {
+    return {
+      fontFamily: `"Proxima Nova Light", ${sansFallback}`,
+      fontWeight: 400,
+    };
+  }
 
   return {
     fontFamily: `"${name.replace(/"/g, "")}", ui-sans-serif, system-ui, sans-serif`,
