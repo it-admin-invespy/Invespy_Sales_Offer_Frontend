@@ -11,7 +11,11 @@ import {
 import { useForm } from "react-hook-form";
 import { useSearchParams } from "next/navigation";
 import generatePDF from "react-to-pdf";
-import { convertImageToBase64, transformSalesOffer } from "@/lib/utils";
+import {
+  convertImageToBase64,
+  transformSalesOffer,
+  orderPreRegistrationBreakdown,
+} from "@/lib/utils";
 import { resolvePdfTypography } from "@/lib/pdfTypography";
 import {
   ImageUpload,
@@ -272,18 +276,22 @@ const convertToISODate = (dateValue) => {
  * Calculates breakdown data for a unit
  */
 const calculateUnitBreakdown = (breakdown, unitPrice) => {
-  const breakdownCopy = { ...breakdown };
-  breakdownCopy[0] = {
-    ...breakdownCopy[0],
+  //  creating a copy of registration table 
+  const arr = (Array.isArray(breakdown) ? breakdown : []).map((item) => ({
+    ...item,
+  }));
+  const first = arr[0] || {};
+  arr[0] = {
+    ...first,
     amount: Math.round(unitPrice * PRE_REGISTRATION_RATE) || 0,
   };
 
-  const totalAmount = Object.values(breakdownCopy).reduce(
+  const totalAmount = arr.reduce(
     (sum, item) => sum + (Number(item?.amount) || 0),
     0
   );
 
-  const unitBreakdown = Object.values(breakdownCopy).map((item) => ({
+  const unitBreakdown = arr.map((item) => ({
     description: item.description,
     amount: Number(item.amount) || 0,
   }));
@@ -488,7 +496,7 @@ function SalesFormPage() {
         const breakdown =
           formData.projects?.[0]?.units?.[0]?.preRegistrationPayment
             ?.breakdown || [];
-        formData.extra.breakdown = breakdown;
+        formData.extra.breakdown = orderPreRegistrationBreakdown(breakdown);
 
         setUnitsData(
           formData.projects?.[0]?.units?.map((unit, index) => ({
@@ -521,7 +529,9 @@ function SalesFormPage() {
   const prepareSubmissionData = useCallback(
     (formValue) => {
       const data = { ...formValue };
-      const breakdown = { ...watch("extra.breakdown") };
+      const breakdown = (watch("extra.breakdown") || []).map((item) => ({
+        ...item,
+      }));
       const selectedUnits = unitsData || [];
 
       if (!data.projects?.[0]) {
@@ -592,7 +602,9 @@ function SalesFormPage() {
   const preparePdfData = useCallback(
     async (useLocalUrl = false) => {
       const data = getValues();
-      const breakdown = { ...watch("extra.breakdown") };
+      const breakdown = (watch("extra.breakdown") || []).map((item) => ({
+        ...item,
+      }));
 
       // Convert logo to base64
       data.meta.logoUrl = await convertImageToBase64(data.meta.logoUrl);

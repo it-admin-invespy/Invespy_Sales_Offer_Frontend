@@ -87,6 +87,19 @@ export const transformSalesOffer = async (data) => {
   };
 };
 
+/**
+ * API may return Admin before the 4% DLD row. Code always treats index 0 as the 4% line.
+ * Reorder once: 4% row first, Admin second, then any other rows.
+ */
+export function orderPreRegistrationBreakdown(breakdown) {
+  const rows = Array.isArray(breakdown) ? [...breakdown] : [];
+  const d = (s) => String(s || "");
+  const dld = rows.find((r) => d(r?.description).includes("4%"));
+  const admin = rows.find((r) => d(r?.description).includes("Admin Fee"));
+  const rest = rows.filter((r) => r !== dld && r !== admin);
+  return [...(dld ? [dld] : []), ...(admin ? [admin] : []), ...rest];
+}
+
 export const createPayloadForDuplicateObj = (objectA) => {
   if (!objectA || !objectA.project) return null;
 

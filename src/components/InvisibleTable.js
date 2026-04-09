@@ -1,6 +1,5 @@
 "use client";
 
-import { formatCurrency } from "@/lib/utils";
 import { useEffect } from "react";
 import { useFieldArray } from "react-hook-form";
 
@@ -16,14 +15,14 @@ export default function InvisibleTable({ register, meta, control }) {
   });
 
   // Initialize with fixed fields if empty
-  useEffect(() => {
-    if (fields.length === 0) {
-      append([
-        { description: "4% Pre-Registration Charges (DLD Fee)", amount: 0 },
-        { description: "Admin Fee + VAT", amount: 5250 },
-      ]);
-    }
-  }, [fields, append]);
+  // useEffect(() => {
+  //   if (fields.length === 0) {
+  //     append([
+  //       { description: "4% Pre-Registration Charges (DLD Fee)", amount: 0 },
+  //       { description: "Admin Fee + VAT", amount: 5250.00 },
+  //     ]);
+  //   }
+  // }, [fields, append]);
 
   return (
     <div>
@@ -57,25 +56,30 @@ export default function InvisibleTable({ register, meta, control }) {
               <td className="p-2 border border-gray-300">
                 <input
                   {...register(`${name}.${index}.description`)}
-                  className="w-full border-none outline-none bg-transparent"
+                  defaultValue={field.description ?? ""}
+                  // disabled={index < 2}
+                  className={`w-full border-none outline-none bg-transparent`}
                 />
               </td>
               <td className="p-2 border border-gray-300">
                 <input
-                  type="hidden"
+                  type="number"
+                  inputMode="decimal"
+                  step="any"
                   {...register(`${name}.${index}.amount`)}
+                  defaultValue={
+                    field.amount === "" || field.amount == null
+                      ? ""
+                      : field.amount
+                  }
                   className="w-full border-none outline-none bg-transparent"
                 />
-                {formatCurrency(field.amount)}
               </td>
               <td className="p-2 border border-gray-300 text-center">
                 <button
                   type="button"
                   onClick={() => remove(index)}
-                  className={`px-2 py-1 rounded text-sm ${
-                    index < 2
-                      ? "bg-gray-400 text-gray-600 cursor-not-allowed"
-                      : "bg-red-600 text-white hover:bg-red-700"
+                  className={`px-2 py-1 rounded text-sm bg-red-600 text-white hover:bg-red-700"
                   }`}
                 >
                   Delete
@@ -87,7 +91,7 @@ export default function InvisibleTable({ register, meta, control }) {
       </table>
       <button
         type="button"
-        onClick={() => append({ description: "", amount: "" })}
+        onClick={() => append({ description: "", amount: 0 })}
         className="mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
       >
         Add Row
