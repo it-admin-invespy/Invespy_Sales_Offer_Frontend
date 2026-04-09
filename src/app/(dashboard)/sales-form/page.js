@@ -90,8 +90,8 @@ const PDF_OPTIONS = Object.freeze({
 const CSV_SAMPLES = Object.freeze({
   projectUnits: {
     content: [
-      "Project Name,Unit No,Floor No,Unit Type,View,Area (Sq/Ft),Price (AED)",
-      "Sample Residency,101,1,2BR,Sea View,1200,1500000",
+      "Project Name,Floor / Unit No,Unit Type,View,Area (Sq/Ft),Original Price (AED),Offer Price (AED)",
+      "Sample Residency,1/101,2BR,Sea View,1200,1600000,1500000",
     ].join("\n"),
     filename: "project-units-sample.csv",
   },
@@ -309,6 +309,7 @@ const transformUnits = (units) => {
     return {
       ...unit,
       grossArea: parseNumericValue(unit.grossArea),
+      originalPrice: parseNumericValue(unit.originalPrice),
       price: parseNumericValue(unit.price),
       installments,
     };
