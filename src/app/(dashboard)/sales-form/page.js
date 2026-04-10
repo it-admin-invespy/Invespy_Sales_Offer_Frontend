@@ -49,6 +49,11 @@ import PreRegistrationDetails from "@/components/PreRegistrationDetails";
 const PRE_REGISTRATION_RATE = 0.04;
 const PDF_RENDER_DELAY = 300;
 
+const DEFAULT_PRE_REGISTRATION_BREAKDOWN = Object.freeze([
+  { description: "4% Pre-Registration Charges (DLD Fee)", amount: 0 },
+  { description: "Admin Fee + VAT", amount: 5250 },
+]);
+
 const DEFAULT_FORM_VALUES = Object.freeze({
   projects: [
     {
@@ -82,7 +87,7 @@ const DEFAULT_FORM_VALUES = Object.freeze({
       floorPlan: "INDIVIDUAL UNIT FLOOR PLAN",
       preRegistration: "PRE-REGISTRATION FEE TO BE PAID WITH RESERVATION",
     },
-    breakdown: [],
+    breakdown: DEFAULT_PRE_REGISTRATION_BREAKDOWN.map((row) => ({ ...row })),
     termsAndCondition: ["", "", "", "", "", "", "" , "" , ""],
   },
 });
@@ -275,16 +280,17 @@ const convertToISODate = (dateValue) => {
 /**
  * Calculates breakdown data for a unit
  */
-const calculateUnitBreakdown = (breakdown, unitPrice) => {
-  //  creating a copy of registration table 
+const calculateUnitBreakdown = (breakdown, unitPrice, applyDldFromUnit) => {
   const arr = (Array.isArray(breakdown) ? breakdown : []).map((item) => ({
     ...item,
   }));
-  const first = arr[0] || {};
-  arr[0] = {
-    ...first,
-    amount: Math.round(unitPrice * PRE_REGISTRATION_RATE) || 0,
-  };
+  if (applyDldFromUnit && arr.length > 0) {
+    const first = arr[0] || {};
+    arr[0] = {
+      ...first,
+      amount: Math.round(unitPrice * PRE_REGISTRATION_RATE) || 0,
+    };
+  }
 
   const totalAmount = arr.reduce(
     (sum, item) => sum + (Number(item?.amount) || 0),
@@ -389,6 +395,8 @@ function SalesFormPage() {
   const [isDownloadLoader, setIsDownloadLoader] = useState(false);
   const [isAllDownloadLoader, setIsAllDownloadLoader] = useState(false);
   const [projectId, setProjectId] = useState("");
+  /** When true, row 0 amount follows 4% of selected unit (Calculate / submit / PDF). Turns false if user removes row 0 or empties the table. */
+  const [autoPreRegFromUnit, setAutoPreRegFromUnit] = useState(true);
 
   // Form
   const {
@@ -454,6 +462,7 @@ function SalesFormPage() {
     setSelectedUnit(0);
     setUnitsData([]);
     setFloorPlanImages([]);
+    setAutoPreRegFromUnit(true);
     reset(DEFAULT_FORM_VALUES);
   }, [reset]);
 
@@ -496,7 +505,12 @@ function SalesFormPage() {
         const breakdown =
           formData.projects?.[0]?.units?.[0]?.preRegistrationPayment
             ?.breakdown || [];
-        formData.extra.breakdown = orderPreRegistrationBreakdown(breakdown);
+        const orderedBreakdown = orderPreRegistrationBreakdown(breakdown);
+        formData.extra.breakdown = orderedBreakdown;
+        setAutoPreRegFromUnit(
+          orderedBreakdown.length > 0 &&
+            String(orderedBreakdown[0]?.description || "").includes("4%")
+        );
 
         setUnitsData(
           formData.projects?.[0]?.units?.map((unit, index) => ({
@@ -550,7 +564,7 @@ function SalesFormPage() {
           data.projects[0].units[index].installments = unit.installments || [];
           data.projects[0].units[index].floorPlans = getFloorPlansForUnit(unit);
           data.projects[0].units[index].preRegistrationPayment =
-            calculateUnitBreakdown(breakdown, unit.price);
+            calculateUnitBreakdown(breakdown, unit.price, autoPreRegFromUnit);
         }
       });
 
@@ -572,7 +586,7 @@ function SalesFormPage() {
 
       return rest;
     },
-    [unitsData, watch, getFloorPlansForUnit]
+    [unitsData, watch, getFloorPlansForUnit, autoPreRegFromUnit]
   );
 
   const onSubmit = useCallback(
@@ -639,7 +653,8 @@ function SalesFormPage() {
 
       currentUnit.preRegistrationPayment = calculateUnitBreakdown(
         breakdown,
-        currentUnit?.price
+        currentUnit?.price,
+        autoPreRegFromUnit
       );
 
       setPdfData({ ...data });
@@ -653,7 +668,7 @@ function SalesFormPage() {
     } finally {
       setIsDownloadLoader(false);
     }
-  }, [preparePdfData, selectedUnit]);
+  }, [preparePdfData, selectedUnit, autoPreRegFromUnit]);
 
   const downloadSalesOfferAll = useCallback(async () => {
     setIsAllDownloadLoader(true);
@@ -666,7 +681,8 @@ function SalesFormPage() {
 
         currentUnit.preRegistrationPayment = calculateUnitBreakdown(
           breakdown,
-          currentUnit.price
+          currentUnit.price,
+          autoPreRegFromUnit
         );
 
         setSelectedUnit(index);
@@ -683,7 +699,7 @@ function SalesFormPage() {
     } finally {
       setIsAllDownloadLoader(false);
     }
-  }, [preparePdfData, unitsData]);
+  }, [preparePdfData, unitsData, autoPreRegFromUnit]);
 
   // ============================================================================
   // EVENT HANDLERS
@@ -890,6 +906,7 @@ function SalesFormPage() {
             setSelectedUnit={setSelectedUnit}
             unitsData={unitsData}
             setValue={setValue}
+            autoPreRegFromUnit={autoPreRegFromUnit}
             units={existingUnits}
             projectId={projectId}
           />
@@ -962,7 +979,13 @@ function SalesFormPage() {
 
         {/* Pre-Registration Payment */}
         <SectionCard title="Pre Registeration Payment">
-          <InvisibleTable register={register} meta={meta} control={control} />
+          <InvisibleTable
+            register={register}
+            meta={meta}
+            control={control}
+            autoPreRegFromUnit={autoPreRegFromUnit}
+            onDisableAutoPreRegFromUnit={() => setAutoPreRegFromUnit(false)}
+          />
           <PreRegistrationDetails register={register}/>
         </SectionCard>
 
