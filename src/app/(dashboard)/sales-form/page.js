@@ -11,7 +11,11 @@ import {
 import { useForm } from "react-hook-form";
 import { useSearchParams } from "next/navigation";
 import generatePDF from "react-to-pdf";
-import { convertImageToBase64, transformSalesOffer } from "@/lib/utils";
+import {
+  convertImageToBase64,
+  transformSalesOffer,
+  orderPreRegistrationBreakdown,
+} from "@/lib/utils";
 import { resolvePdfTypography } from "@/lib/pdfTypography";
 import {
   ImageUpload,
@@ -44,6 +48,11 @@ import PreRegistrationDetails from "@/components/PreRegistrationDetails";
 
 const PRE_REGISTRATION_RATE = 0.04;
 const PDF_RENDER_DELAY = 300;
+
+const DEFAULT_PRE_REGISTRATION_BREAKDOWN = Object.freeze([
+  { description: "4% Pre-Registration Charges (DLD Fee)", amount: 0 },
+  { description: "Admin Fee + VAT", amount: 5250 },
+]);
 
 const DEFAULT_FORM_VALUES = Object.freeze({
   projects: [
@@ -78,7 +87,7 @@ const DEFAULT_FORM_VALUES = Object.freeze({
       floorPlan: "INDIVIDUAL UNIT FLOOR PLAN",
       preRegistration: "PRE-REGISTRATION FEE TO BE PAID WITH RESERVATION",
     },
-    breakdown: [],
+    breakdown: DEFAULT_PRE_REGISTRATION_BREAKDOWN.map((row) => ({ ...row })),
     termsAndCondition: ["", "", "", "", "", "", "" , "" , ""],
   },
 });
@@ -271,19 +280,24 @@ const convertToISODate = (dateValue) => {
 /**
  * Calculates breakdown data for a unit
  */
-const calculateUnitBreakdown = (breakdown, unitPrice) => {
-  const breakdownCopy = { ...breakdown };
-  breakdownCopy[0] = {
-    ...breakdownCopy[0],
-    amount: Math.round(unitPrice * PRE_REGISTRATION_RATE) || 0,
-  };
+const calculateUnitBreakdown = (breakdown, unitPrice, applyDldFromUnit) => {
+  const arr = (Array.isArray(breakdown) ? breakdown : []).map((item) => ({
+    ...item,
+  }));
+  if (applyDldFromUnit && arr.length > 0) {
+    const first = arr[0] || {};
+    arr[0] = {
+      ...first,
+      amount: Math.round(unitPrice * PRE_REGISTRATION_RATE) || 0,
+    };
+  }
 
-  const totalAmount = Object.values(breakdownCopy).reduce(
+  const totalAmount = arr.reduce(
     (sum, item) => sum + (Number(item?.amount) || 0),
     0
   );
 
-  const unitBreakdown = Object.values(breakdownCopy).map((item) => ({
+  const unitBreakdown = arr.map((item) => ({
     description: item.description,
     amount: Number(item.amount) || 0,
   }));
@@ -381,6 +395,8 @@ function SalesFormPage() {
   const [isDownloadLoader, setIsDownloadLoader] = useState(false);
   const [isAllDownloadLoader, setIsAllDownloadLoader] = useState(false);
   const [projectId, setProjectId] = useState("");
+  /** When true, row 0 amount follows 4% of selected unit (Calculate / submit / PDF). Turns false if user removes row 0 or empties the table. */
+  const [autoPreRegFromUnit, setAutoPreRegFromUnit] = useState(true);
 
   // Form
   const {
@@ -446,6 +462,7 @@ function SalesFormPage() {
     setSelectedUnit(0);
     setUnitsData([]);
     setFloorPlanImages([]);
+    setAutoPreRegFromUnit(true);
     reset(DEFAULT_FORM_VALUES);
   }, [reset]);
 
@@ -488,7 +505,12 @@ function SalesFormPage() {
         const breakdown =
           formData.projects?.[0]?.units?.[0]?.preRegistrationPayment
             ?.breakdown || [];
-        formData.extra.breakdown = breakdown;
+        const orderedBreakdown = orderPreRegistrationBreakdown(breakdown);
+        formData.extra.breakdown = orderedBreakdown;
+        setAutoPreRegFromUnit(
+          orderedBreakdown.length > 0 &&
+          String(orderedBreakdown[0]?.description || "").includes("4%")
+        );
 
         setUnitsData(
           formData.projects?.[0]?.units?.map((unit, index) => ({
@@ -521,7 +543,9 @@ function SalesFormPage() {
   const prepareSubmissionData = useCallback(
     (formValue) => {
       const data = { ...formValue };
-      const breakdown = { ...watch("extra.breakdown") };
+      const breakdown = (watch("extra.breakdown") || []).map((item) => ({
+        ...item,
+      }));
       const selectedUnits = unitsData || [];
 
       if (!data.projects?.[0]) {
@@ -540,7 +564,7 @@ function SalesFormPage() {
           data.projects[0].units[index].installments = unit.installments || [];
           data.projects[0].units[index].floorPlans = getFloorPlansForUnit(unit);
           data.projects[0].units[index].preRegistrationPayment =
-            calculateUnitBreakdown(breakdown, unit.price);
+            calculateUnitBreakdown(breakdown, unit.price, autoPreRegFromUnit);
         }
       });
 
@@ -562,7 +586,7 @@ function SalesFormPage() {
 
       return rest;
     },
-    [unitsData, watch, getFloorPlansForUnit]
+    [unitsData, watch, getFloorPlansForUnit, autoPreRegFromUnit]
   );
 
   const onSubmit = useCallback(
@@ -592,7 +616,9 @@ function SalesFormPage() {
   const preparePdfData = useCallback(
     async (useLocalUrl = false) => {
       const data = getValues();
-      const breakdown = { ...watch("extra.breakdown") };
+      const breakdown = (watch("extra.breakdown") || []).map((item) => ({
+        ...item,
+      }));
 
       // Convert logo to base64
       data.meta.logoUrl = await convertImageToBase64(data.meta.logoUrl);
@@ -627,7 +653,8 @@ function SalesFormPage() {
 
       currentUnit.preRegistrationPayment = calculateUnitBreakdown(
         breakdown,
-        currentUnit?.price
+        currentUnit?.price,
+        autoPreRegFromUnit
       );
 
       setPdfData({ ...data });
@@ -641,7 +668,7 @@ function SalesFormPage() {
     } finally {
       setIsDownloadLoader(false);
     }
-  }, [preparePdfData, selectedUnit]);
+  }, [preparePdfData, selectedUnit, autoPreRegFromUnit]);
 
   const downloadSalesOfferAll = useCallback(async () => {
     setIsAllDownloadLoader(true);
@@ -654,7 +681,8 @@ function SalesFormPage() {
 
         currentUnit.preRegistrationPayment = calculateUnitBreakdown(
           breakdown,
-          currentUnit.price
+          currentUnit.price,
+          autoPreRegFromUnit
         );
 
         setSelectedUnit(index);
@@ -671,7 +699,7 @@ function SalesFormPage() {
     } finally {
       setIsAllDownloadLoader(false);
     }
-  }, [preparePdfData, unitsData]);
+  }, [preparePdfData, unitsData, autoPreRegFromUnit]);
 
   // ============================================================================
   // EVENT HANDLERS
@@ -728,7 +756,9 @@ function SalesFormPage() {
           meta={meta}
           headerValue="OFFICIAL SALES OFFER"
         />
-
+        <div className="shadow-sm rounded-lg p-6 space-y-4 flex justify-end">
+          <ProjectDetailsCSVImport setValue={setValue} />
+        </div>
         {/* Form Styles Section */}
         <SectionCard title="Form Styles">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -803,11 +833,10 @@ function SalesFormPage() {
                   </h4>
                   <div className="space-y-2">
                     <div
-                      className={`h-8 rounded flex items-center justify-center text-white text-sm ${
-                        previewTypography.fontWeight === undefined
+                      className={`h-8 rounded flex items-center justify-center text-white text-sm ${previewTypography.fontWeight === undefined
                           ? "font-medium"
                           : ""
-                      }`}
+                        }`}
                       style={{
                         backgroundColor: brandColors || "#007BFF",
                         fontFamily: previewTypography.fontFamily,
@@ -878,6 +907,7 @@ function SalesFormPage() {
             setSelectedUnit={setSelectedUnit}
             unitsData={unitsData}
             setValue={setValue}
+            autoPreRegFromUnit={autoPreRegFromUnit}
             units={existingUnits}
             projectId={projectId}
           />
@@ -950,8 +980,14 @@ function SalesFormPage() {
 
         {/* Pre-Registration Payment */}
         <SectionCard title="Pre Registeration Payment">
-          <InvisibleTable register={register} meta={meta} control={control} />
-          <PreRegistrationDetails register={register}/>
+          <InvisibleTable
+            register={register}
+            meta={meta}
+            control={control}
+            autoPreRegFromUnit={autoPreRegFromUnit}
+            onDisableAutoPreRegFromUnit={() => setAutoPreRegFromUnit(false)}
+          />
+          <PreRegistrationDetails register={register} />
         </SectionCard>
 
         {/* Signature */}
@@ -979,7 +1015,6 @@ function SalesFormPage() {
         {/* Actions */}
         <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-6 border border-gray-200 shadow-sm">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <ProjectDetailsCSVImport setValue={setValue} />
 
             <div className="flex flex-wrap gap-3">
               <DynamicButton

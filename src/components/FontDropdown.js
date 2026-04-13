@@ -18,7 +18,8 @@ export default function FontDropdown({ register, name }) {
     "Founders Grotesk",
     "Helvetica Neue Ultra Light",
     "Helvetica Neue Light",
-    "Proxima Nova Light"
+    "Proxima Nova Light",
+    "Cormorant"
   ];
 
   return (

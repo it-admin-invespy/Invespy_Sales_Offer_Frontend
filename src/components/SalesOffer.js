@@ -72,6 +72,16 @@ const emptySalesOfferData = {
   },
 };
 
+/** A4 — use the same height on every “page” block so PDF slice boundaries align with sections. */
+const A4_PAGE = {
+  width: "210mm",
+  height: "297mm",
+  minHeight: "297mm",
+  maxHeight: "297mm",
+  boxSizing: "border-box",
+  overflow: "hidden",
+};
+
 const SalesOffer = ({ salesOfferData, selectedUnit }) => {
   const data = salesOfferData || emptySalesOfferData;
   const project = data?.projects?.[0];
@@ -178,10 +188,10 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
           textAlign: "center",
         }}
       >
-        <p style={{ margin: "3px 0", fontWeight: "bold", fontSize: "12px" }}>
+        <p style={{ margin: "3px 0", fontWeight: "bold", fontSize: "12px" }} className="hidden">
           {customer.email}
         </p>
-        <p style={{ margin: "3px 0", fontSize: "12px" }}>{customer.address}</p>
+        <p style={{ margin: "3px 0", fontSize: "12px" }} className="hidden">{customer.address}</p>
       </div>
     </div>
   );
@@ -489,7 +499,7 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
         <Footer />
       </div>
       {/* Page 2  */}
-      <div
+      {unit?.preRegistrationPayment?.breakdown?.length > 0 && <div
         style={{
           height: "306mm",
           display: "flex",
@@ -588,7 +598,8 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
           </div>
         </div>
         <Footer />
-      </div>
+      </div>}
+      
       {/* Page 3 */}
       <div
         style={{

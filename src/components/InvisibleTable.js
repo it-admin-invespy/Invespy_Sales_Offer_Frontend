@@ -1,10 +1,15 @@
 "use client";
 
-import { formatCurrency } from "@/lib/utils";
 import { useEffect } from "react";
 import { useFieldArray } from "react-hook-form";
 
-export default function InvisibleTable({ register, meta, control }) {
+export default function InvisibleTable({
+  register,
+  meta,
+  control,
+  autoPreRegFromUnit = true,
+  onDisableAutoPreRegFromUnit,
+}) {
   const name = `extra.breakdown`;
   const headerStyle = {
     backgroundColor: meta?.brandColors || "#007BFF",
@@ -15,19 +20,24 @@ export default function InvisibleTable({ register, meta, control }) {
     name,
   });
 
-  // Initialize with fixed fields if empty
+  // If breakdown is empty while auto mode is on (edge case), seed the two default rows.
   useEffect(() => {
-    if (fields.length === 0) {
-      append([
-        { description: "4% Pre-Registration Charges (DLD Fee)", amount: 0 },
-        { description: "Admin Fee + VAT", amount: 5250 },
-      ]);
+    if (!autoPreRegFromUnit || fields.length > 0) return;
+    append([
+      { description: "4% Pre-Registration Charges (DLD Fee)", amount: 0 },
+      { description: "Admin Fee + VAT", amount: 5250 },
+    ]);
+  }, [autoPreRegFromUnit, fields.length, append]);
+
+  const handleRemoveRow = (index) => {
+    if (index === 0) {
+      onDisableAutoPreRegFromUnit?.();
     }
-  }, [fields, append]);
+    remove(index);
+  };
 
   return (
     <div>
-      {/* <div>{JSON.stringify(fields)}</div> */}
       <table className="w-full">
         <thead>
           <tr>
@@ -57,26 +67,31 @@ export default function InvisibleTable({ register, meta, control }) {
               <td className="p-2 border border-gray-300">
                 <input
                   {...register(`${name}.${index}.description`)}
-                  className="w-full border-none outline-none bg-transparent"
+                  defaultValue={field.description ?? ""}
+                  disabled={autoPreRegFromUnit && index < 2}
+                  className="w-full border-none outline-none bg-transparent disabled:opacity-70"
                 />
               </td>
               <td className="p-2 border border-gray-300">
                 <input
-                  type="hidden"
+                  type="number"
+                  inputMode="decimal"
+                  step="any"
                   {...register(`${name}.${index}.amount`)}
-                  className="w-full border-none outline-none bg-transparent"
+                  defaultValue={
+                    field.amount === "" || field.amount == null
+                      ? ""
+                      : field.amount
+                  }
+                  disabled={autoPreRegFromUnit && index === 0}
+                  className="w-full border-none outline-none bg-transparent disabled:opacity-70"
                 />
-                {formatCurrency(field.amount)}
               </td>
               <td className="p-2 border border-gray-300 text-center">
                 <button
                   type="button"
-                  onClick={() => remove(index)}
-                  className={`px-2 py-1 rounded text-sm ${
-                    index < 2
-                      ? "bg-gray-400 text-gray-600 cursor-not-allowed"
-                      : "bg-red-600 text-white hover:bg-red-700"
-                  }`}
+                  onClick={() => handleRemoveRow(index)}
+                  className="px-2 py-1 rounded text-sm bg-red-600 text-white hover:bg-red-700"
                 >
                   Delete
                 </button>
@@ -87,7 +102,7 @@ export default function InvisibleTable({ register, meta, control }) {
       </table>
       <button
         type="button"
-        onClick={() => append({ description: "", amount: "" })}
+        onClick={() => append({ description: "", amount: 0 })}
         className="mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
       >
         Add Row

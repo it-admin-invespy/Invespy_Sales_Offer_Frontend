@@ -22,6 +22,7 @@ export default function CSVUpload({
   setSelectedUnit,
   unitsData = [],
   setValue,
+  autoPreRegFromUnit = true,
   projectId,
 }) {
   const name = "projects.0.units";
@@ -82,12 +83,14 @@ export default function CSVUpload({
       const newIndex = selectedRow === index ? 0 : index;
       setSelectedRow(newIndex);
       setSelectedUnit(newIndex);
-      setValue(
-        "extra.breakdown.0.amount",
-        (csvData[newIndex]?.price || 0) * 0.04
-      );
+      if (autoPreRegFromUnit) {
+        setValue(
+          "extra.breakdown.0.amount",
+          (csvData[newIndex]?.price || 0) * 0.04
+        );
+      }
     },
-    [selectedRow, setSelectedUnit, setValue, csvData]
+    [selectedRow, setSelectedUnit, setValue, csvData, autoPreRegFromUnit]
   );
 
   const handleRemoveCSV = useCallback(() => {
@@ -96,9 +99,11 @@ export default function CSVUpload({
     setValue(name, []);
     setSelectedRow(0);
     setSelectedUnit(0);
-    setValue("extra.breakdown.0.amount", 0);
+    if (autoPreRegFromUnit) {
+      setValue("extra.breakdown.0.amount", 0);
+    }
     document.getElementById("csv-upload").value = "";
-  }, [name, onDataLoad, setSelectedUnit, setValue]);
+  }, [name, onDataLoad, setSelectedUnit, setValue, autoPreRegFromUnit]);
 
   const handleDeleteRow = useCallback(
     async (indexToDelete) => {
@@ -131,7 +136,9 @@ export default function CSVUpload({
         if (updatedCsvData.length === 0) {
           setSelectedRow(0);
           setSelectedUnit(0);
-          setValue("extra.breakdown.0.amount", 0);
+          if (autoPreRegFromUnit) {
+            setValue("extra.breakdown.0.amount", 0);
+          }
           return;
         }
 
@@ -144,10 +151,12 @@ export default function CSVUpload({
 
         setSelectedRow(nextSelectedRow);
         setSelectedUnit(nextSelectedRow);
-        setValue(
-          "extra.breakdown.0.amount",
-          (updatedCsvData[nextSelectedRow]?.price || 0) * 0.04
-        );
+        if (autoPreRegFromUnit) {
+          setValue(
+            "extra.breakdown.0.amount",
+            (updatedCsvData[nextSelectedRow]?.price || 0) * 0.04
+          );
+        }
       } catch (error) {
         console.error("Failed to delete unit:", error);
         alert(error?.message || "Failed to delete unit");
@@ -155,7 +164,7 @@ export default function CSVUpload({
         setDeletingRowIndex(null);
       }
     },
-    [csvData, onDataLoad, selectedRow, setSelectedUnit, setValue]
+    [csvData, onDataLoad, selectedRow, setSelectedUnit, setValue, autoPreRegFromUnit]
   );
 
   const clearAllUnits = useCallback(() => {
@@ -164,9 +173,11 @@ export default function CSVUpload({
     setValue(name, []);
     setSelectedRow(0);
     setSelectedUnit(0);
-    setValue("extra.breakdown.0.amount", 0);
+    if (autoPreRegFromUnit) {
+      setValue("extra.breakdown.0.amount", 0);
+    }
     document.getElementById("csv-upload").value = "";
-  }, [name, onDataLoad, setSelectedUnit, setValue]);
+  }, [name, onDataLoad, setSelectedUnit, setValue, autoPreRegFromUnit]);
 
   const handleDeleteAllUnits = useCallback(async () => {
     if (csvData.length === 0) return;
