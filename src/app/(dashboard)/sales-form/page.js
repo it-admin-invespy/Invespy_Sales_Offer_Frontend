@@ -14,7 +14,6 @@ import generatePDF from "react-to-pdf";
 import {
   convertImageToBase64,
   transformSalesOffer,
-  orderPreRegistrationBreakdown,
 } from "@/lib/utils";
 import { resolvePdfTypography } from "@/lib/pdfTypography";
 import {
@@ -88,7 +87,7 @@ const DEFAULT_FORM_VALUES = Object.freeze({
       preRegistration: "PRE-REGISTRATION FEE TO BE PAID WITH RESERVATION",
     },
     breakdown: DEFAULT_PRE_REGISTRATION_BREAKDOWN.map((row) => ({ ...row })),
-    termsAndCondition: ["", "", "", "", "", "", "" , "" , ""],
+    termsAndCondition: ["", "", "", "", "", "", "", "", ""],
   },
 });
 
@@ -449,7 +448,7 @@ function SalesFormPage() {
     (unit, useLocalUrl = false) => {
       return (
         floorPlanImages
-          ?.filter((image) => image?.name?.includes(unit?.unitNo))
+          ?.filter((image) => image.name.endsWith("_" + String(unit.unitNo).trim()))
           .map((image) => ({
             layoutsImages: useLocalUrl ? image?.localUrl : image?.url,
           })) || []
@@ -484,9 +483,9 @@ function SalesFormPage() {
         const data = await getSalesOfferById(id);
         setProjectId(
           data.salesOffer?.project?._id ||
-            data.salesOffer?.project?.id ||
-            data.salesOffer?.project?.projectId ||
-            ""
+          data.salesOffer?.project?.id ||
+          data.salesOffer?.project?.projectId ||
+          ""
         );
         const unitsArray = data.salesOffer?.project?.units || [];
         const fetchedProjectName = data.salesOffer?.project?.projectName || "";
@@ -504,8 +503,8 @@ function SalesFormPage() {
 
         const breakdown =
           formData.projects?.[0]?.units?.[0]?.preRegistrationPayment
-            ?.breakdown || [];
-        const orderedBreakdown = orderPreRegistrationBreakdown(breakdown);
+            ?.breakdown?.reverse() || [];
+        const orderedBreakdown = breakdown
         formData.extra.breakdown = orderedBreakdown;
         setAutoPreRegFromUnit(
           orderedBreakdown.length > 0 &&
@@ -834,8 +833,8 @@ function SalesFormPage() {
                   <div className="space-y-2">
                     <div
                       className={`h-8 rounded flex items-center justify-center text-white text-sm ${previewTypography.fontWeight === undefined
-                          ? "font-medium"
-                          : ""
+                        ? "font-medium"
+                        : ""
                         }`}
                       style={{
                         backgroundColor: brandColors || "#007BFF",
@@ -1014,7 +1013,7 @@ function SalesFormPage() {
 
         {/* Actions */}
         <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-6 border border-gray-200 shadow-sm">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div className="flex flex-col sm:flex-row justify-end items-start sm:items-center gap-4">
 
             <div className="flex flex-wrap gap-3">
               <DynamicButton
