@@ -68,7 +68,7 @@ export default function InvisibleTable({
                 <input
                   {...register(`${name}.${index}.description`)}
                   defaultValue={field.description ?? ""}
-                  disabled={autoPreRegFromUnit && index < 2}
+                  // disabled={autoPreRegFromUnit && index < 2}
                   className="w-full border-none outline-none bg-transparent disabled:opacity-70"
                 />
               </td>
