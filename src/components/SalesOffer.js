@@ -278,7 +278,7 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
                     unit?.unitType || "",
                     unit?.view || "",
                     formatNumber(unit?.grossArea) || "",
-                    formatNumber(unit?.originalPrice ?? unit?.price) || "",
+                    formatNumber(unit?.originalPrice) || "",
                     formatNumber(unit?.price) || "",
                   ].map((value, index) => (
                     <td
@@ -628,7 +628,7 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
                       alt={`Floor Plan ${i + 1}`}
                       style={{
                         width: "100%",
-                        maxHeight: "600px",
+                        maxHeight: "700px",
                         objectFit: "contain",
                       }}
                     />
