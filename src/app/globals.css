@@ -47,6 +47,24 @@
   font-display: swap;
 }
 
+/* Marlide Display Regular*/
+@font-face {
+  font-family: "Marlide Display Regular";
+  src: url("/fonts/MarlideDisplayRegular.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/*Beausite Classic Regular*/
+@font-face {
+  font-family: "Beausite Classic Regular";
+  src: url("/fonts/BeausiteClassicRegular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* Toast animation */
 @keyframes slide-in {
   from {

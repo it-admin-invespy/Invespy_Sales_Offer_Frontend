@@ -19,7 +19,9 @@ export default function FontDropdown({ register, name }) {
     "Helvetica Neue Ultra Light",
     "Helvetica Neue Light",
     "Proxima Nova Light",
-    "Cormorant"
+    "Cormorant",
+    "Marlide Display Regular",
+    "Beausite Classic Regular"
   ];
 
   return (
