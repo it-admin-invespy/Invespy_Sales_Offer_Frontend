@@ -43,6 +43,12 @@ export function resolvePdfTypography(rawFont) {
       fontWeight: 400,
     };
   }
+  if (key === "marlide display regular") {
+    return {
+      fontFamily: `"Marlide Display Regular", ${sansFallback}`,
+      fontWeight: 400,
+    };
+  }
 
   return {
     fontFamily: `"${name.replace(/"/g, "")}", ui-sans-serif, system-ui, sans-serif`,
