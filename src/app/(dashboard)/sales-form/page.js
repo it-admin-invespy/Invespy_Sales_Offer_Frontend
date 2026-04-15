@@ -523,7 +523,9 @@ function SalesFormPage() {
   const prepareSubmissionData = useCallback(
     (formValue) => {
       const data = { ...formValue };
-      const breakdown = { ...watch("extra.breakdown") };
+      const breakdown = (watch("extra.breakdown") || []).map((item) => ({
+        ...item,
+      }));
       const selectedUnits = unitsData || [];
 
       if (!data.projects?.[0]) {
@@ -594,7 +596,9 @@ function SalesFormPage() {
   const preparePdfData = useCallback(
     async (useLocalUrl = false) => {
       const data = getValues();
-      const breakdown = { ...watch("extra.breakdown") };
+      const breakdown = (watch("extra.breakdown") || []).map((item) => ({
+        ...item,
+      }));
 
       // Convert logo to base64
       data.meta.logoUrl = await convertImageToBase64(data.meta.logoUrl);
@@ -730,7 +734,9 @@ function SalesFormPage() {
           meta={meta}
           headerValue="OFFICIAL SALES OFFER"
         />
-
+        <div className="shadow-sm rounded-lg p-6 space-y-4 flex justify-end">
+          <ProjectDetailsCSVImport setValue={setValue} />
+        </div>
         {/* Form Styles Section */}
         <SectionCard title="Form Styles">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -805,11 +811,10 @@ function SalesFormPage() {
                   </h4>
                   <div className="space-y-2">
                     <div
-                      className={`h-8 rounded flex items-center justify-center text-white text-sm ${
-                        previewTypography.fontWeight === undefined
-                          ? "font-medium"
-                          : ""
-                      }`}
+                      className={`h-8 rounded flex items-center justify-center text-white text-sm ${previewTypography.fontWeight === undefined
+                        ? "font-medium"
+                        : ""
+                        }`}
                       style={{
                         backgroundColor: brandColors || "#007BFF",
                         fontFamily: previewTypography.fontFamily,
@@ -980,8 +985,7 @@ function SalesFormPage() {
 
         {/* Actions */}
         <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-6 border border-gray-200 shadow-sm">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <ProjectDetailsCSVImport setValue={setValue} />
+          <div className="flex flex-col sm:flex-row justify-end items-start sm:items-center gap-4">
 
             <div className="flex flex-wrap gap-3">
               <DynamicButton
