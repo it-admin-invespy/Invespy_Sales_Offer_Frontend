@@ -434,7 +434,7 @@ function SalesFormPage() {
     (unit, useLocalUrl = false) => {
       return (
         floorPlanImages
-          ?.filter((image) => image?.name?.includes(unit?.unitNo))
+          ?.filter((image) => image.name.endsWith("_" + String(unit.unitNo).trim()))
           .map((image) => ({
             layoutsImages: useLocalUrl ? image?.localUrl : image?.url,
           })) || []
@@ -488,8 +488,9 @@ function SalesFormPage() {
 
         const breakdown =
           formData.projects?.[0]?.units?.[0]?.preRegistrationPayment
-            ?.breakdown || [];
-        formData.extra.breakdown = breakdown;
+            ?.breakdown?.reverse() || [];
+        const orderedBreakdown = breakdown
+        formData.extra.breakdown = orderedBreakdown;
 
         setUnitsData(
           formData.projects?.[0]?.units?.map((unit, index) => ({
