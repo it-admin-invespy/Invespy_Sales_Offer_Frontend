@@ -226,8 +226,7 @@ export default function InstallmentCSV({
                 const percentage = parsePercentage(row.percentagePayable);
                 const amount = calculateAmount(percentage, price);
                 const vat = hasVatColumn ? (parseFloat(row.vat) || 0) : 0;
-                const amountAfterVat = amount + vat;
-
+                const amountAfterVat = amount + (amount * vat) / 100;
                 return (
                   <tr key={index}>
                     <td className="border border-gray-300 px-2 py-1">
