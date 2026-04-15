@@ -80,8 +80,7 @@ export default function CSVUpload({
                 ? parseFloat(values[4]?.trim()) || 0
                 : parseFloat(values[5]?.trim()) || 0,
               originalPrice: hasMergedFloorUnit
-                ? parseFloat(values[5]?.replace(/\D/g, "").trim()) || 0
-                : parseFloat(values[6]?.replace(/\D/g, "").trim()) || 0,
+                 && parseFloat(values[5]?.replace(/\D/g, "").trim()) || 0 ,
               price: hasMergedFloorUnit
                 ? parseFloat(values[6]?.replace(/\D/g, "").trim()) || 0
                 : parseFloat(values[6]?.replace(/\D/g, "").trim()) || 0,
