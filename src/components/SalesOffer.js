@@ -386,7 +386,7 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
                     ...((unit?.installments || []).some(
                       (inst) => inst?.vat != null && inst?.vat !== "" && inst.vat > 0
                     )
-                      ? ["VAT", "Amount after VAT"]
+                      ? ["VAT %", "Amount after VAT"]
                       : []),
                   ].map((heading) => (
                     <th
