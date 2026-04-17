@@ -408,7 +408,7 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
                 {(unit?.installments || []).map((inst, i) => {
                   const totalNum = Number(inst?.total) || 0;
                   const vatNum = Number(inst?.vat) || 0;
-                  const amountAfterVat = totalNum + vatNum;
+                  const amountAfterVat = totalNum +  (totalNum * vatNum) /100;
                   const showVatColumns = (unit?.installments || []).some(
                     (instItem) =>
                       instItem?.vat != null && instItem?.vat !== "" && instItem.vat > 0
