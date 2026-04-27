@@ -188,10 +188,10 @@ const PDFPage = ({ salesOfferData, selectedUnit }) => {
           textAlign: "center",
         }}
       >
-        <p style={{ margin: "3px 0", fontWeight: "bold", fontSize: "12px" }} className="hidden">
+        <p style={{ margin: "3px 0", fontWeight: "bold", fontSize: "12px" }} className="">
           {customer.email}
         </p>
-        <p style={{ margin: "3px 0", fontSize: "12px" }} className="hidden">{customer.address}</p>
+        <p style={{ margin: "3px 0", fontSize: "12px" }} className="">{customer.address}</p>
       </div>
     </div>
   );
