@@ -11,6 +11,7 @@
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
     "@tailwindcss/postcss": "^4.1.13",
+    "antd": "^6.3.5",
     "axios": "^1.12.2",
     "browser-image-compression": "^2.0.2",
     "html2pdf.js": "^0.10.0",

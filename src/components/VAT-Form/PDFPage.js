@@ -82,7 +82,7 @@ const A4_PAGE = {
   overflow: "hidden",
 };
 
-const SalesOffer = ({ salesOfferData, selectedUnit }) => {
+const PDFPage = ({ salesOfferData, selectedUnit }) => {
   const data = salesOfferData || emptySalesOfferData;
   const project = data?.projects?.[0];
   const unit = project?.units?.[selectedUnit] || project?.units?.[0];
@@ -117,7 +117,7 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
         <img
           src={meta?.logoUrl || null}
           alt="Logo"
-          className="w-full h-auto max-h-[140px]"
+          className="w-auto h-auto max-h-[100px]"
           style={{ margin: 5 }}
         />
       </div>
@@ -261,7 +261,8 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
                     "Unit Type",
                     "View",
                     "Area (Sq/Ft)",
-                    "Price (AED)",
+                    "Price Excl. VAT (AED)",
+                    "Price Incl. VAT (AED)"
                   ].map((heading) => (
                     <th
                       key={heading}
@@ -288,6 +289,7 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
                     unit?.view || "",
                     formatNumber(unit?.grossArea) || "",
                     formatNumber(unit?.price) || "",
+                    formatNumber(unit?.price + (unit?.price * 5) / 100)
                   ].map((value, index) => (
                     <td
                       key={index}
@@ -382,7 +384,9 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
                     "Installment",
                     "% Payable",
                     "Milestone",
-                    "Amount (AED)",
+                    "Amount Excl. VAT (AED)",
+                    "5% VAT Amount (AED)",
+                    "Amount INCL. VAT (AED)",
                     ...((unit?.installments || []).some(
                       (inst) => inst?.vat != null && inst?.vat !== "" && inst.vat > 0
                     )
@@ -407,12 +411,13 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
               <tbody>
                 {(unit?.installments || []).map((inst, i) => {
                   const totalNum = Number(inst?.total) || 0;
-                  const vatNum = Number(inst?.vat) || 0;
-                  const amountAfterVat = totalNum +  (totalNum * vatNum) /100;
-                  const showVatColumns = (unit?.installments || []).some(
-                    (instItem) =>
-                      instItem?.vat != null && instItem?.vat !== "" && instItem.vat > 0
-                  );
+                  // const vatNum = Number(inst?.vat) || 0;
+                  const vatPrice = (totalNum * 5) /100;
+                  const amountAfterVat = totalNum +  vatPrice;
+                  // const showVatColumns = (unit?.installments || []).some(
+                  //   (instItem) =>
+                  //     instItem?.vat != null && instItem?.vat !== "" && instItem.vat > 0
+                  // );
                   return (
                     <tr
                       key={i}
@@ -463,7 +468,7 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
                       >
                         {formatNumber(inst?.total)}
                       </td>
-                      {showVatColumns && (
+                      {/* {showVatColumns && ( */}
                         <>
                           <td
                             style={{
@@ -474,7 +479,8 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
                               fontSize: "12px",
                             }}
                           >
-                            {formatNumber(inst?.vat)}
+                            {/* {formatNumber(inst?.vat)} */}
+                            {vatPrice}
                           </td>
                           <td
                             style={{
@@ -488,7 +494,7 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
                             {formatNumber(amountAfterVat)}
                           </td>
                         </>
-                      )}
+                      {/* // )} */}
                     </tr>
                   );
                 })}
@@ -653,4 +659,4 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
   );
 };
 
-export default SalesOffer;
+export default PDFPage;
