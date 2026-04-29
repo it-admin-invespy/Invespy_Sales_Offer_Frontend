@@ -20,13 +20,11 @@ import {
   ImageUpload,
   ColorPicker,
   FontDropdown,
-  CSVUpload,
   InstallmentCSV,
   BulkImageUpload,
   DynamicHeader,
   ContactInfo,
   InvisibleTable,
-  SalesOffer,
   SectionCard,
   InputField,
   DynamicButton,
@@ -40,6 +38,8 @@ import {
   updateSalesOffer,
 } from "../dashboard/actions";
 import PreRegistrationDetails from "@/components/PreRegistrationDetails";
+import CSVUpload from "@/components/Offer-Price-Form/CSVUpload";
+import PDFPage from "@/components/Offer-Price-Form/PDFPage";
 
 // ============================================================================
 // CONSTANTS
@@ -98,8 +98,8 @@ const PDF_OPTIONS = Object.freeze({
 const CSV_SAMPLES = Object.freeze({
   projectUnits: {
     content: [
-      "Project Name,Unit No,Floor No,Unit Type,View,Area (Sq/Ft),Price (AED)",
-      "Sample Residency,101,1,2BR,Sea View,1200,1500000",
+      "Project Name,Floor / Unit No,Unit Type,View,Area (Sq/Ft),Original Price (AED),Offer Price (AED)",
+      "Sample Residency,1/101,2BR,Sea View,1200,1600000,1500000",
     ].join("\n"),
     filename: "project-units-sample.csv",
   },
@@ -287,8 +287,8 @@ const calculateUnitBreakdown = (breakdown, unitPrice, applyDldFromUnit) => {
     const first = arr[0] || {};
     arr[0] = {
       ...first,
-      amount: Math.round(unitPrice * PRE_REGISTRATION_RATE) || 0,
-    };
+    amount: Math.round(unitPrice * PRE_REGISTRATION_RATE) || 0,
+  };
   }
 
   const totalAmount = arr.reduce(
@@ -322,6 +322,7 @@ const transformUnits = (units) => {
     return {
       ...unit,
       grossArea: parseNumericValue(unit.grossArea),
+      originalPrice: parseNumericValue(unit.originalPrice),
       price: parseNumericValue(unit.price),
       installments,
     };
@@ -483,9 +484,9 @@ function SalesFormPage() {
         const data = await getSalesOfferById(id);
         setProjectId(
           data.salesOffer?.project?._id ||
-          data.salesOffer?.project?.id ||
-          data.salesOffer?.project?.projectId ||
-          ""
+            data.salesOffer?.project?.id ||
+            data.salesOffer?.project?.projectId ||
+            ""
         );
         const unitsArray = data.salesOffer?.project?.units || [];
         const fetchedProjectName = data.salesOffer?.project?.projectName || "";
@@ -1060,7 +1061,7 @@ function SalesFormPage() {
         ref={targetRef}
         style={{ position: "absolute", left: "-9999px", top: "-9999px" }}
       >
-        <SalesOffer salesOfferData={pdfData} selectedUnit={selectedUnit} />
+        <PDFPage salesOfferData={pdfData} selectedUnit={selectedUnit} />
       </div>
     </>
   );

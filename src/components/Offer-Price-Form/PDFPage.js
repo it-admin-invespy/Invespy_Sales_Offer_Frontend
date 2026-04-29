@@ -17,6 +17,7 @@ const emptySalesOfferData = {
           unitType: "",
           view: "",
           grossArea: "",
+          originalPrice: "",
           price: "",
           installments: [
             {
@@ -82,7 +83,7 @@ const A4_PAGE = {
   overflow: "hidden",
 };
 
-const SalesOffer = ({ salesOfferData, selectedUnit }) => {
+const PDFPage = ({ salesOfferData, selectedUnit }) => {
   const data = salesOfferData || emptySalesOfferData;
   const project = data?.projects?.[0];
   const unit = project?.units?.[selectedUnit] || project?.units?.[0];
@@ -99,6 +100,7 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
   const formatNumber = (num) => {
     return Number(num || 0).toLocaleString();
   };
+  const floorUnitNo = [unit?.floorNo, unit?.unitNo].filter(Boolean).join("/");
 
   const Header = ({ value }) => (
     <div
@@ -256,12 +258,12 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
                 <tr>
                   {[
                     "Project Name",
-                    "Unit No",
-                    "Floor No",
+                    "Floor / Unit No",
                     "Unit Type",
                     "View",
                     "Area (Sq/Ft)",
-                    "Price (AED)",
+                    "Original Price (AED)",
+                    "Offer Price (AED)",
                   ].map((heading) => (
                     <th
                       key={heading}
@@ -282,11 +284,11 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
                 <tr>
                   {[
                     project?.projectName || "",
-                    unit?.unitNo || "",
-                    unit?.floorNo || "",
+                    floorUnitNo || "",
                     unit?.unitType || "",
                     unit?.view || "",
                     formatNumber(unit?.grossArea) || "",
+                    formatNumber(unit?.originalPrice) || "",
                     formatNumber(unit?.price) || "",
                   ].map((value, index) => (
                     <td
@@ -653,4 +655,4 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
   );
 };
 
-export default SalesOffer;
+export default PDFPage;

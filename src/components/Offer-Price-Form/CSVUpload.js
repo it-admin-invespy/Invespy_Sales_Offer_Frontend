@@ -40,6 +40,10 @@ export default function CSVUpload({
           parseNumericValue(unit.grossArea)
         );
         setValue(`${name}.${index}.price`, parseNumericValue(unit.price));
+        setValue(
+          `${name}.${index}.originalPrice`,
+          parseNumericValue(unit.originalPrice)
+        );
       });
     }
   }, [unitsData, setValue, name]);
@@ -58,14 +62,29 @@ export default function CSVUpload({
           .filter((line) => line?.trim())
           .map((line) => {
             const values = line.split(",");
+            const floorAndUnitNo = values[1]?.trim() || "";
+            const hasMergedFloorUnit = floorAndUnitNo.includes("/");
+            const [floorPart, unitPart] = hasMergedFloorUnit
+              ? floorAndUnitNo.split("/")
+              : [values[2]?.trim() || "", values[1]?.trim() || ""];
             return {
               projectName: values[0]?.trim() || "",
-              unitNo: values[1]?.trim() || "",
-              floorNo: values[2]?.trim() || "",
-              unitType: values[3]?.trim() || "",
-              view: values[4]?.trim() || "",
-              grossArea: parseFloat(values[5]?.trim()) || 0,
-              price: parseFloat(values[6]?.trim()) || 0,
+              floorNo: floorPart?.trim() || "",
+              unitNo: unitPart?.trim() || "",
+              unitType: hasMergedFloorUnit
+                ? values[2]?.trim() || ""
+                : values[3]?.trim() || "",
+              view: hasMergedFloorUnit
+                ? values[3]?.trim() || ""
+                : values[4]?.trim() || "",
+              grossArea: hasMergedFloorUnit
+                ? parseFloat(values[4]?.trim()) || 0
+                : parseFloat(values[5]?.trim()) || 0,
+              originalPrice: hasMergedFloorUnit
+                 && parseFloat(values[5]?.replace(/\D/g, "").trim()) || 0 ,
+              price: hasMergedFloorUnit
+                ? parseFloat(values[6]?.replace(/\D/g, "").trim()) || 0
+                : parseFloat(values[6]?.replace(/\D/g, "").trim()) || 0,
             };
           })
           .sort(sortUnits);
@@ -84,10 +103,10 @@ export default function CSVUpload({
       setSelectedRow(newIndex);
       setSelectedUnit(newIndex);
       if (autoPreRegFromUnit) {
-        setValue(
-          "extra.breakdown.0.amount",
-          (csvData[newIndex]?.price || 0) * 0.04
-        );
+      setValue(
+        "extra.breakdown.0.amount",
+        (csvData[newIndex]?.price || 0) * 0.04
+      );
       }
     },
     [selectedRow, setSelectedUnit, setValue, csvData, autoPreRegFromUnit]
@@ -100,7 +119,7 @@ export default function CSVUpload({
     setSelectedRow(0);
     setSelectedUnit(0);
     if (autoPreRegFromUnit) {
-      setValue("extra.breakdown.0.amount", 0);
+    setValue("extra.breakdown.0.amount", 0);
     }
     document.getElementById("csv-upload").value = "";
   }, [name, onDataLoad, setSelectedUnit, setValue, autoPreRegFromUnit]);
@@ -137,7 +156,7 @@ export default function CSVUpload({
           setSelectedRow(0);
           setSelectedUnit(0);
           if (autoPreRegFromUnit) {
-            setValue("extra.breakdown.0.amount", 0);
+          setValue("extra.breakdown.0.amount", 0);
           }
           return;
         }
@@ -152,10 +171,10 @@ export default function CSVUpload({
         setSelectedRow(nextSelectedRow);
         setSelectedUnit(nextSelectedRow);
         if (autoPreRegFromUnit) {
-          setValue(
-            "extra.breakdown.0.amount",
-            (updatedCsvData[nextSelectedRow]?.price || 0) * 0.04
-          );
+        setValue(
+          "extra.breakdown.0.amount",
+          (updatedCsvData[nextSelectedRow]?.price || 0) * 0.04
+        );
         }
       } catch (error) {
         console.error("Failed to delete unit:", error);
@@ -174,7 +193,7 @@ export default function CSVUpload({
     setSelectedRow(0);
     setSelectedUnit(0);
     if (autoPreRegFromUnit) {
-      setValue("extra.breakdown.0.amount", 0);
+    setValue("extra.breakdown.0.amount", 0);
     }
     document.getElementById("csv-upload").value = "";
   }, [name, onDataLoad, setSelectedUnit, setValue, autoPreRegFromUnit]);
@@ -207,12 +226,12 @@ export default function CSVUpload({
   const tableHeaders = useMemo(
     () => [
       "Project Name",
-      "Unit No",
-      "Floor No",
+      "Floor / Unit No",
       "Unit Type",
       "View",
       "Area (Sq/Ft)",
-      "Price (AED)",
+      "Original Price (AED)",
+      "Offer Price (AED)",
       "Action",
     ],
     []
@@ -278,13 +297,32 @@ export default function CSVUpload({
                 const isSelected = selectedRow === index;
                 const numericPrice = parseNumericValue(row.price);
                 const numericArea = parseNumericValue(row.grossArea);
+                const numericOriginalPrice = parseNumericValue(
+                  row.originalPrice ?? row.price
+                );
+                const floorUnitNo = [row.floorNo, row.unitNo]
+                  .filter(Boolean)
+                  .join("/");
 
                 return (
                   <tr key={index} className={isSelected ? "bg-blue-50" : ""}>
                     <td className="border border-gray-300 px-2 py-1">
                       {row.projectName}
                     </td>
-                    {["unitNo", "floorNo", "unitType", "view"].map((field) => (
+                    <td className="border border-gray-300 px-2 py-1">
+                      <input
+                        type="hidden"
+                        {...register(`${name}.${index}.floorNo`)}
+                        defaultValue={row.floorNo}
+                      />
+                      <input
+                        type="hidden"
+                        {...register(`${name}.${index}.unitNo`)}
+                        defaultValue={row.unitNo}
+                      />
+                      {floorUnitNo}
+                    </td>
+                    {["unitType", "view"].map((field) => (
                       <td
                         key={field}
                         className="border border-gray-300 px-2 py-1"
@@ -304,6 +342,14 @@ export default function CSVUpload({
                         defaultValue={numericArea}
                       />
                       {formatArea(row.grossArea)}
+                    </td>
+                    <td className="border border-gray-300 px-2 py-1 text-right">
+                      <input
+                        type="hidden"
+                        {...register(`${name}.${index}.originalPrice`)}
+                        defaultValue={numericOriginalPrice}
+                      />
+                      {formatCurrency(row.originalPrice ?? row.price)}
                     </td>
                     <td className="border border-gray-300 px-2 py-1 text-right">
                       <input

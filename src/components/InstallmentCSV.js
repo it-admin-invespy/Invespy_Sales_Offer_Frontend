@@ -168,7 +168,7 @@ export default function InstallmentCSV({
           "% Payable",
           "Milestone",
           "Amount (AED)",
-          "VAT",
+          "VAT %",
           "Amount after VAT",
         ]
         : ["Installment", "% Payable", "Milestone", "Amount (AED)"],
@@ -226,8 +226,7 @@ export default function InstallmentCSV({
                 const percentage = parsePercentage(row.percentagePayable);
                 const amount = calculateAmount(percentage, price);
                 const vat = hasVatColumn ? (parseFloat(row.vat) || 0) : 0;
-                const amountAfterVat = amount + vat;
-
+                const amountAfterVat = amount + (amount * vat) / 100;
                 return (
                   <tr key={index}>
                     <td className="border border-gray-300 px-2 py-1">
@@ -245,7 +244,7 @@ export default function InstallmentCSV({
                     {hasVatColumn && (
                       <>
                         <td className="border border-gray-300 px-2 py-1 text-right">
-                          {formatCurrency(vat)}
+                          {Math.floor(formatCurrency(vat))}
                         </td>
                         <td className="border border-gray-300 px-2 py-1 text-right">
                           {formatCurrency(amountAfterVat)}
