@@ -22,6 +22,7 @@ export const transformSalesOffer = async (data) => {
             view: unit?.view || "",
             grossArea: unit?.grossArea || "",
             price: unit?.price || "",
+            originalPrice: unit?.originalPrice || "",
             installments: (unit?.installments || []).map((inst) => ({
               installment: inst?.installment || "",
               percentagePayable: inst?.percentagePayable || "",
