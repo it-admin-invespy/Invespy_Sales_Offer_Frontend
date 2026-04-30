@@ -117,7 +117,7 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
         <img
           src={meta?.logoUrl || null}
           alt="Logo"
-          className="w-full h-auto max-h-[140px]"
+          className="w-auto h-auto max-h-[100px]"
           style={{ margin: 5 }}
         />
       </div>
