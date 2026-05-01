@@ -523,6 +523,7 @@ function SalesFormPage() {
               unitsArray[index]?.unitId ||
               unit?.unitId ||
               "",
+            vatPrice: parseFloat(unit?.price.trim()) + (parseFloat(unit?.price?.trim()) * 5) / 100,
             ...unit,
           })) || []
         );
@@ -735,7 +736,6 @@ function SalesFormPage() {
       CSV_SAMPLES.installment.filename
     );
   }, []);
-
 
   // ============================================================================
   // RENDER
