@@ -387,11 +387,6 @@ const PDFPage = ({ salesOfferData, selectedUnit }) => {
                     "Amount Excl. VAT (AED)",
                     "5% VAT Amount (AED)",
                     "Amount INCL. VAT (AED)",
-                    ...((unit?.installments || []).some(
-                      (inst) => inst?.vat != null && inst?.vat !== "" && inst.vat > 0
-                    )
-                      ? ["VAT %", "Amount after VAT"]
-                      : []),
                   ].map((heading) => (
                     <th
                       key={heading}
