@@ -447,18 +447,72 @@ function SalesFormPage() {
   // HELPER FUNCTIONS (Memoized with useCallback)
   // ============================================================================
 
+  // const getFloorPlansForUnit = useCallback(
+  //   (unit, useLocalUrl = false) => {
+  //     return (
+  //       floorPlanImages
+  //         ?.filter((image) => image.name.endsWith("_" + String(unit.unitNo).trim()))
+  //         .map((image) => ({
+  //           layoutsImages: useLocalUrl ? image?.localUrl : image?.url,
+  //         })) || []
+  //     );
+  //   },
+  //   [floorPlanImages]
+  // );
+
   const getFloorPlansForUnit = useCallback(
-    (unit, useLocalUrl = false) => {
-      return (
-        floorPlanImages
-          ?.filter((image) => image.name.endsWith("_" + String(unit.unitNo).trim()))
-          .map((image) => ({
-            layoutsImages: useLocalUrl ? image?.localUrl : image?.url,
-          })) || []
-      );
-    },
-    [floorPlanImages]
-  );
+  (unit, useLocalUrl = false) => {
+    const unitValue = String(unit?.unitNo || "").trim();
+
+    const normalizeText = (text) =>
+      String(text || "")
+        .toLowerCase()
+        .replace(/\.[^/.]+$/, "")
+        .replace(/_/g, " ")
+        .replace(/[^\w\s]/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+
+    // extract ALL numbers
+    const extractedNumbers = unitValue.match(/\d+/g) || [];
+
+    const normalizedUnitText = normalizeText(unitValue);
+
+    return (
+      floorPlanImages
+        ?.filter((image) => {
+          const fileName = image?.name || "";
+
+          // extract all numbers from filename
+          const fileNumbers = fileName.match(/\d+/g) || [];
+
+          // CASE 1: unit has numbers
+          if (extractedNumbers.length > 0) {
+            // exact number count must match
+            if (fileNumbers.length !== extractedNumbers.length) {
+              return false;
+            }
+
+            // all numbers must match in same order
+            return extractedNumbers.every(
+              (num, index) => num === fileNumbers[index]
+            );
+          }
+
+          // CASE 2: string only
+          const normalizedFileName = normalizeText(fileName);
+
+          return normalizedFileName.includes(normalizedUnitText);
+        })
+        .map((image) => ({
+          layoutsImages: useLocalUrl
+            ? image?.localUrl
+            : image?.url,
+        })) || []
+    );
+  },
+  [floorPlanImages]
+);
 
   const resetToDefaults = useCallback(() => {
     setSelectedUnit(0);
