@@ -291,7 +291,7 @@ export default function CSVUpload({
                     {["unitNo", "floorNo", "unitType", "view"].map((field) => (
                       <td
                         key={field}
-                        className="border border-gray-300 px-2 py-1 w-[100px]"
+                        className={`border border-gray-300 px-2 py-1 ${field == "unitNo" ? "w-[150px]" : "w-[100px]"}`}
                       >
                         <input
                           {...register(`${name}.${index}.${field}`)}
