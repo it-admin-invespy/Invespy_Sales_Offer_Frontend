@@ -1,0 +1,68 @@
+name: Build & Deploy to EKS
+
+on:
+  push:
+    branches:
+      - staging
+      - main
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REGISTRY: 703671911262.dkr.ecr.us-east-1.amazonaws.com
+  ECR_REPOSITORY: sales-offer-frontend
+  EKS_CLUSTER: invespy-cluster
+
+jobs:
+  build-and-deploy:
+    name: Build, Push, Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set image tag
+        id: tag
+        run: |
+          SHA=$(echo $GITHUB_SHA | cut -c1-8)
+          if [ "$GITHUB_REF_NAME" = "main" ]; then
+            echo "ENV_TAG=production" >> $GITHUB_OUTPUT
+            echo "NAMESPACE=production" >> $GITHUB_OUTPUT
+            echo "BASE_URL=${{ secrets.NEXT_PUBLIC_BASE_URL }}" >> $GITHUB_OUTPUT
+          else
+            echo "ENV_TAG=staging" >> $GITHUB_OUTPUT
+            echo "NAMESPACE=staging" >> $GITHUB_OUTPUT
+            echo "BASE_URL=https://staging.sales-api.invespy.com" >> $GITHUB_OUTPUT
+          fi
+          echo "SHA_TAG=$SHA" >> $GITHUB_OUTPUT
+
+      - name: Build and push Docker image
+        run: |
+          docker build \
+            --build-arg NEXT_PUBLIC_BASE_URL=${{ steps.tag.outputs.BASE_URL }} \
+            -t $ECR_REGISTRY/$ECR_REPOSITORY:${{ steps.tag.outputs.SHA_TAG }} .
+          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:${{ steps.tag.outputs.SHA_TAG }} \
+                     $ECR_REGISTRY/$ECR_REPOSITORY:${{ steps.tag.outputs.ENV_TAG }}
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:${{ steps.tag.outputs.SHA_TAG }}
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:${{ steps.tag.outputs.ENV_TAG }}
+
+      - name: Update kubeconfig
+        run: aws eks update-kubeconfig --name $EKS_CLUSTER --region $AWS_REGION
+
+      - name: Deploy to Kubernetes
+        run: |
+          kubectl set image deployment/sales-offer-frontend \
+            sales-offer-frontend=$ECR_REGISTRY/$ECR_REPOSITORY:${{ steps.tag.outputs.SHA_TAG }} \
+            -n ${{ steps.tag.outputs.NAMESPACE }}
+          kubectl rollout status deployment/sales-offer-frontend \
+            -n ${{ steps.tag.outputs.NAMESPACE }} --timeout=5m || true
