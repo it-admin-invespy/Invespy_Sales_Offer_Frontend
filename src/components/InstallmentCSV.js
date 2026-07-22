@@ -233,7 +233,7 @@ export default function InstallmentCSV({
                       {row.installment}
                     </td>
                     <td className="border border-gray-300 px-2 py-1">
-                      {Math.round(percentage)}
+                      {Number(percentage.toFixed(2))}
                     </td>
                     <td className="border border-gray-300 px-2 py-1">
                       {row.milestone}
