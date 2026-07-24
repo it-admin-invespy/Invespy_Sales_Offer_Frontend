@@ -2,57 +2,50 @@ name: Deploy to EKS
 
 on:
   workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        default: staging
+        type: choice
+        options:
+          - staging
+          - production
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Determine namespace and tag
-        id: tag
-        run: |
-          if [ "$GITHUB_REF_NAME" = "dev" ]; then
-            echo "NAMESPACE=production" >> $GITHUB_OUTPUT
-            echo "IMAGE_TAG=production" >> $GITHUB_OUTPUT
-          else
-            echo "NAMESPACE=staging" >> $GITHUB_OUTPUT
-            echo "IMAGE_TAG=staging" >> $GITHUB_OUTPUT
-          fi
-
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
+          aws-access-key-id: ${{ secrets.AWS_ECR_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_ECR_ACCESS_KEY_SECRET }}
           aws-region: us-east-1
 
       - name: Login to Amazon ECR
-        id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
       - name: Build and push Docker image
         env:
           ECR_REGISTRY: 703671911262.dkr.ecr.us-east-1.amazonaws.com
-          ECR_REPOSITORY: sales-offer-frontend
-          IMAGE_TAG: ${{ steps.tag.outputs.IMAGE_TAG }}
+          IMAGE_TAG: ${{ inputs.environment }}
         run: |
-          if [ "${{ steps.tag.outputs.NAMESPACE }}" = "production" ]; then
+          if [ "$IMAGE_TAG" = "production" ]; then
             BUILD_ARG="--build-arg NEXT_PUBLIC_BASE_URL=${{ secrets.NEXT_PUBLIC_BASE_URL }}"
           else
             BUILD_ARG="--build-arg NEXT_PUBLIC_BASE_URL=https://staging.sales-api.invespy.com"
           fi
-          docker build $BUILD_ARG -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker build $BUILD_ARG -t $ECR_REGISTRY/sales-offer-frontend:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/sales-offer-frontend:$IMAGE_TAG
 
       - name: Update kubeconfig
-        run: |
-          aws eks update-kubeconfig --region us-east-1 --name invespy-cluster
+        run: aws eks update-kubeconfig --region us-east-1 --name invespy-cluster
 
-      - name: Restart deployment
-        env:
-          NAMESPACE: ${{ steps.tag.outputs.NAMESPACE }}
+      - name: Deploy to EKS
         run: |
-          kubectl rollout restart deployment/sales-offer-frontend -n $NAMESPACE
+          kubectl rollout restart deployment/sales-offer-frontend -n ${{ inputs.environment }}
+          kubectl rollout status deployment/sales-offer-frontend -n ${{ inputs.environment }} --timeout=300s
