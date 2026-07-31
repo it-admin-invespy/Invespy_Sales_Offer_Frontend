@@ -32,50 +32,50 @@ export default function Header() {
           <div className="flex items-center gap-4">
             {
               !isSalesForm ?
-              (
-                <div className="flex gap-x-3">
-                  <DynamicButton
-                onClick={() => router.push("/offer-price-form")}
-                variant="primary"
-                className="bg-blue-900 px-6 py-3 text-sm font-medium"
-              >
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                New Offer Form
-              </DynamicButton>
-                  <DynamicButton
-                onClick={() => router.push("/sales-form-vat")}
-                variant=""
-                className="bg-blue-300 px-6 py-3 text-sm font-medium text-white"
-              >
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                New VAT Form
-              </DynamicButton>
-                  <DynamicButton
-                onClick={() => router.push("/sales-form")}
-                variant="primary"
-                className="px-6 py-3 text-sm font-medium"
-              >
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                New Form
-              </DynamicButton>
-                </div>
-              ) :
-               <DynamicButton
-                onClick={() => router.push("/dashboard")}
-                variant="primary"
-                className="px-6 py-3 text-sm font-medium"
-              >
-                {/* <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                (
+                  <div className="flex gap-x-3">
+                    <DynamicButton
+                      onClick={() => router.push("/sales-form")}
+                      variant="primary"
+                      className="px-6 py-3 text-sm font-medium"
+                    >
+                      <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                      </svg>
+                      New Form
+                    </DynamicButton>
+                    <DynamicButton
+                      onClick={() => router.push("/offer-price-form")}
+                      variant="primary"
+                      className="bg-blue-900 px-6 py-3 text-sm font-medium"
+                    >
+                      <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                      </svg>
+                      New Offer Form
+                    </DynamicButton>
+                    <DynamicButton
+                      onClick={() => router.push("/sales-form-vat")}
+                      variant=""
+                      className="bg-blue-300 px-6 py-3 text-sm font-medium text-white"
+                    >
+                      <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                      </svg>
+                      New VAT Form
+                    </DynamicButton>
+                  </div>
+                ) :
+                <DynamicButton
+                  onClick={() => router.push("/dashboard")}
+                  variant="primary"
+                  className="px-6 py-3 text-sm font-medium"
+                >
+                  {/* <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                 </svg> */}
-                Back to Home
-              </DynamicButton>
+                  Back to Home
+                </DynamicButton>
             }
             <button
               onClick={handleLogout}
