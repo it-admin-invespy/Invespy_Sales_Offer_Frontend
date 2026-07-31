@@ -158,7 +158,7 @@ export default function Page() {
                         (f) =>
                           f.createdAt &&
                           new Date(f.createdAt).getMonth() ===
-                            new Date().getMonth()
+                          new Date().getMonth()
                       ).length
                     }
                   </p>
@@ -255,13 +255,13 @@ export default function Page() {
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {form?.createdAt
                             ? new Date(form.createdAt).toLocaleDateString(
-                                "en-US",
-                                {
-                                  year: "numeric",
-                                  month: "short",
-                                  day: "numeric",
-                                }
-                              )
+                              "en-US",
+                              {
+                                year: "numeric",
+                                month: "short",
+                                day: "numeric",
+                              }
+                            )
                             : "Unknown"}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -271,6 +271,26 @@ export default function Page() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                           <div className="flex justify-end gap-2">
+                            <DynamicButton
+                              onClick={() => handleEdit(form.id)}
+                              variant="primary"
+                              className="p-2 hover:scale-105 transition-transform"
+                              title="Edit"
+                            >
+                              <svg
+                                className="w-4 h-4"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                />
+                              </svg>
+                            </DynamicButton>
                             <DynamicButton
                               onClick={() => router.push(`/offer-price-form?id=${form.id}`)}
                               variant=""
@@ -301,26 +321,6 @@ export default function Page() {
                                 className="w-4 h-4"
                                 fill="none"
                                 stroke="white"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                                />
-                              </svg>
-                            </DynamicButton>
-                            <DynamicButton
-                              onClick={() => handleEdit(form.id)}
-                              variant="primary"
-                              className="p-2 hover:scale-105 transition-transform"
-                              title="Edit"
-                            >
-                              <svg
-                                className="w-4 h-4"
-                                fill="none"
-                                stroke="currentColor"
                                 viewBox="0 0 24 24"
                               >
                                 <path
