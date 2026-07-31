@@ -19,8 +19,8 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-access-key-id: ${{ secrets.AWS_ECR_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_ECR_ACCESS_KEY_SECRET }}
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Login to Amazon ECR
@@ -34,10 +34,8 @@ jobs:
           ECR_REPO: ${{ secrets.ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/sales-offer-frontend
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          # Build (no build-args; your Dockerfile doesn't use ARG)
           docker build -t sales-offer-frontend:$IMAGE_TAG .
 
-          # Push SHA + latest tags
           docker tag sales-offer-frontend:$IMAGE_TAG ${{ secrets.ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/sales-offer-frontend:${{ github.sha }}
           docker push ${{ secrets.ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/sales-offer-frontend:${{ github.sha }}
 
@@ -52,25 +50,16 @@ jobs:
             ECR_REPO=${{ secrets.ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/sales-offer-frontend
             IMAGE_TAG=${{ github.sha }}
 
-            # Login & pull specific image
             aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | \
             docker login --username AWS --password-stdin $ECR_REPO
             docker pull $ECR_REPO:${{ github.sha }}
 
-            # Stop/remove existing container
             docker stop sales-offer-frontend 
             docker rm sales-offer-frontend 
 
-            # Run the new container
-            # NOTE: Your image already contains NEXT_PUBLIC_BASE_URL and .env.
-            # If you want to override at runtime, add: -e NEXT_PUBLIC_BASE_URL='https://override.example'
             docker run -d \
               -p 3001:3000 \
               --name sales-offer-frontend \
               --restart unless-stopped \
               -e BASE_URL=${{ secrets.BACKEND_BASE_URL }} \
-              $ECR_REPO:${{ github.sha }} 
-
-            # Clean dangling images (optional)
-            #docker image prune -f || true
-
+              $ECR_REPO:${{ github.sha }}
