@@ -1,6 +1,9 @@
 name: Deploy to EKS
 
 on:
+  push:
+    branches:
+      - staging
   workflow_dispatch:
     inputs:
       environment:
@@ -19,6 +22,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Set target environment
+        id: env
+        run: |
+          if [ -n "${{ inputs.environment }}" ]; then
+            echo "target=${{ inputs.environment }}" >> $GITHUB_OUTPUT
+          elif [ "${{ github.ref_name }}" = "staging" ]; then
+            echo "target=staging" >> $GITHUB_OUTPUT
+          else
+            echo "target=production" >> $GITHUB_OUTPUT
+          fi
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -32,20 +46,19 @@ jobs:
       - name: Build and push Docker image
         env:
           ECR_REGISTRY: 703671911262.dkr.ecr.us-east-1.amazonaws.com
-          IMAGE_TAG: ${{ inputs.environment }}
         run: |
-          if [ "$IMAGE_TAG" = "production" ]; then
-            BUILD_ARG="--build-arg NEXT_PUBLIC_BASE_URL=${{ secrets.NEXT_PUBLIC_BASE_URL }}"
-          else
-            BUILD_ARG="--build-arg NEXT_PUBLIC_BASE_URL=https://staging.sales-api.invespy.com"
-          fi
-          docker build $BUILD_ARG -t $ECR_REGISTRY/sales-offer-frontend:$IMAGE_TAG .
-          docker push $ECR_REGISTRY/sales-offer-frontend:$IMAGE_TAG
+          if [ "${{ steps.env.outputs.target }}" = "production" ]; then
+  BUILD_ARG="--build-arg NEXT_PUBLIC_BASE_URL=${{ secrets.NEXT_PUBLIC_BASE_URL }}"
+else
+  BUILD_ARG="--build-arg NEXT_PUBLIC_BASE_URL=https://staging.sales-api.invespy.com"
+fi
+docker build $BUILD_ARG -t $ECR_REGISTRY/sales-offer-frontend:${{ steps.env.outputs.target }} .
+docker push $ECR_REGISTRY/sales-offer-frontend:${{ steps.env.outputs.target }}
 
       - name: Update kubeconfig
         run: aws eks update-kubeconfig --region us-east-1 --name invespy-cluster
 
       - name: Deploy to EKS
         run: |
-          kubectl rollout restart deployment/sales-offer-frontend -n ${{ inputs.environment }}
-          kubectl rollout status deployment/sales-offer-frontend -n ${{ inputs.environment }} --timeout=300s
+          kubectl rollout restart deployment/sales-offer-frontend -n ${{ steps.env.outputs.target }}
+          kubectl rollout status deployment/sales-offer-frontend -n ${{ steps.env.outputs.target }} --timeout=300s
