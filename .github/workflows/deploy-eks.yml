@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - staging
+      - main
   workflow_dispatch:
     inputs:
       environment:
@@ -48,12 +49,12 @@ jobs:
           ECR_REGISTRY: 703671911262.dkr.ecr.us-east-1.amazonaws.com
         run: |
           if [ "${{ steps.env.outputs.target }}" = "production" ]; then
-  BUILD_ARG="--build-arg NEXT_PUBLIC_BASE_URL=${{ secrets.NEXT_PUBLIC_BASE_URL }}"
-else
-  BUILD_ARG="--build-arg NEXT_PUBLIC_BASE_URL=https://staging.sales-api.invespy.com"
-fi
-docker build $BUILD_ARG -t $ECR_REGISTRY/sales-offer-frontend:${{ steps.env.outputs.target }} .
-docker push $ECR_REGISTRY/sales-offer-frontend:${{ steps.env.outputs.target }}
+            BUILD_ARG="--build-arg NEXT_PUBLIC_BASE_URL=${{ secrets.NEXT_PUBLIC_BASE_URL }}"
+          else
+            BUILD_ARG="--build-arg NEXT_PUBLIC_BASE_URL=https://staging.sales-api.invespy.com"
+          fi
+          docker build $BUILD_ARG -t 703671911262.dkr.ecr.us-east-1.amazonaws.com/sales-offer-frontend:${{ steps.env.outputs.target }} .
+          docker push 703671911262.dkr.ecr.us-east-1.amazonaws.com/sales-offer-frontend:${{ steps.env.outputs.target }}
 
       - name: Update kubeconfig
         run: aws eks update-kubeconfig --region us-east-1 --name invespy-cluster
