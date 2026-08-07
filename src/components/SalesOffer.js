@@ -82,12 +82,35 @@ const A4_PAGE = {
   overflow: "hidden",
 };
 
+/** How many installment rows fit on page 1 (below unit/terms content). */
+const PAGE1_INSTALLMENT_LIMIT = 7;
+/** How many installment rows fit on a continuation page (header + table + footer only). */
+const CONTINUATION_INSTALLMENT_LIMIT = 18;
+
+const chunkArray = (items, size) => {
+  if (!items?.length) return [];
+  const chunks = [];
+  for (let i = 0; i < items.length; i += size) {
+    chunks.push(items.slice(i, i + size));
+  }
+  return chunks;
+};
+
 const SalesOffer = ({ salesOfferData, selectedUnit }) => {
   const data = salesOfferData || emptySalesOfferData;
   const project = data?.projects?.[0];
   const unit = project?.units?.[selectedUnit] || project?.units?.[0];
   const { customer, meta, extra, termsAndCondition } = data || {};
   const brandColor = meta?.brandColors || "#007BFF";
+  const installments = unit?.installments || [];
+  const showVatColumns = installments.some(
+    (inst) => inst?.vat != null && inst?.vat !== "" && inst.vat > 0
+  );
+  const page1Installments = installments.slice(0, PAGE1_INSTALLMENT_LIMIT);
+  const remainingInstallmentChunks = chunkArray(
+    installments.slice(PAGE1_INSTALLMENT_LIMIT),
+    CONTINUATION_INSTALLMENT_LIMIT
+  );
 
   const { fontFamily, fontWeight } = resolvePdfTypography(meta?.fonts?.[0]);
   const pdfRootFontStyle = {
@@ -100,10 +123,147 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
     return Number(num || 0).toLocaleString();
   };
 
+  const installmentHeadings = [
+    "Installment",
+    "% Payable",
+    "Milestone",
+    "Amount (AED)",
+    ...(showVatColumns ? ["VAT %", "Amount after VAT"] : []),
+  ];
+
+  const renderInstallmentRows = (rows) =>
+    rows.map((inst, i) => {
+      const totalNum = Number(inst?.total) || 0;
+      const vatNum = Number(inst?.vat) || 0;
+      const amountAfterVat = totalNum + (totalNum * vatNum) / 100;
+      return (
+        <tr key={i} style={{ backgroundColor: "#fff" }}>
+          <td
+            style={{
+              border: "1px solid #000",
+              textAlign: "center",
+              padding: "8px 6px",
+              fontWeight: "500",
+              fontSize: "12px",
+            }}
+          >
+            {inst?.installment}
+          </td>
+          <td
+            style={{
+              border: "1px solid #000",
+              textAlign: "center",
+              padding: "8px 6px",
+              fontWeight: "600",
+              fontSize: "12px",
+            }}
+          >
+            {Number(inst?.percentagePayable || 0)}%
+          </td>
+          <td
+            style={{
+              border: "1px solid #000",
+              textAlign: "center",
+              padding: "8px 6px",
+              fontSize: "12px",
+            }}
+          >
+            {inst?.milestone}
+          </td>
+          <td
+            style={{
+              border: "1px solid #000",
+              textAlign: "center",
+              padding: "8px 6px",
+              fontWeight: "600",
+              fontSize: "12px",
+            }}
+          >
+            {formatNumber(inst?.total)}
+          </td>
+          {showVatColumns && (
+            <>
+              <td
+                style={{
+                  border: "1px solid #000",
+                  textAlign: "center",
+                  padding: "8px 6px",
+                  fontWeight: "600",
+                  fontSize: "12px",
+                }}
+              >
+                {formatNumber(inst?.vat)}
+              </td>
+              <td
+                style={{
+                  border: "1px solid #000",
+                  textAlign: "center",
+                  padding: "8px 6px",
+                  fontWeight: "600",
+                  fontSize: "12px",
+                }}
+              >
+                {formatNumber(amountAfterVat)}
+              </td>
+            </>
+          )}
+        </tr>
+      );
+    });
+
+  const InstallmentPlanSection = ({ rows, showBanner = true }) => (
+    <div style={{ width: "100%" }}>
+      {showBanner && (
+        <div
+          style={{
+            background: brandColor,
+            color: "#fff",
+            textAlign: "center",
+            fontSize: "16px",
+            fontWeight: "600",
+            paddingBottom: "20px",
+            paddingTop: "10px",
+            marginBottom: "10px",
+          }}
+        >
+          *** INSTALLMENT PLAN ***
+        </div>
+      )}
+      <table
+        style={{
+          width: "100%",
+          borderCollapse: "collapse",
+          border: "1px solid #000",
+        }}
+      >
+        <thead>
+          <tr>
+            {installmentHeadings.map((heading) => (
+              <th
+                key={heading}
+                style={{
+                  padding: "10px 8px",
+                  fontSize: "12px",
+                  fontWeight: "600",
+                  textAlign: "center",
+                  border: "1px solid #000",
+                }}
+              >
+                {heading}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>{renderInstallmentRows(rows)}</tbody>
+      </table>
+    </div>
+  );
+
   const Header = ({ value }) => (
     <div
       style={{
         width: "100%",
+        flexShrink: 0,
       }}
     >
       <div
@@ -111,14 +271,25 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
           display: "flex",
           flexShrink: 0,
           justifyContent: "center",
+          alignItems: "center",
           marginBottom: 10,
+          minHeight: "60px",
+          maxHeight: "110px",
+          overflow: "hidden",
         }}
       >
         <img
           src={meta?.logoUrl || null}
           alt="Logo"
-          className="w-auto h-auto max-h-[100px]"
-          style={{ margin: 5 }}
+          style={{
+            margin: 5,
+            maxHeight: "100px",
+            maxWidth: "100%",
+            width: "auto",
+            height: "auto",
+            objectFit: "contain",
+            display: "block",
+          }}
         />
       </div>
       <div
@@ -141,7 +312,7 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
   );
 
   const Footer = () => (
-    <div style={{ width: "100%" }}>
+    <div style={{ width: "100%", flexShrink: 0 }}>
       <div
         style={{
           display: "flex",
@@ -188,10 +359,10 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
           textAlign: "center",
         }}
       >
-        <p style={{ margin: "3px 0", fontWeight: "bold", fontSize: "12px" }} className="">
+        <p style={{ margin: "3px 0", fontWeight: "bold", fontSize: "12px" }}>
           {customer.email}
         </p>
-        <p style={{ margin: "3px 0", fontSize: "12px" }} className="">{customer.address}</p>
+        <p style={{ margin: "3px 0", fontSize: "12px" }}>{customer.address}</p>
       </div>
     </div>
   );
@@ -201,9 +372,8 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
       {/* Page 1 */}
       <div
         style={{
-          height: "306mm",
+          ...A4_PAGE,
           display: "flex",
-          width: "210mm",
           gap: "0.5rem",
           flexDirection: "column",
           alignItems: "center",
@@ -215,6 +385,8 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
           style={{
             width: "100%",
             flex: 1,
+            minHeight: 0,
+            overflow: "hidden",
           }}
         >
           {/* Project Details */}
@@ -354,156 +526,40 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
               ))}
           </div>
           {/* Payment Plan */}
-          <div style={{ width: "100%" }}>
-            <div
-              style={{
-                background: brandColor,
-                color: "#fff",
-                textAlign: "center",
-                fontSize: "16px",
-                fontWeight: "600",
-                paddingBottom: "20px",
-                paddingTop: "10px",
-                marginBottom: "10px",
-              }}
-            >
-              *** INSTALLMENT PLAN ***
-            </div>
-            <table
-              style={{
-                width: "100%",
-                borderCollapse: "collapse",
-                border: "1px solid #000",
-              }}
-            >
-              <thead>
-                <tr>
-                  {[
-                    "Installment",
-                    "% Payable",
-                    "Milestone",
-                    "Amount (AED)",
-                    ...((unit?.installments || []).some(
-                      (inst) => inst?.vat != null && inst?.vat !== "" && inst.vat > 0
-                    )
-                      ? ["VAT %", "Amount after VAT"]
-                      : []),
-                  ].map((heading) => (
-                    <th
-                      key={heading}
-                      style={{
-                        padding: "10px 8px",
-                        fontSize: "12px",
-                        fontWeight: "600",
-                        textAlign: "center",
-                        border: "1px solid #000",
-                      }}
-                    >
-                      {heading}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {(unit?.installments || []).map((inst, i) => {
-                  const totalNum = Number(inst?.total) || 0;
-                  const vatNum = Number(inst?.vat) || 0;
-                  const amountAfterVat = totalNum +  (totalNum * vatNum) /100;
-                  const showVatColumns = (unit?.installments || []).some(
-                    (instItem) =>
-                      instItem?.vat != null && instItem?.vat !== "" && instItem.vat > 0
-                  );
-                  return (
-                    <tr
-                      key={i}
-                      style={{
-                        backgroundColor: "#fff",
-                      }}
-                    >
-                      <td
-                        style={{
-                          border: "1px solid #000",
-                          textAlign: "center",
-                          padding: "8px 6px",
-                          fontWeight: "500",
-                          fontSize: "12px",
-                        }}
-                      >
-                        {inst?.installment}
-                      </td>
-                      <td
-                        style={{
-                          border: "1px solid #000",
-                          textAlign: "center",
-                          padding: "8px 6px",
-                          fontWeight: "600",
-                          fontSize: "12px",
-                        }}
-                      >
-                        {Number(inst?.percentagePayable || 0)}%
-                      </td>
-                      <td
-                        style={{
-                          border: "1px solid #000",
-                          textAlign: "center",
-                          padding: "8px 6px",
-                          fontSize: "12px",
-                        }}
-                      >
-                        {inst?.milestone}
-                      </td>
-                      <td
-                        style={{
-                          border: "1px solid #000",
-                          textAlign: "center",
-                          padding: "8px 6px",
-                          fontWeight: "600",
-                          fontSize: "12px",
-                        }}
-                      >
-                        {formatNumber(inst?.total)}
-                      </td>
-                      {showVatColumns && (
-                        <>
-                          <td
-                            style={{
-                              border: "1px solid #000",
-                              textAlign: "center",
-                              padding: "8px 6px",
-                              fontWeight: "600",
-                              fontSize: "12px",
-                            }}
-                          >
-                            {formatNumber(inst?.vat)}
-                          </td>
-                          <td
-                            style={{
-                              border: "1px solid #000",
-                              textAlign: "center",
-                              padding: "8px 6px",
-                              fontWeight: "600",
-                              fontSize: "12px",
-                            }}
-                          >
-                            {formatNumber(amountAfterVat)}
-                          </td>
-                        </>
-                      )}
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+          {page1Installments.length > 0 && (
+            <InstallmentPlanSection rows={page1Installments} />
+          )}
         </div>
         <Footer />
       </div>
-      {/* Page 2  */}
+
+      {/* Installment continuation pages */}
+      {remainingInstallmentChunks.map((rows, pageIndex) => (
+        <div
+          key={`installment-page-${pageIndex}`}
+          style={{
+            ...A4_PAGE,
+            display: "flex",
+            gap: "0.5rem",
+            flexDirection: "column",
+            justifyContent: "space-between",
+            alignItems: "center",
+            ...pdfRootFontStyle,
+          }}
+        >
+          <Header value={extra?.header?.salesOffer} />
+          <div style={{ flex: 1, width: "100%", minHeight: 0, overflow: "hidden" }}>
+            <InstallmentPlanSection rows={rows} />
+          </div>
+          <Footer />
+        </div>
+      ))}
+
+      {/* Pre-registration page */}
       {unit?.preRegistrationPayment?.breakdown?.length > 0 && <div
         style={{
-          height: "306mm",
+          ...A4_PAGE,
           display: "flex",
-          width: "210mm",
           gap: "2rem",
           flexDirection: "column",
           justifyContent: "space-between",
@@ -512,7 +568,7 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
         }}
       >
         <Header value={extra?.header?.preRegistration} />
-        <div style={{ flex: 1, width: "100%" }}>
+        <div style={{ flex: 1, width: "100%", minHeight: 0, overflow: "hidden" }}>
           <table
             style={{
               width: "100%",
@@ -603,9 +659,8 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
       {/* Page 3 */}
       <div
         style={{
-          height: "306mm",
+          ...A4_PAGE,
           display: "flex",
-          width: "210mm",
           gap: "0.2rem",
           flexDirection: "column",
           justifyContent: "space-between",
