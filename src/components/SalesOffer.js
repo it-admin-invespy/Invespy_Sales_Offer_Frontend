@@ -72,12 +72,17 @@ const emptySalesOfferData = {
   },
 };
 
-/** A4 — use the same height on every “page” block so PDF slice boundaries align with sections. */
+/**
+ * Page block sized to match react-to-pdf slicing with A4 + 10mm margins.
+ * Printable area is 277mm tall × 190mm wide; content is 210mm wide so
+ * horizontal fit scales source height to ~306mm per PDF page
+ * (277 × 210 / 190). Keep this in sync with PDF_OPTIONS.page.margin.
+ */
 const A4_PAGE = {
   width: "210mm",
-  height: "297mm",
-  minHeight: "297mm",
-  maxHeight: "297mm",
+  height: "306mm",
+  minHeight: "306mm",
+  maxHeight: "306mm",
   boxSizing: "border-box",
   overflow: "hidden",
 };
