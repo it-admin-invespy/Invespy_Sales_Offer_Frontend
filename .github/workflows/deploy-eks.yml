@@ -62,24 +62,6 @@ jobs:
           docker build $BUILD_ARG -t 703671911262.dkr.ecr.us-east-1.amazonaws.com/sales-offer-frontend:${{ steps.env.outputs.image_tag }} .
           docker push 703671911262.dkr.ecr.us-east-1.amazonaws.com/sales-offer-frontend:${{ steps.env.outputs.image_tag }}
 
-
-      - name: Update GitOps repo (staging)
-        if: steps.env.outputs.target == 'staging'
-        env:
-          GITOPS_TOKEN: ${{ secrets.GITOPS_TOKEN }}
-          IMAGE_TAG: ${{ steps.env.outputs.image_tag }}
-          GITOPS_PATH: apps/sales-offer-frontend/overlays/staging
-          SERVICE: sales-offer-frontend
-        run: |
-          git clone https://x-access-token:${GITOPS_TOKEN}@github.com/it-admin-invespy/gitops.git gitops-repo
-          cd gitops-repo
-          git config user.email "ci@invespy.io"
-          git config user.name "CI Bot"
-          sed -i "s|newTag:.*|newTag: ${IMAGE_TAG}|" ${GITOPS_PATH}/kustomization.yaml
-          git add ${GITOPS_PATH}/kustomization.yaml
-          git diff --staged --quiet || git commit -m "ci: update ${SERVICE} staging to ${IMAGE_TAG}"
-          git push
-
       - name: Update GitOps repo (staging)
         if: steps.env.outputs.target == 'staging'
         env:
