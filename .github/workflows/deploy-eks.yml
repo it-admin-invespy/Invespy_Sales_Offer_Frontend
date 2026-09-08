@@ -26,20 +26,20 @@ jobs:
       - name: Set target environment
         id: env
         run: |
+          SHA=$(echo "$GITHUB_SHA" | cut -c1-8)
           if [ -n "${{ inputs.environment }}" ]; then
-            echo "target=${{ inputs.environment }}" >> $GITHUB_OUTPUT
-            SHA=$(echo "$GITHUB_SHA" | cut -c1-8)
-            if [ "${{ steps.env.outputs.target }}" = "staging" ]; then
-              echo "image_tag=staging-${SHA}" >> $GITHUB_OUTPUT
-            else
-              echo "image_tag=${{ steps.env.outputs.target }}" >> $GITHUB_OUTPUT
-            fi
+            TARGET="${{ inputs.environment }}"
           elif [ "${{ github.ref_name }}" = "staging" ]; then
-            echo "target=staging" >> $GITHUB_OUTPUT
+            TARGET=staging
           else
-            echo "target=production" >> $GITHUB_OUTPUT
+            TARGET=production
           fi
-
+          echo "target=$TARGET" >> $GITHUB_OUTPUT
+          if [ "$TARGET" = "staging" ]; then
+            echo "image_tag=staging-${SHA}" >> $GITHUB_OUTPUT
+          else
+            echo "image_tag=${TARGET}" >> $GITHUB_OUTPUT
+          fi
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -80,6 +80,23 @@ jobs:
           git diff --staged --quiet || git commit -m "ci: update ${SERVICE} staging to ${IMAGE_TAG}"
           git push
 
+      - name: Update GitOps repo (staging)
+        if: steps.env.outputs.target == 'staging'
+        env:
+          GITOPS_TOKEN: ${{ secrets.GITOPS_TOKEN }}
+          IMAGE_TAG: ${{ steps.env.outputs.image_tag }}
+          GITOPS_PATH: apps/sales-offer-frontend/overlays/staging
+          SERVICE: sales-offer-frontend
+        run: |
+          git clone https://x-access-token:${GITOPS_TOKEN}@github.com/it-admin-invespy/gitops.git gitops-repo
+          cd gitops-repo
+          git config user.email "ci@invespy.io"
+          git config user.name "CI Bot"
+          sed -i "s|newTag:.*|newTag: ${IMAGE_TAG}|" ${GITOPS_PATH}/kustomization.yaml
+          git add ${GITOPS_PATH}/kustomization.yaml
+          git diff --staged --quiet || git commit -m "ci: update ${SERVICE} staging to ${IMAGE_TAG}"
+          git push
+
       - name: Update kubeconfig (production)
         if: steps.env.outputs.target == 'production'
         run: aws eks update-kubeconfig --region us-east-1 --name invespy-cluster
@@ -87,4 +104,5 @@ jobs:
       - name: Deploy to EKS (production)
         if: steps.env.outputs.target == 'production'
         run: |
-          kubectl rollout restart deployment/sales-offer-frontend -n production && kubectl rollout status deployment/sales-offer-frontend -n production --timeout=300s
+          kubectl rollout restart deployment/sales-offer-frontend -n production
+          kubectl rollout status deployment/sales-offer-frontend -n production --timeout=300s
