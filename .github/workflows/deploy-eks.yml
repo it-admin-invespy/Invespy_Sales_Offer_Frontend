@@ -77,7 +77,7 @@ jobs:
           sed -i "s|newTag:.*|newTag: ${IMAGE_TAG}|" ${GITOPS_PATH}/kustomization.yaml
           git add ${GITOPS_PATH}/kustomization.yaml
           git diff --staged --quiet || git commit -m "ci: update ${SERVICE} staging to ${IMAGE_TAG}"
-          git push
+          git pull --rebase origin main && git push
 
       - name: Update kubeconfig (production)
         if: steps.env.outputs.target == 'production'
