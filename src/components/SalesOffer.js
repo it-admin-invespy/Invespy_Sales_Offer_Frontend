@@ -125,7 +125,10 @@ const SalesOffer = ({ salesOfferData, selectedUnit }) => {
 
 
   const formatNumber = (num) => {
-    return Number(num || 0).toLocaleString();
+    return Number(num || 0).toLocaleString("en-US", {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+    });
   };
 
   const installmentHeadings = [
