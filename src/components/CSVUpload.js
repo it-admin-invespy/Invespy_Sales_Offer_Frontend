@@ -1,4 +1,4 @@
-import { formatCurrency, parseNumericValue, formatArea } from "@/lib/utils";
+import { formatPrice, parseNumericValue, formatArea } from "@/lib/utils";
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { deleteProjectUnits, deleteUnit } from "@/app/(dashboard)/dashboard/actions";
 
@@ -319,7 +319,7 @@ export default function CSVUpload({
                         {...register(`${name}.${index}.price`)}
                         defaultValue={numericPrice}
                       />
-                      {formatCurrency(row.price)}
+                      {formatPrice(row.price)}
                     </td>
                     <td className="border border-gray-300 px-2 py-1">
                       <div className="flex items-center gap-2">
