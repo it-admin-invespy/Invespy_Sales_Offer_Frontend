@@ -215,6 +215,14 @@ export const parseNumericValue = (value) => {
   return parseFloat(String(value).replace(/,/g, "")) || 0;
 };
 
+/** Table price display: up to 2 decimals, no trailing .00 for whole numbers. */
+export const formatPrice = (amount) => {
+  return parseNumericValue(amount).toLocaleString("en-US", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  });
+};
+
 export const formatArea = (value) => {
   return Math.round(parseNumericValue(value)).toLocaleString("en-US");
 };

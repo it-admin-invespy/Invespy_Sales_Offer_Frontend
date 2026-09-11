@@ -1,4 +1,4 @@
-import { formatCurrency, parseNumericValue, formatArea } from "@/lib/utils";
+import { formatPrice, parseNumericValue, formatArea } from "@/lib/utils";
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { deleteProjectUnits, deleteUnit } from "@/app/(dashboard)/dashboard/actions";
 
@@ -14,6 +14,12 @@ const sortUnits = (a, b) => {
     numeric: true,
     sensitivity: "base",
   });
+};
+
+/** Keep digits + decimal point; strip commas/currency (do not use \\D — it removes "."). */
+const parsePriceCell = (raw) => {
+  if (raw == null || String(raw).trim() === "") return 0;
+  return parseFloat(String(raw).replace(/[^0-9.]/g, "")) || 0;
 };
 
 export default function CSVUpload({
@@ -78,13 +84,12 @@ export default function CSVUpload({
                 ? values[3]?.trim() || ""
                 : values[4]?.trim() || "",
               grossArea: hasMergedFloorUnit
-                ? parseFloat(values[4]?.trim()) || 0
-                : parseFloat(values[5]?.trim()) || 0,
+                ? parsePriceCell(values[4])
+                : parsePriceCell(values[5]),
               originalPrice: hasMergedFloorUnit
-                 && parseFloat(values[5]?.replace(/\D/g, "").trim()) || 0 ,
-              price: hasMergedFloorUnit
-                ? parseFloat(values[6]?.replace(/\D/g, "").trim()) || 0
-                : parseFloat(values[6]?.replace(/\D/g, "").trim()) || 0,
+                ? parsePriceCell(values[5])
+                : 0,
+              price: parsePriceCell(values[6]),
             };
           })
           .sort(sortUnits);
@@ -357,7 +362,7 @@ export default function CSVUpload({
                         {...register(`${name}.${index}.originalPrice`)}
                         defaultValue={numericOriginalPrice}
                       />
-                      {formatCurrency(row.originalPrice ?? row.price)}
+                      {formatPrice(row.originalPrice ?? row.price)}
                     </td>
                     <td className="border border-gray-300 px-2 py-1 text-right">
                       <input
@@ -365,7 +370,7 @@ export default function CSVUpload({
                         {...register(`${name}.${index}.price`)}
                         defaultValue={numericPrice}
                       />
-                      {formatCurrency(row.price)}
+                      {formatPrice(row.price)}
                     </td>
                     <td className="border border-gray-300 px-2 py-1">
                       <div className="flex items-center gap-2">
