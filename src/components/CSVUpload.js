@@ -71,11 +71,19 @@ export default function CSVUpload({
           .sort(sortUnits);
 
         setCsvData(data);
+        setSelectedRow(0);
+        setSelectedUnit(0);
         onDataLoad(data);
+        if (autoPreRegFromUnit) {
+          setValue(
+            "extra.breakdown.0.amount",
+            Math.round((data[0]?.price || 0) * 0.04)
+          );
+        }
       };
       reader.readAsText(file);
     },
-    [onDataLoad]
+    [onDataLoad, setSelectedUnit, setValue, autoPreRegFromUnit]
   );
 
   const handleCalculate = useCallback(
@@ -86,7 +94,7 @@ export default function CSVUpload({
       if (autoPreRegFromUnit) {
         setValue(
           "extra.breakdown.0.amount",
-          (csvData[newIndex]?.price || 0) * 0.04
+          Math.round((csvData[newIndex]?.price || 0) * 0.04)
         );
       }
     },
